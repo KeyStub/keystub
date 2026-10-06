@@ -40,7 +40,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 - [x] 11 DONE 2026-10-05: KeyStub Records folder in Drive; simple bookkeeping (spreadsheet or Wave)
 
 ## Phase 4: put the app online (with Claude)
-- [ ] 12 (PART DONE 2026-10-05: GitHub account created, username **KeyStub**; code committed locally) Jarin creates the private repo **keystub** (no README) at github.com/new → push with `git push -u origin main` (sign in through the GitHub pop-up)
+- [x] 12 DONE 2026-10-05: GitHub account **KeyStub**; code pushed to the private repo github.com/KeyStub/keystub (branch main)
 - [ ] 13 Neon project "keystub" in AWS US East (N. Virginia), to sit next to Vercel iad1 → connection string saved in Google Password Manager (never pasted in chat)
 - [ ] 14 Vercel (Hobby, via GitHub) → import repo, add settings, deploy; Claude runs migrations and checks
 - [ ] 15 Real account on the live site → dry-run then real import → verify the 45/16/29 totals; review 3 flagged records
@@ -77,7 +77,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 | CRA My Business Account | existing CRA sign-in | — | Exists |
 | Venn | accounts@ | — | To do |
 | Wave (optional) | accounts@ | — | To do |
-| GitHub | accounts@ (username KeyStub) | — | Done 2026-10-05 (repo pending) |
+| GitHub | accounts@ (username KeyStub) | — | Done 2026-10-05 (private repo KeyStub/keystub) |
 | Neon | accounts@ (email sign-up) | — | To do |
 | Vercel | Continue with GitHub | — | To do |
 | Resend | accounts@ | — | To do |
@@ -161,3 +161,9 @@ Shown on the website as "Coming soon" until built.
 - Engine hours instead of km for boats, ATVs, tractors, generators; motorcycles work already.
 - Seasonal tire swaps & storage as a recurring reminder pair; diesel DEF as a fuel-log extra.
 - Multiple drivers per vehicle / shared household garage.
+
+## Markets (decided 2026-10-05)
+- **Launch: Canada + US.** Hosting (Vercel iad1 + Neon US East) already serves both well.
+- Needed for the US before launch: miles / US gallons / MPG and per-user currency (CAD or USD); pricing in USD for US customers (Stripe supports a CAD and a USD price per plan); US-friendly wording (e.g. "registration renewal" is fine, "licence" vs "license").
+- US sales tax on software: only required once sales into a state pass its threshold (usually US$100k or 200 transactions per year), so not at the start. Stripe Tax can monitor thresholds.
+- **Later, worldwide:** EU/UK charge VAT on digital services from the FIRST sale to consumers (no threshold for foreign sellers), and Australia/NZ/others have similar rules. Before opening those markets, either register via EU OSS / UK HMRC, or switch to a merchant of record (Paddle or Lemon Squeezy) that collects and files tax everywhere for ~5% + 50¢ per sale. Also needs translations, more currencies and date/number formats, and GDPR wording in the privacy policy.

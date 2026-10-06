@@ -81,7 +81,7 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
             </div>
           </Field>
           <Field label="Nickname (optional)" htmlFor="nickname">
-            <input className="input" id="nickname" name="nickname" defaultValue={v.nickname ?? ""} placeholder="e.g. The Santa Fe" />
+            <input className="input" id="nickname" name="nickname" defaultValue={v.nickname ?? ""} placeholder="e.g. Daily driver" />
           </Field>
         </div>
         {decoded && (

@@ -40,7 +40,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 - [x] 11 DONE 2026-10-05: KeyStub Records folder in Drive; simple bookkeeping (spreadsheet or Wave)
 
 ## Phase 4: put the app online (with Claude)
-- [ ] 12 GitHub account → Claude creates a private repo and pushes the code
+- [ ] 12 (PART DONE 2026-10-05: GitHub account created, username **KeyStub**; code committed locally) Jarin creates the private repo **keystub** (no README) at github.com/new → push with `git push -u origin main` (sign in through the GitHub pop-up)
 - [ ] 13 Neon project "keystub" in AWS US East (N. Virginia), to sit next to Vercel iad1 → connection string saved in Google Password Manager (never pasted in chat)
 - [ ] 14 Vercel (Hobby, via GitHub) → import repo, add settings, deploy; Claude runs migrations and checks
 - [ ] 15 Real account on the live site → dry-run then real import → verify the 45/16/29 totals; review 3 flagged records
@@ -77,7 +77,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 | CRA My Business Account | existing CRA sign-in | — | Exists |
 | Venn | accounts@ | — | To do |
 | Wave (optional) | accounts@ | — | To do |
-| GitHub | accounts@ | — | To do |
+| GitHub | accounts@ (username KeyStub) | — | Done 2026-10-05 (repo pending) |
 | Neon | accounts@ (email sign-up) | — | To do |
 | Vercel | Continue with GitHub | — | To do |
 | Resend | accounts@ | — | To do |
@@ -132,3 +132,32 @@ Shown on the website as "Coming soon" until built.
 - App: pill buttons and tabs, softer cards, blurred sticky header; on phones (≤700px) a bottom tab bar (Home, Fuel, yellow "+", Reminders, More). "+" opens Log something → fill-up / maintenance / cost / reminder; "More" has the other sections, account and sign out; secondary table columns hide on phones.
 - `/preview` (local only): website and app pages side by side in 390×844 phone frames.
 - TO REVIEW: the founder quote on the homepage is a DRAFT written in Jarin's voice; he should rewrite or approve it.
+
+## Polish batch (2026-10-05)
+- Privacy scrub: homepage and app mockups no longer show gas stations, exact vehicle, plate or town ("Daily driver · 2014 SUV"; example car is generic).
+- Dark mode: Light / Dark / Match device toggle (header button on the website and app, plus Account → Appearance and the phone "More" sheet). No flash on load; contrast checked in both themes.
+- Reminder lead time is user-editable (Account → Reminders): days ahead (default 30) and km ahead (default 500).
+- Sign-in, sign-up, forgot and reset password pages restyled in the new design (split layout).
+- "Miles, gallons and MPG" listed on Coming soon (units are km and litres for now).
+
+## EV & plug-in hybrid support (built 2026-10-05)
+- Every vehicle has a **powertrain**: gas, diesel, hybrid, plug-in hybrid or electric (VIN lookup fills it in). EV/PHEV also get usable battery kWh and rated range.
+- **Charging log**: kWh, cost (blank at home = kWh × home electricity rate, marked as estimated; 0 = free), home / work / public L2 / DC fast / other, network, start/end %, minutes, odometer. Quick charge card on the dashboard and a "Charging session" item in the phone "+" sheet.
+- **Charging stats**: total spent, kWh, average $/kWh, % at home, kWh/100 km measured at the plug (includes charging losses), energy cost per km, and savings against a comparable gas car.
+- **Battery health**: periodic checks of state-of-health % and/or range at 100%, compared with rated range.
+- **Account → Energy**: home electricity price (default $0.18/kWh), comparison gas car L/100 km (default 9) and gas price (default $1.60/L).
+- EV cost types: Home charger, Charging subscription, Rebate / incentive (counts as money back). New maintenance categories: 12V battery, Cabin / air filter, Software / recall.
+- EVs see Charging + Battery tabs instead of Fuel; plug-in hybrids see both. Charging is included in totals, monthly trends, reminders (odometer), and the CSV export.
+- Website: homepage "Drive electric? KeyStub speaks kWh." section; pricing table rows for all powertrains, EV charging and battery health (Free and Pro).
+- Fixed: two fill-ups or charges on the same day no longer trigger a false odometer warning.
+- Migration 0003 (needs to run on Neon at deploy, done automatically by the migrate step).
+
+## Ideas for "works with any vehicle" (not built yet, for Jarin to prioritise)
+- Units: miles / US & imperial gallons / MPG, and currency (already on Coming soon). Most important for the US launch.
+- Lease tracking: km allowance vs actual, projected overage cost.
+- Loan / financing: payment schedule, interest paid vs principal.
+- Depreciation & resale estimate in the true cost (purchase − estimated value today).
+- Business-use mileage log (CRA / IRS): trips, purpose, business % for tax deductions. A strong reason for self-employed people to pay.
+- Engine hours instead of km for boats, ATVs, tractors, generators; motorcycles work already.
+- Seasonal tire swaps & storage as a recurring reminder pair; diesel DEF as a fuel-log extra.
+- Multiple drivers per vehicle / shared household garage.

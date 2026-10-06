@@ -51,6 +51,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 - [ ] 18 Accountant: incorporate? GST across both businesses? bookkeeping
 - [ ] 19 Trademark filing decision; legal review of privacy policy and terms
 - [ ] 20 Stripe: login accounts@, public receipt email billing@ (test mode → verification → payouts to Venn → live)
+- [ ] 20b Upgrade Vercel Hobby → Pro (US$20/month) before taking payments: Hobby is non-commercial use only
 - [ ] 21 Launch (Vercel paid plan if charging); next features: bank-statement import, receipt scanning
 
 ## Product decisions (2026-10-05)

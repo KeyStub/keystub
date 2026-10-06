@@ -42,7 +42,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 ## Phase 4: put the app online (with Claude)
 - [x] 12 DONE 2026-10-05: GitHub account **KeyStub**; code pushed to the private repo github.com/KeyStub/keystub (branch main)
 - [x] 13 DONE 2026-10-05: Neon project "KeyStub" (project id royal-surf-02570009) in **AWS US East 2 (Ohio)**; app functions pinned to Vercel **cle1 (Cleveland)** in vercel.json to sit next to it. Pooled connection string saved in Google Password Manager (never pasted in chat)
-- [ ] 14 Vercel (Hobby, via GitHub) → import repo, add settings, deploy; Claude runs migrations and checks
+- [x] 14 DONE 2026-10-05: Vercel Hobby (team "key-stub", via GitHub KeyStub) → project **keystub**, live at https://keystub.vercel.app ; env vars set; database tables created by the vercel-build step; checked: pages load, auth + database respond, security headers on, /preview hidden
 - [ ] 15 Real account on the live site → dry-run then real import → verify the 45/16/29 totals; review 3 flagged records
 - [ ] 16 Resend on keystub.com → API key → Claude switches app emails to noreply@keystub.com
 - [ ] 17 (PART DONE 2026-10-05: app renamed to KeyStub locally; brand colours, Archivo + IBM Plex Sans, logo, favicon/app icons, share image, installable app manifest, new homepage) Rename to KeyStub, logo and colours; delete Porkbun parking records (ALIAS @ → pixie.porkbun.com, CNAME * → uixie.porkbun.com); connect keystub.com (and .ca redirect) in Vercel

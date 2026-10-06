@@ -144,7 +144,7 @@ table.acct .em { font-family: var(--mono); font-size: 12.5px; }
           <tr><td><a href="https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/business-account.html" target="_blank" rel="noopener">CRA My Business Account</a></td><td>Business number, GST</td><td>Your existing CRA sign-in</td><td>—</td><td><span class="pill ok">Exists</span></td><td>08</td></tr>
           <tr><td><a href="https://app.venn.ca/signup" target="_blank" rel="noopener">Venn</a></td><td>Business bank account and card</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>09</td></tr>
           <tr><td><a href="https://www.waveapps.com" target="_blank" rel="noopener">Wave</a> <span class="muted">(optional)</span></td><td>Bookkeeping</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>11</td></tr>
-          <tr><td><a href="https://github.com" target="_blank" rel="noopener">GitHub</a></td><td>App code (private)</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>12</td></tr>
+          <tr><td><a href="https://github.com" target="_blank" rel="noopener">GitHub</a></td><td>App code (private)</td><td class="em">accounts@keystub.com</td><td>KeyStub</td><td><span class="pill todo">Repo to create</span></td><td>12</td></tr>
           <tr><td><a href="https://neon.com" target="_blank" rel="noopener">Neon</a></td><td>Database</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>13</td></tr>
           <tr><td><a href="https://vercel.com/signup" target="_blank" rel="noopener">Vercel</a></td><td>Website and app hosting</td><td>"Continue with GitHub"</td><td>—</td><td><span class="pill todo">To do</span></td><td>14</td></tr>
           <tr><td><a href="https://resend.com/signup" target="_blank" rel="noopener">Resend</a></td><td>App emails (noreply@)</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>16</td></tr>
@@ -465,10 +465,12 @@ table.acct .em { font-family: var(--mono); font-size: 12.5px; }
       <div class="body">
         <div><div class="label">Steps</div>
         <ol class="how">
-          <li>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> → <b>Sign up</b>. Email: <b>accounts@keystub.com</b>. Username: e.g. <b>keystub</b> or <b>jarin-keystub</b>. Free plan.</li>
+          <li>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> → <b>Sign up</b>. Email: <b>accounts@keystub.com</b>. Username: e.g. <b>keystub</b> or <b>jarin-keystub</b>. Free plan. <i>(Done: username <b>KeyStub</b>.)</i></li>
           <li>Verify your email, then turn on two-factor authentication: <span class="path">profile picture → Settings → Password and authentication → Enable two-factor authentication</span> (<a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication" target="_blank" rel="noopener">GitHub's guide</a>). Save the recovery codes in a Google Password Manager note.</li>
+          <li><b>Create the empty repository:</b> go to <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a> → Owner <b>KeyStub</b> → Repository name <b>keystub</b> → choose <b>Private</b> → leave <i>Add a README</i>, <i>.gitignore</i> and <i>license</i> all <b>off</b> → <b>Create repository</b>.</li>
+          <li>Tell Claude it&#39;s created. Claude connects the project and uploads the code; a GitHub sign-in window pops up once, so sign in as KeyStub and approve it.</li>
         </ol></div>
-        <div class="claude"><b>Tell Claude</b> your GitHub username. I'll create a <b>private</b> repository, upload the code, and ask you to approve the connection.</div>
+        <div class="claude"><b>Claude does:</b> links the project to github.com/KeyStub/keystub and pushes the code. Your .env secrets and local database are never uploaded.</div>
         <p class="doneWhen"><b>Done when:</b> you can see the KeyStub code in a private repository on GitHub.</p>
       </div>
     </article>

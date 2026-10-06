@@ -41,7 +41,7 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 
 ## Phase 4: put the app online (with Claude)
 - [x] 12 DONE 2026-10-05: GitHub account **KeyStub**; code pushed to the private repo github.com/KeyStub/keystub (branch main)
-- [ ] 13 Neon project "keystub" in AWS US East (N. Virginia), to sit next to Vercel iad1 → connection string saved in Google Password Manager (never pasted in chat)
+- [x] 13 DONE 2026-10-05: Neon project "KeyStub" (project id royal-surf-02570009) in **AWS US East 2 (Ohio)**; app functions pinned to Vercel **cle1 (Cleveland)** in vercel.json to sit next to it. Pooled connection string saved in Google Password Manager (never pasted in chat)
 - [ ] 14 Vercel (Hobby, via GitHub) → import repo, add settings, deploy; Claude runs migrations and checks
 - [ ] 15 Real account on the live site → dry-run then real import → verify the 45/16/29 totals; review 3 flagged records
 - [ ] 16 Resend on keystub.com → API key → Claude switches app emails to noreply@keystub.com
@@ -163,7 +163,7 @@ Shown on the website as "Coming soon" until built.
 - Multiple drivers per vehicle / shared household garage.
 
 ## Markets (decided 2026-10-05)
-- **Launch: Canada + US.** Hosting (Vercel iad1 + Neon US East) already serves both well.
+- **Launch: Canada + US.** Hosting (Vercel cle1 + Neon US East 2, Ohio) already serves both well.
 - Needed for the US before launch: miles / US gallons / MPG and per-user currency (CAD or USD); pricing in USD for US customers (Stripe supports a CAD and a USD price per plan); US-friendly wording (e.g. "registration renewal" is fine, "licence" vs "license").
 - US sales tax on software: only required once sales into a state pass its threshold (usually US$100k or 200 transactions per year), so not at the start. Stripe Tax can monitor thresholds.
 - **Later, worldwide:** EU/UK charge VAT on digital services from the FIRST sale to consumers (no threshold for foreign sellers), and Australia/NZ/others have similar rules. Before opening those markets, either register via EU OSS / UK HMRC, or switch to a merchant of record (Paddle or Lemon Squeezy) that collects and files tax everywhere for ~5% + 50¢ per sale. Also needs translations, more currencies and date/number formats, and GDPR wording in the privacy policy.

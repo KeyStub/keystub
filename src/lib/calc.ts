@@ -13,26 +13,38 @@ export type FuelRow = {
 };
 export type MaintRow = { id: string; date: string; totalCostCents: number; odometer: number | null };
 export type CostRow = { id: string; date: string; type: string; amountCents: number };
+export type ChargeRow = {
+  id: string;
+  date: string;
+  kwh: number;
+  costCents: number;
+  location: string;
+  odometer: number | null;
+};
 
-export type Category = "Fuel" | "Maintenance" | "Insurance" | "Other";
-export const CATEGORIES: Category[] = ["Fuel", "Maintenance", "Insurance", "Other"];
+export type Category = "Fuel" | "Charging" | "Maintenance" | "Insurance" | "Other";
+export const CATEGORIES: Category[] = ["Fuel", "Charging", "Maintenance", "Insurance", "Other"];
+
+/** Cost types that are money back (government EV rebates, incentives): they reduce the total. */
+export const CREDIT_TYPES = ["Rebate / incentive"];
 
 export type DatedAmount = { date: string; cents: number; cat: Category };
 
-export function allDated(fuel: FuelRow[], maint: MaintRow[], costs: CostRow[]): DatedAmount[] {
+export function allDated(fuel: FuelRow[], maint: MaintRow[], costs: CostRow[], charges: ChargeRow[] = []): DatedAmount[] {
   return [
     ...fuel.map((r) => ({ date: r.date, cents: r.totalPaidCents, cat: "Fuel" as const })),
+    ...charges.map((r) => ({ date: r.date, cents: r.costCents, cat: "Charging" as const })),
     ...maint.map((r) => ({ date: r.date, cents: r.totalCostCents, cat: "Maintenance" as const })),
     ...costs.map((r) => ({
       date: r.date,
-      cents: r.amountCents,
+      cents: CREDIT_TYPES.includes(r.type) ? -r.amountCents : r.amountCents,
       cat: (r.type === "Insurance" ? "Insurance" : "Other") as Category,
     })),
   ].filter((r) => r.date);
 }
 
 export function totalsByCategory(rows: DatedAmount[]): Record<Category, number> {
-  const out: Record<Category, number> = { Fuel: 0, Maintenance: 0, Insurance: 0, Other: 0 };
+  const out: Record<Category, number> = { Fuel: 0, Charging: 0, Maintenance: 0, Insurance: 0, Other: 0 };
   for (const r of rows) out[r.cat] += r.cents;
   return out;
 }
@@ -53,8 +65,9 @@ export function kmRecorded(
   fuel: { odometer: number | null }[],
   maint: { odometer: number | null }[],
   currentOdometer: number | null,
+  extra: { odometer: number | null }[] = [],
 ) {
-  const odos = [...fuel, ...maint].map((r) => r.odometer).filter((o): o is number => o != null);
+  const odos = [...fuel, ...maint, ...extra].map((r) => r.odometer).filter((o): o is number => o != null);
   if (currentOdometer != null) odos.push(currentOdometer);
   if (odos.length < 2) return null;
   const min = Math.min(...odos);
@@ -89,7 +102,7 @@ export function monthlyTrend(rows: DatedAmount[], lastN = 12) {
   const byMonth = new Map<string, Record<Category, number>>();
   for (const r of rows) {
     const k = r.date.slice(0, 7);
-    if (!byMonth.has(k)) byMonth.set(k, { Fuel: 0, Maintenance: 0, Insurance: 0, Other: 0 });
+    if (!byMonth.has(k)) byMonth.set(k, { Fuel: 0, Charging: 0, Maintenance: 0, Insurance: 0, Other: 0 });
     byMonth.get(k)![r.cat] += r.cents;
   }
   return [...byMonth.keys()]
@@ -106,7 +119,7 @@ export function priorOdometer(rows: OdoRow[], beforeDate: string, excludeId?: st
   let best: { date: string; odo: number } | null = null;
   for (const r of rows) {
     if (r.id === excludeId || r.odometer == null) continue;
-    if (r.date <= beforeDate) {
+    if (r.date < beforeDate) {
       if (!best || r.date > best.date || (r.date === best.date && r.odometer > best.odo))
         best = { date: r.date, odo: r.odometer };
     }
@@ -118,7 +131,7 @@ export function laterLowerOdometer(rows: OdoRow[], afterDate: string, newOdo: nu
   let hit: { date: string; odo: number } | null = null;
   for (const r of rows) {
     if (r.id === excludeId || r.odometer == null) continue;
-    if (r.date >= afterDate && r.odometer < newOdo) {
+    if (r.date > afterDate && r.odometer < newOdo) {
       if (!hit || r.date < hit.date) hit = { date: r.date, odo: r.odometer };
     }
   }
@@ -170,3 +183,96 @@ export function reminderStatus(
   }
   return overdue ? "overdue" : soon ? "soon" : "upcoming";
 }
+
+/* ---------- EV charging ---------- */
+
+export type ChargingStats = {
+  sessions: number;
+  totalKwh: number;
+  totalCents: number;
+  /** average price paid per kWh, in dollars (null if no kWh) */
+  avgPricePerKwh: number | null;
+  /** share of kWh by where it was charged */
+  byLocation: Record<string, { kwh: number; cents: number; count: number }>;
+  /** kWh per 100 km measured at the charger (includes charging losses); null until 2+ odometer readings */
+  kwhPer100: number | null;
+  /** distance covered between the first and last charge with an odometer reading */
+  distanceKm: number | null;
+  /** energy cost per km over that same span, in cents */
+  centsPerKm: number | null;
+  /** what the same distance would have cost in fuel, and the difference, in cents */
+  gasEquivalentCents: number | null;
+  savingsCents: number | null;
+};
+
+/**
+ * Efficiency uses the energy added *after* the first odometer reading: that is the energy that
+ * replaced what was used to drive the measured distance.
+ */
+export function chargingStats(rows: ChargeRow[], compare: { l100: number; fuelPrice: number }): ChargingStats {
+  const totalKwh = rows.reduce((t, r) => t + r.kwh, 0);
+  const totalCents = rows.reduce((t, r) => t + r.costCents, 0);
+  const byLocation: ChargingStats["byLocation"] = {};
+  for (const r of rows) {
+    const b = (byLocation[r.location] ??= { kwh: 0, cents: 0, count: 0 });
+    b.kwh += r.kwh;
+    b.cents += r.costCents;
+    b.count += 1;
+  }
+  // Chronological order; within a day, by odometer (sessions without one go last).
+  const ordered = rows
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.odometer ?? Infinity) - (b.odometer ?? Infinity));
+  const firstIdx = ordered.findIndex((r) => r.odometer != null);
+  const lastIdx = ordered.findLastIndex((r) => r.odometer != null);
+  let kwhPer100: number | null = null;
+  let distanceKm: number | null = null;
+  let centsPerKm: number | null = null;
+  let gasEquivalentCents: number | null = null;
+  let savingsCents: number | null = null;
+  if (firstIdx >= 0 && lastIdx > firstIdx) {
+    const dist = ordered[lastIdx].odometer! - ordered[firstIdx].odometer!;
+    if (dist > 0) {
+      const after = ordered.slice(firstIdx + 1, lastIdx + 1);
+      const kwh = after.reduce((t, r) => t + r.kwh, 0);
+      const cents = after.reduce((t, r) => t + r.costCents, 0);
+      distanceKm = dist;
+      kwhPer100 = (kwh / dist) * 100;
+      centsPerKm = cents / dist;
+      const litres = (dist * compare.l100) / 100;
+      gasEquivalentCents = Math.round(litres * compare.fuelPrice * 100);
+      savingsCents = gasEquivalentCents - cents;
+    }
+  }
+  return {
+    sessions: rows.length,
+    totalKwh,
+    totalCents,
+    avgPricePerKwh: totalKwh > 0 ? totalCents / 100 / totalKwh : null,
+    byLocation,
+    kwhPer100,
+    distanceKm,
+    centsPerKm,
+    gasEquivalentCents,
+    savingsCents,
+  };
+}
+
+export const CHARGE_LOCATIONS: Record<string, string> = {
+  home: "Home",
+  work: "Work",
+  public: "Public (Level 2)",
+  fast: "DC fast",
+  other: "Other",
+};
+
+export const POWERTRAINS = [
+  { id: "gas", label: "Gas" },
+  { id: "diesel", label: "Diesel" },
+  { id: "hybrid", label: "Hybrid" },
+  { id: "phev", label: "Plug-in hybrid" },
+  { id: "ev", label: "Electric (EV)" },
+] as const;
+export type Powertrain = (typeof POWERTRAINS)[number]["id"];
+export const usesFuel = (p: string) => p !== "ev";
+export const usesCharging = (p: string) => p === "ev" || p === "phev";

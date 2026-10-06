@@ -2,21 +2,37 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { CHARGE_LOCATIONS } from "@/lib/calc";
 import { centsToInput, fmtDate, money, numFmt, todayISO } from "@/lib/format";
 import {
   clearReviewFlag,
   deleteRecord,
+  saveCharge,
   saveCost,
   saveFuel,
   saveMaintenance,
   type ActionResult,
   type RecordKind,
 } from "@/server/actions";
-import type { CostRecord, FuelEntry, MaintenanceRecord } from "@/server/data";
+import type { ChargingSession, CostRecord, FuelEntry, MaintenanceRecord } from "@/server/data";
 import { Field, IconButton, Modal, useConfirm, useOpenOnAdd, useToast } from "./ui";
 
 export const FUEL_GRADES = ["Regular", "Mid-grade", "Premium", "Diesel", "E85"];
-export const MAINT_CATEGORIES = ["Oil Change", "Tires", "Brakes", "Battery", "Fluids", "Inspection", "Repair", "Service", "Car Wash", "Other"];
+export const MAINT_CATEGORIES = [
+  "Oil Change",
+  "Tires",
+  "Brakes",
+  "Battery",
+  "12V battery",
+  "Fluids",
+  "Cabin / air filter",
+  "Inspection",
+  "Repair",
+  "Service",
+  "Software / recall",
+  "Car Wash",
+  "Other",
+];
 export const COST_TYPES = [
   "Insurance",
   "Registration",
@@ -27,6 +43,9 @@ export const COST_TYPES = [
   "Subscription",
   "Seasonal Tires",
   "Financing",
+  "Home charger",
+  "Charging subscription",
+  "Rebate / incentive",
   "Other",
 ];
 
@@ -641,6 +660,138 @@ export function CostLog({ vehicleId, rows }: { vehicleId: string; rows: CostReco
         </Field>
         <Field label="Notes" htmlFor="c-notes">
           <textarea className="input" id="c-notes" name="notes" rows={2} defaultValue={ex?.notes ?? ""} />
+        </Field>
+      </FormModal>
+    </>
+  );
+}
+
+/* ===================================== EV CHARGING ===================================== */
+
+
+
+
+export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string; rows: ChargingSession[]; homeKwhPrice: number }) {
+  const [editing, setEditing] = useState<ChargingSession | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  const [loc, setLoc] = useState("home");
+  const save = useSaver();
+  const ex = editing ?? null;
+  const open = (r: ChargingSession | null) => {
+    setLoc(r?.location ?? "home");
+    setEditing(r);
+  };
+  useOpenOnAdd(() => open(null));
+
+  return (
+    <>
+      <LogTable
+        kind="charge"
+        singular="charging session"
+        rows={rows}
+        amount={(r) => r.costCents}
+        searchText={(r) => [r.network, CHARGE_LOCATIONS[r.location], r.notes, r.date].filter(Boolean).join(" ")}
+        filterOptions={Object.values(CHARGE_LOCATIONS)}
+        rowType={(r) => CHARGE_LOCATIONS[r.location] ?? r.location}
+        onOpen={open}
+        columns={[
+          { label: "Date", render: (r) => fmtDate(r.date) },
+          { label: "Where", render: (r) => r.network || CHARGE_LOCATIONS[r.location] || r.location },
+          { label: "kWh", num: true, render: (r) => numFmt(r.kwh, 1) },
+          { label: "Battery", num: true, hideSm: true, render: (r) => (r.startPct != null && r.endPct != null ? `${r.startPct}→${r.endPct}%` : "—") },
+          { label: "$/kWh", num: true, hideSm: true, render: (r) => (r.pricePerKwh != null ? `$${r.pricePerKwh.toFixed(3)}` : "—") },
+          { label: "Odometer", num: true, hideSm: true, render: (r) => (r.odometer != null ? `${numFmt(r.odometer)} km` : "—") },
+          {
+            label: "Cost",
+            num: true,
+            render: (r) => (
+              <span title={r.costEstimated ? "Estimated from your home electricity rate" : undefined}>
+                {r.costCents === 0 ? "Free" : money(r.costCents)}
+                {r.costEstimated ? "*" : ""}
+              </span>
+            ),
+          },
+        ]}
+      />
+      {rows.some((r) => r.costEstimated) && (
+        <p className="muted" style={{ fontSize: 12.5, marginTop: 8 }}>
+          * Estimated from your home electricity rate (${homeKwhPrice.toFixed(3)}/kWh). Change it under Account → Energy.
+        </p>
+      )}
+      <FormModal
+        title={ex ? "Edit charging session" : "Log a charge"}
+        open={editing !== undefined}
+        onClose={() => setEditing(undefined)}
+        busy={busy}
+        onSubmit={async (data) => {
+          setBusy(true);
+          const ok = await save((ack) => saveCharge(vehicleId, ex?.id ?? null, data, ack), ex ? "Charging session updated." : "Charge logged.");
+          setBusy(false);
+          if (ok) setEditing(undefined);
+        }}
+      >
+        <div className="row2">
+          <Field label="Date" htmlFor="ch-date">
+            <input className="input" id="ch-date" name="date" type="date" required defaultValue={ex?.date ?? todayISO()} />
+          </Field>
+          <Field label="Where" htmlFor="ch-loc">
+            <select className="select" id="ch-loc" name="location" value={loc} onChange={(e) => setLoc(e.target.value)}>
+              {Object.entries(CHARGE_LOCATIONS).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className="row2">
+          <Field label="Energy added (kWh)" htmlFor="ch-kwh" hint="From the charger, app or car.">
+            <input className="input" id="ch-kwh" name="kwh" type="number" step="0.01" min={0.01} required inputMode="decimal" defaultValue={ex?.kwh ?? ""} />
+          </Field>
+          <Field
+            label="Cost ($)"
+            htmlFor="ch-cost"
+            hint={loc === "home" ? `Leave blank to estimate at ${"$"}${homeKwhPrice.toFixed(3)}/kWh. Enter 0 if free.` : "Enter 0 if it was free."}
+          >
+            <input
+              className="input"
+              id="ch-cost"
+              name="cost"
+              type="number"
+              step="0.01"
+              min={0}
+              inputMode="decimal"
+              required={loc !== "home"}
+              defaultValue={ex && !ex.costEstimated ? centsToInput(ex.costCents) : ""}
+            />
+          </Field>
+        </div>
+        {loc !== "home" && (
+          <Field label="Network or station (optional)" htmlFor="ch-net">
+            <input className="input" id="ch-net" name="network" defaultValue={ex?.network ?? ""} placeholder="e.g. FLO, Electrify Canada, Tesla Supercharger" list="network-list" />
+            <datalist id="network-list">
+              {[...new Set(rows.map((r) => r.network).filter(Boolean))].map((n) => (
+                <option key={n} value={n!} />
+              ))}
+            </datalist>
+          </Field>
+        )}
+        <div className="row3">
+          <Field label="Battery start %" htmlFor="ch-s">
+            <input className="input" id="ch-s" name="startPct" type="number" min={0} max={100} defaultValue={ex?.startPct ?? ""} />
+          </Field>
+          <Field label="Battery end %" htmlFor="ch-e">
+            <input className="input" id="ch-e" name="endPct" type="number" min={0} max={100} defaultValue={ex?.endPct ?? ""} />
+          </Field>
+          <Field label="Minutes" htmlFor="ch-m">
+            <input className="input" id="ch-m" name="minutes" type="number" min={0} defaultValue={ex?.minutes ?? ""} />
+          </Field>
+        </div>
+        <Field label="Odometer (km)" htmlFor="ch-odo" hint="Add it now and then: it's how efficiency (kWh/100 km) is worked out.">
+          <input className="input" id="ch-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={ex?.odometer ?? ""} />
+        </Field>
+        <Field label="Notes" htmlFor="ch-notes">
+          <textarea className="input" id="ch-notes" name="notes" rows={2} defaultValue={ex?.notes ?? ""} />
         </Field>
       </FormModal>
     </>

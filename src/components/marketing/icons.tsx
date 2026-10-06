@@ -102,3 +102,17 @@ export const IconWarn = (p: { size?: number }) => (
     <path d="M12 10v4M12 17.5v.5" />
   </I>
 );
+export const IconPlug = (p: { size?: number }) => (
+  <I {...p}>
+    <path d="M9 2v5M15 2v5" />
+    <path d="M6 7h12v4a6 6 0 0 1-12 0z" />
+    <path d="M12 17v5" />
+  </I>
+);
+export const IconBattery = (p: { size?: number }) => (
+  <I {...p}>
+    <rect x="2" y="7" width="17" height="10" rx="2" />
+    <path d="M22 11v2" />
+    <path d="M11 9l-2 3h4l-2 3" />
+  </I>
+);

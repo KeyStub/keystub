@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fuelEconomySeries, kmRecorded, laterLowerOdometer, monthsSince, priorOdometer, reminderStatus } from "./calc";
+import { allDated, chargingStats, totalsByCategory } from "./calc";
 import { effectivePlan, trialDaysLeft } from "./plans";
 
 describe("calc", () => {
@@ -29,6 +30,9 @@ describe("calc", () => {
     expect(priorOdometer(rows, "2026-01-15")).toEqual({ date: "2026-01-01", odo: 1000 });
     expect(laterLowerOdometer(rows, "2026-01-15", 2500)).toEqual({ date: "2026-02-01", odo: 2000 });
     expect(laterLowerOdometer(rows, "2026-01-15", 1500)).toBeNull();
+    // Two fill-ups or charges on the same day (road trip): order within a day is unknown, so no warning.
+    expect(laterLowerOdometer(rows, "2026-02-01", 2400)).toBeNull();
+    expect(priorOdometer(rows, "2026-02-01")).toEqual({ date: "2026-01-01", odo: 1000 });
   });
 
   it("reminder status", () => {
@@ -50,5 +54,35 @@ describe("free trial", () => {
     expect(effectivePlan({ email: "a@b.c", plan: "free", trialEndsAt: new Date(Date.now() + 86_400_000) })).toBe("pro");
     expect(effectivePlan({ email: "a@b.c", plan: "free", trialEndsAt: new Date(Date.now() - 86_400_000) })).toBe("free");
     expect(effectivePlan({ email: "a@b.c", plan: "pro", trialEndsAt: null })).toBe("pro");
+  });
+});
+
+describe("EV charging", () => {
+  const s = (id: string, date: string, kwh: number, cents: number, location: string, odometer: number | null) => ({ id, date, kwh, costCents: cents, location, odometer });
+  const rows = [
+    s("a", "2026-01-01", 40, 720, "home", 10_000),
+    s("b", "2026-01-08", 30, 540, "home", 10_200),
+    s("c", "2026-01-15", 50, 2500, "fast", 10_500),
+  ];
+  it("computes efficiency, cost per km and savings vs gas over the measured span", () => {
+    const st = chargingStats(rows, { l100: 9, fuelPrice: 1.6 });
+    expect(st.totalKwh).toBe(120);
+    expect(st.distanceKm).toBe(500);
+    expect(st.kwhPer100).toBeCloseTo(16); // (30 + 50) kWh / 500 km
+    expect(st.centsPerKm).toBeCloseTo(6.08); // (540 + 2500) / 500
+    expect(st.gasEquivalentCents).toBe(7200); // 500 km × 9 L/100 × $1.60
+    expect(st.savingsCents).toBe(7200 - 3040);
+    expect(st.byLocation.home.kwh).toBe(70);
+    expect(st.avgPricePerKwh).toBeCloseTo(0.3133, 3);
+  });
+  it("needs two odometer readings for efficiency", () => {
+    expect(chargingStats([rows[0]], { l100: 9, fuelPrice: 1.6 }).kwhPer100).toBeNull();
+  });
+  it("counts charging as its own category and rebates as money back", () => {
+    const t = totalsByCategory(
+      allDated([], [], [{ id: "r", date: "2026-02-01", type: "Rebate / incentive", amountCents: 500000 }], rows),
+    );
+    expect(t.Charging).toBe(3760);
+    expect(t.Other).toBe(-500000);
   });
 });

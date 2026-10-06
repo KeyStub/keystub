@@ -110,7 +110,7 @@ export default function Home() {
             <div className="mk-eyebrow">Features</div>
             <h2 className="mk-h2">Everything your car costs, in one place.</h2>
             <p className="mk-sub">
-              Fuel, maintenance, insurance and registration are built in, plus parking, tolls, roadside assistance, seasonal tires and more. Custom
+              Fuel, EV charging, maintenance, insurance and registration are built in, plus parking, tolls, roadside assistance, seasonal tires and more. Custom
               categories and miles / gallons / MPG are <Link href="/coming-soon">coming soon</Link>.
             </p>
           </div>
@@ -248,6 +248,51 @@ export default function Home() {
                 </div>
               </div>
             </article>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- EV ---------------- */}
+      <section className="mk-dark ev-band" id="ev">
+        <div className="mk-wrap ev-grid">
+          <div className="rv">
+            <div className="mk-eyebrow">Electric &amp; plug-in hybrid</div>
+            <h2 className="mk-h2">Drive electric? KeyStub speaks kWh.</h2>
+            <p className="mk-sub">
+              Gas apps treat an EV as an afterthought. KeyStub tracks what actually matters when you plug in, and it works the same for gas, diesel, hybrid and
+              plug-in hybrid vehicles.
+            </p>
+            <ul className="ev-list">
+              {[
+                ["Every charge, home or away", "Home, work, Level 2 and DC fast, with the network, kWh, battery % and minutes. Skip the cost at home and it’s worked out from your electricity rate."],
+                ["Your real efficiency", "kWh/100 km measured at the plug, so charging losses are included. Not the car’s optimistic dash number."],
+                ["What you’re saving vs gas", "Your energy cost against a comparable gas car on the same kilometres, at the fuel price you set."],
+                ["Battery health over time", "Log state of health or range at 100% every few months and watch how your battery ages against the rated range."],
+                ["The rest of EV ownership", "Home charger install, charging subscriptions, tires, cabin filters, 12V battery, and rebates counted as money back."],
+              ].map(([t, d]) => (
+                <li key={t}>
+                  <IconCheck size={18} />
+                  <span>
+                    <b>{t}.</b> {d}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="ev-cards rv">
+            {[
+              ["Efficiency", "17.8", "kWh/100 km"],
+              ["Average price", "$0.21", "per kWh · 82% at home"],
+              ["Energy cost", "$0.037", "per km"],
+              ["Saved vs gas", "$1,240", "over 12,400 km"],
+            ].map(([k, v, s2]) => (
+              <div className="ev-card" key={k}>
+                <span className="k">{k}</span>
+                <b>{v}</b>
+                <span className="s">{s2}</span>
+              </div>
+            ))}
+            <p className="mk-foot-note" style={{ gridColumn: "1 / -1", margin: 0 }}>Example figures for illustration.</p>
           </div>
         </div>
       </section>

@@ -1,7 +1,7 @@
 import { CATEGORIES, type Category } from "@/lib/calc";
 import { money, moneyShort } from "@/lib/format";
 
-const COLORS: Record<Category, string> = { Fuel: "var(--s1)", Maintenance: "var(--s2)", Insurance: "var(--s3)", Other: "var(--s4)" };
+const COLORS: Record<Category, string> = { Fuel: "var(--s1)", Charging: "var(--s5)", Maintenance: "var(--s2)", Insurance: "var(--s3)", Other: "var(--s4)" };
 
 export function CategoryBars({ totals }: { totals: Record<Category, number> }) {
   const cats = CATEGORIES.map((c) => ({ label: c, val: totals[c] })).filter((c) => c.val > 0);

@@ -8,10 +8,10 @@ import { requireUser } from "@/server/session";
 export default async function VehicleLayout({ children, params }: LayoutProps<"/app/v/[vid]">) {
   const user = await requireUser();
   const { vid } = await params;
-  const { vehicle: v, fuel, maintenance } = await getVehicleBundle(user.id, vid);
+  const { vehicle: v, fuel, maintenance, charges, battery } = await getVehicleBundle(user.id, vid);
   const full = [v.year, v.make, v.model, v.trim].filter(Boolean).join(" ");
   // Show the highest reading we know of, even if the profile's odometer was never filled in.
-  const odo = Math.max(v.currentOdometer ?? -1, ...fuel.map((r) => r.odometer ?? -1), ...maintenance.map((r) => r.odometer ?? -1));
+  const odo = Math.max(v.currentOdometer ?? -1, ...fuel.map((r) => r.odometer ?? -1), ...maintenance.map((r) => r.odometer ?? -1), ...charges.map((r) => r.odometer ?? -1), ...battery.map((r) => r.odometer ?? -1));
   const purchased = [
     v.purchaseDate ? `Purchased ${fmtDate(v.purchaseDate)}` : v.purchasePriceCents != null ? "Purchased" : null,
     v.purchasePriceCents != null ? `for ${money(v.purchasePriceCents)}` : null,
@@ -34,10 +34,10 @@ export default async function VehicleLayout({ children, params }: LayoutProps<"/
             <span>Odometer</span> <b className="tabular">{odo >= 0 ? numFmt(odo) : "—"}</b> <span>km</span>
           </div>
         </div>
-        <VehicleTabs vid={vid} />
+        <VehicleTabs vid={vid} powertrain={v.powertrain} />
       </header>
       <main className="page">{children}</main>
-      <MobileNav vid={vid} />
+      <MobileNav vid={vid} powertrain={v.powertrain} />
     </div>
   );
 }

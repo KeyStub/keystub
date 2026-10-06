@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { IconBell, IconChart, IconHome, IconMore, IconPump, IconWrench } from "./marketing/icons";
+import { usesCharging, usesFuel } from "@/lib/calc";
+import { IconBattery, IconBell, IconChart, IconHome, IconMore, IconPlug, IconPump, IconWrench } from "./marketing/icons";
 import { SignOutButton } from "./sign-out-button";
 import { ThemeSegmented } from "./theme-toggle";
 
@@ -11,7 +12,7 @@ import { ThemeSegmented } from "./theme-toggle";
  * Phone layout: a bottom tab bar with a yellow "+" in the middle for quick logging, like a native
  * app. Hidden on wider screens, where the top tabs are used instead.
  */
-export function MobileNav({ vid }: { vid: string }) {
+export function MobileNav({ vid, powertrain }: { vid: string; powertrain: string }) {
   const path = usePathname();
   const base = `/app/v/${vid}`;
   // The sheet remembers which page it was opened on, so navigating away closes it.
@@ -32,12 +33,22 @@ export function MobileNav({ vid }: { vid: string }) {
       {sheet === "add" && (
         <div className="mnav-sheet" role="dialog" aria-label="Log something">
           <b>Log something</b>
-          <Link href={`${base}/fuel?add=1`} className="sheet-row">
-            <span className="ic">
-              <IconPump />
-            </span>
-            Fill-up
-          </Link>
+          {usesCharging(powertrain) && (
+            <Link href={`${base}/charging?add=1`} className="sheet-row">
+              <span className="ic">
+                <IconPlug />
+              </span>
+              Charging session
+            </Link>
+          )}
+          {usesFuel(powertrain) && (
+            <Link href={`${base}/fuel?add=1`} className="sheet-row">
+              <span className="ic">
+                <IconPump />
+              </span>
+              Fill-up
+            </Link>
+          )}
           <Link href={`${base}/maintenance?add=1`} className="sheet-row">
             <span className="ic">
               <IconWrench />
@@ -61,6 +72,14 @@ export function MobileNav({ vid }: { vid: string }) {
       {sheet === "more" && (
         <div className="mnav-sheet" role="dialog" aria-label="More">
           <b>More</b>
+          {powertrain === "phev" && (
+            <Link href={`${base}/fuel`} className="sheet-row">Fuel</Link>
+          )}
+          {usesCharging(powertrain) && (
+            <Link href={`${base}/battery`} className="sheet-row">
+              <IconBattery size={18} /> Battery health
+            </Link>
+          )}
           <Link href={`${base}/maintenance`} className="sheet-row">Maintenance</Link>
           <Link href={`${base}/costs`} className="sheet-row">Recurring &amp; other costs</Link>
           <Link href={`${base}/reports`} className="sheet-row">Reports</Link>
@@ -77,7 +96,7 @@ export function MobileNav({ vid }: { vid: string }) {
       )}
       <nav className="mnav" aria-label="Sections">
         {tab(base, "Home", IconHome)}
-        {tab(`${base}/fuel`, "Fuel", IconPump)}
+        {usesCharging(powertrain) ? tab(`${base}/charging`, "Charging", IconPlug) : tab(`${base}/fuel`, "Fuel", IconPump)}
         <button type="button" className="mnav-fab" aria-label="Log something" onClick={() => setSheet(sheet === "add" ? null : "add")}>
           +
         </button>

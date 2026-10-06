@@ -18,7 +18,7 @@ export type ReminderPrefs = { leadDays: number; leadKm: number };
 /** Open reminders + ones implied by renewal dates and recurring costs, most urgent first. */
 export function collectReminders(b: VehicleBundle, today: string, prefs: ReminderPrefs = { leadDays: 30, leadKm: 500 }): ReminderView[] {
   // Highest known reading — the profile's odometer may never have been filled in.
-  const readings = [b.vehicle.currentOdometer, ...b.fuel.map((r) => r.odometer), ...b.maintenance.map((r) => r.odometer)].filter(
+  const readings = [b.vehicle.currentOdometer, ...b.fuel.map((r) => r.odometer), ...b.maintenance.map((r) => r.odometer), ...b.charges.map((r) => r.odometer), ...b.battery.map((r) => r.odometer)].filter(
     (o): o is number => o != null,
   );
   const odo = readings.length ? Math.max(...readings) : null;

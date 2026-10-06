@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { ImportVerificationError, importExport } from "@/db/import-core";
-import { costRecords, fuelEntries, maintenanceRecords, reminders, user as userTable, vehicles } from "@/db/schema";
+import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, user as userTable, vehicles } from "@/db/schema";
 import { laterLowerOdometer, priorOdometer } from "@/lib/calc";
 import { fmtDate, money, numFmt } from "@/lib/format";
 import { PLANS } from "@/lib/plans";
@@ -42,15 +42,19 @@ async function ownedVehicle(userId: string, vehicleId: string) {
 }
 
 async function odometerRows(userId: string, vehicleId: string) {
-  const scope = (t: typeof fuelEntries | typeof maintenanceRecords) => and(eq(t.userId, userId), eq(t.vehicleId, vehicleId));
-  const [f, m] = await Promise.all([
+  const scope = (t: typeof fuelEntries | typeof maintenanceRecords | typeof chargingSessions) => and(eq(t.userId, userId), eq(t.vehicleId, vehicleId));
+  const [f, m, c] = await Promise.all([
     db.select({ id: fuelEntries.id, date: fuelEntries.date, odometer: fuelEntries.odometer }).from(fuelEntries).where(scope(fuelEntries)),
     db
       .select({ id: maintenanceRecords.id, date: maintenanceRecords.date, odometer: maintenanceRecords.odometer })
       .from(maintenanceRecords)
       .where(scope(maintenanceRecords)),
+    db
+      .select({ id: chargingSessions.id, date: chargingSessions.date, odometer: chargingSessions.odometer })
+      .from(chargingSessions)
+      .where(scope(chargingSessions)),
   ]);
-  return [...f, ...m];
+  return [...f, ...m, ...c];
 }
 
 function odometerWarnings(rows: { id: string; date: string; odometer: number | null }[], date: string, odo: number, excludeId: string | null, checkLater: boolean) {
@@ -313,7 +317,7 @@ export async function saveCost(vehicleId: string, id: string | null, input: unkn
 
 /* ============================== DELETE / FLAGS ============================== */
 
-const TABLES = { fuel: fuelEntries, maintenance: maintenanceRecords, cost: costRecords } as const;
+const TABLES = { fuel: fuelEntries, maintenance: maintenanceRecords, cost: costRecords, charge: chargingSessions } as const;
 export type RecordKind = keyof typeof TABLES;
 
 export async function deleteRecord(kind: RecordKind, id: string): Promise<ActionResult> {
@@ -416,6 +420,9 @@ export async function deleteReminder(id: string): Promise<ActionResult> {
 
 const vehicleSchema = z.object({
   nickname: optStr,
+  powertrain: z.enum(["gas", "diesel", "hybrid", "phev", "ev"]).default("gas"),
+  batteryKwh: optNum,
+  ratedRangeKm: optInt,
   year: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().int().min(1900).max(2100).nullable()),
   make: optStr,
   model: optStr,
@@ -437,8 +444,12 @@ export async function saveVehicle(id: string | null, input: unknown): Promise<Ac
     const user = await requireUser();
     const d = vehicleSchema.parse(input);
     if (!d.make && !d.model && !d.nickname) return { ok: false, error: "Enter at least a make/model or a nickname." };
+    const isPlugIn = d.powertrain === "ev" || d.powertrain === "phev";
     const values = {
       nickname: d.nickname,
+      powertrain: d.powertrain,
+      batteryKwh: isPlugIn ? d.batteryKwh : null,
+      ratedRangeKm: isPlugIn ? d.ratedRangeKm : null,
       year: d.year,
       make: d.make,
       model: d.model,
@@ -559,6 +570,148 @@ export async function saveReminderPrefs(input: unknown): Promise<ActionResult> {
       .update(userTable)
       .set({ reminderLeadDays: d.leadDays, reminderLeadKm: d.leadKm, updatedAt: new Date() })
       .where(eq(userTable.id, user.id));
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ================================ EV: CHARGING ================================ */
+
+const pct = z.preprocess((v) => (v === "" || v == null ? null : Math.round(Number(v))), z.number().int().min(0).max(100).nullable());
+const chargeSchema = z.object({
+  date: reqDate,
+  kwh: z.preprocess((v) => Number(v), z.number().finite().positive("Enter the kWh added").max(1000)),
+  // Blank cost at home = estimate from the user's electricity rate; 0 = free charging.
+  cost: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().min(0).max(100000).nullable()),
+  location: z.enum(["home", "work", "public", "fast", "other"]).default("home"),
+  network: optStr,
+  odometer: optInt,
+  startPct: pct,
+  endPct: pct,
+  minutes: optInt,
+  notes: optStr,
+});
+
+export async function saveCharge(vehicleId: string, id: string | null, input: unknown, acknowledged = false): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    await ownedVehicle(user.id, vehicleId);
+    const d = chargeSchema.parse(input);
+    let costCents: number;
+    let costEstimated = false;
+    if (d.cost == null) {
+      costCents = Math.round(d.kwh * user.homeKwhPrice * 100);
+      costEstimated = true;
+    } else costCents = Math.round(d.cost * 100);
+
+    if (!acknowledged) {
+      const warnings: string[] = [];
+      if (d.date > today()) warnings.push("This date is in the future.");
+      if (d.startPct != null && d.endPct != null && d.endPct < d.startPct) warnings.push("The battery % at the end is lower than at the start.");
+      if (d.odometer != null) warnings.push(...odometerWarnings(await odometerRows(user.id, vehicleId), d.date, d.odometer, id, true));
+      if (warnings.length) return { ok: false, warnings };
+    }
+
+    const values = {
+      date: d.date,
+      kwh: d.kwh,
+      costCents,
+      costEstimated,
+      pricePerKwh: d.kwh > 0 ? costCents / 100 / d.kwh : null,
+      location: d.location,
+      network: d.network,
+      odometer: d.odometer,
+      startPct: d.startPct,
+      endPct: d.endPct,
+      minutes: d.minutes,
+      notes: d.notes,
+    };
+    let savedId = id;
+    if (id) {
+      const r = await db
+        .update(chargingSessions)
+        .set({ ...values, updatedAt: new Date() })
+        .where(and(eq(chargingSessions.userId, user.id), eq(chargingSessions.id, id)))
+        .returning({ id: chargingSessions.id });
+      if (!r.length) return { ok: false, error: "Record not found" };
+    } else {
+      const [r] = await db.insert(chargingSessions).values({ ...values, userId: user.id, vehicleId }).returning({ id: chargingSessions.id });
+      savedId = r.id;
+    }
+    await bumpOdometer(user.id, vehicleId, d.odometer);
+    revalidatePath(`/app/v/${vehicleId}`, "layout");
+    return { ok: true, id: savedId! };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ============================ EV: BATTERY HEALTH ============================ */
+
+const batterySchema = z
+  .object({
+    date: reqDate,
+    odometer: optInt,
+    healthPct: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().min(1).max(110).nullable()),
+    rangeAtFullKm: optInt,
+    notes: optStr,
+  })
+  .refine((b) => b.healthPct != null || b.rangeAtFullKm != null, { message: "Enter the battery health %, the range at 100%, or both" });
+
+export async function saveBatteryCheck(vehicleId: string, id: string | null, input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    await ownedVehicle(user.id, vehicleId);
+    const d = batterySchema.parse(input);
+    if (id) {
+      const r = await db
+        .update(batteryChecks)
+        .set({ ...d, updatedAt: new Date() })
+        .where(and(eq(batteryChecks.userId, user.id), eq(batteryChecks.id, id)))
+        .returning({ id: batteryChecks.id });
+      if (!r.length) return { ok: false, error: "Record not found" };
+    } else {
+      await db.insert(batteryChecks).values({ ...d, userId: user.id, vehicleId });
+    }
+    await bumpOdometer(user.id, vehicleId, d.odometer);
+    revalidatePath(`/app/v/${vehicleId}`, "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteBatteryCheck(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const [r] = await db
+      .delete(batteryChecks)
+      .where(and(eq(batteryChecks.userId, user.id), eq(batteryChecks.id, id)))
+      .returning({ vehicleId: batteryChecks.vehicleId });
+    if (!r) return { ok: false, error: "Record not found" };
+    revalidatePath(`/app/v/${r.vehicleId}`, "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ============================ EV: ENERGY SETTINGS ============================ */
+
+const energySchema = z.object({
+  homeKwhPrice: z.preprocess((v) => Number(v), z.number().min(0).max(5, "That price per kWh looks too high")),
+  compareL100: z.preprocess((v) => Number(v), z.number().min(1).max(40)),
+  compareFuelPrice: z.preprocess((v) => Number(v), z.number().min(0).max(10)),
+});
+
+/** Home electricity price (for estimating home charging cost) and the gas car to compare against. */
+export async function saveEnergyPrefs(input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const d = energySchema.parse(input);
+    await db.update(userTable).set({ ...d, updatedAt: new Date() }).where(eq(userTable.id, user.id));
     revalidatePath("/app", "layout");
     return { ok: true };
   } catch (e) {

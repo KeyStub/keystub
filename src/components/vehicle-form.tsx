@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { POWERTRAINS, usesCharging } from "@/lib/calc";
 import { centsToInput } from "@/lib/format";
 import { saveVehicle } from "@/server/actions";
 import { Field, useToast } from "./ui";
@@ -9,6 +10,9 @@ import { Field, useToast } from "./ui";
 type V = {
   id?: string;
   nickname?: string | null;
+  powertrain?: string;
+  batteryKwh?: number | null;
+  ratedRangeKm?: number | null;
   year?: number | null;
   make?: string | null;
   model?: string | null;
@@ -32,7 +36,8 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vin, setVin] = useState(v.vin ?? "");
-  const [decoded, setDecoded] = useState<{ year?: string; make?: string; model?: string; trim?: string } | null>(null);
+  const [powertrain, setPowertrain] = useState(v.powertrain ?? "gas");
+  const [decoded, setDecoded] = useState<{ year?: string; make?: string; model?: string; trim?: string; powertrain?: string } | null>(null);
 
   async function decodeVin() {
     if (vin.trim().length !== 17) return toast("A VIN is 17 characters.", true);
@@ -40,6 +45,7 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
     if (!r.ok) return toast("Couldn't decode that VIN.", true);
     const d = await r.json();
     setDecoded(d);
+    if (d.powertrain && !v.id) setPowertrain(d.powertrain);
     const form = document.getElementById("vehicle-form") as HTMLFormElement;
     for (const k of ["year", "make", "model", "trim"] as const) {
       const input = form.elements.namedItem(k) as HTMLInputElement | null;
@@ -81,6 +87,27 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
         {decoded && (
           <div className="note info">
             VIN decoded: {[decoded.year, decoded.make, decoded.model, decoded.trim].filter(Boolean).join(" ") || "no details found"}
+            {decoded.powertrain ? ` · ${POWERTRAINS.find((p) => p.id === decoded.powertrain)?.label}` : ""}
+          </div>
+        )}
+        <Field label="Powertrain" htmlFor="powertrain" hint="Sets which logs you see: fill-ups, charging, or both.">
+          <div className="seg-choice" role="radiogroup" aria-label="Powertrain">
+            {POWERTRAINS.map((p) => (
+              <label key={p.id} className={powertrain === p.id ? "on" : ""}>
+                <input type="radio" name="powertrain" value={p.id} checked={powertrain === p.id} onChange={() => setPowertrain(p.id)} />
+                {p.label}
+              </label>
+            ))}
+          </div>
+        </Field>
+        {usesCharging(powertrain) && (
+          <div className="row2">
+            <Field label="Usable battery (kWh)" htmlFor="batteryKwh" hint="Optional. From the spec sheet, e.g. 77.4">
+              <input className="input" id="batteryKwh" name="batteryKwh" type="number" step="0.1" min={1} max={300} inputMode="decimal" defaultValue={v.batteryKwh ?? ""} />
+            </Field>
+            <Field label="Rated range when new (km)" htmlFor="ratedRangeKm" hint="Optional. Used to compare against your real range.">
+              <input className="input" id="ratedRangeKm" name="ratedRangeKm" type="number" min={1} max={2000} inputMode="numeric" defaultValue={v.ratedRangeKm ?? ""} />
+            </Field>
           </div>
         )}
         <div className="row2">

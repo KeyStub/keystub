@@ -26,6 +26,7 @@
   --s2: #eb6834;
   --s3: #1baf7a;
   --s4: #e0a800;
+  --s5: #0e9f9a;
   --shadow: 0 1px 2px rgba(24, 38, 63, 0.06), 0 1px 1px rgba(24, 38, 63, 0.04);
   --font-display-stack: var(--font-display), "Arial Black", system-ui, sans-serif;
   --font-body-stack: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -54,6 +55,7 @@
     --s2: #e06a35;
     --s3: #22b07f;
     --s4: #f4c430;
+    --s5: #2cc5bd;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
   }
 }
@@ -80,6 +82,7 @@
   --s2: #e06a35;
   --s3: #22b07f;
   --s4: #f4c430;
+  --s5: #2cc5bd;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
@@ -417,3 +420,15 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
 .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 .mk .theme-btn { border-color: var(--mk-line); color: var(--mk-ink-2); }
 .mk .theme-btn:hover { color: var(--mk-ink); background: var(--mk-hover); }
+
+/* Pill-style radio group (vehicle powertrain) */
+.seg-choice { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg-choice label {
+  display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+  font-size: 13.5px; font-weight: 500; cursor: pointer; user-select: none;
+}
+.seg-choice label:hover { border-color: var(--ink-3); }
+.seg-choice label.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.seg-choice label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg-choice input { position: absolute; opacity: 0; pointer-events: none; }

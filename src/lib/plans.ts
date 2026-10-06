@@ -23,6 +23,7 @@ export const PLANS: Record<
     features: [
       { text: "Up to 2 vehicles" },
       { text: "Unlimited fuel, maintenance and cost logs" },
+      { text: "EV charging and battery health tracking" },
       { text: "Dashboard, reports and cost per km" },
       { text: "Service and renewal reminders in the app" },
       { text: "Up to 3 custom categories", soon: true },
@@ -54,6 +55,9 @@ export const COMPARISON: { label: string; free: boolean | string; pro: boolean |
   { label: "Vehicles", free: "2", pro: "Unlimited" },
   { label: "Fuel, maintenance, insurance, registration and other logs", free: "Unlimited", pro: "Unlimited" },
   { label: "Dashboard: total cost, cost per km, cost per month", free: true, pro: true },
+  { label: "Gas, diesel, hybrid, plug-in hybrid and electric vehicles", free: true, pro: true },
+  { label: "EV charging log: home vs public, $/kWh, kWh/100 km, savings vs gas", free: true, pro: true },
+  { label: "EV battery health tracking", free: true, pro: true },
   { label: "Reports, monthly trends and keep-vs-replace calculator", free: true, pro: true },
   { label: "Duplicate and odometer checks", free: true, pro: true },
   { label: "Service and renewal reminders in the app", free: true, pro: true },

@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { AccountForms } from "@/components/account-forms";
 import { AppTopBar } from "@/components/app-top-bar";
-import { AppearanceSettings, ReminderSettings } from "@/components/settings-forms";
+import { AppearanceSettings, EnergySettings, ReminderSettings } from "@/components/settings-forms";
 import { ImportPanel } from "@/components/import-panel";
 import { db } from "@/db";
 import { importLog } from "@/db/schema";
@@ -76,6 +76,11 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
           Reminders
         </h3>
         <ReminderSettings leadDays={user.reminderLeadDays} leadKm={user.reminderLeadKm} />
+
+        <h3 className="section-title" id="energy">
+          Energy (EVs &amp; plug-in hybrids)
+        </h3>
+        <EnergySettings homeKwhPrice={user.homeKwhPrice} compareL100={user.compareL100} compareFuelPrice={user.compareFuelPrice} />
 
         <AccountForms name={user.name} email={user.email} />
 

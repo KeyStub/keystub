@@ -3,7 +3,7 @@ import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
-import { costRecords, fuelEntries, maintenanceRecords, reminders, vehicles } from "@/db/schema";
+import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, vehicles } from "@/db/schema";
 
 /*
  * Read side of the data layer. Every function takes the userId and filters on it, so a record
@@ -33,7 +33,7 @@ export const getVehicle = cache(async (userId: string, vehicleId: string) => {
 
 export const getVehicleBundle = cache(async (userId: string, vehicleId: string) => {
   const vehicle = await getVehicle(userId, vehicleId);
-  const [fuel, maintenance, costs, rems] = await Promise.all([
+  const [fuel, maintenance, costs, rems, charges, battery] = await Promise.all([
     db
       .select()
       .from(fuelEntries)
@@ -54,8 +54,18 @@ export const getVehicleBundle = cache(async (userId: string, vehicleId: string) 
       .from(reminders)
       .where(and(eq(reminders.userId, userId), eq(reminders.vehicleId, vehicleId)))
       .orderBy(asc(reminders.dueDate)),
+    db
+      .select()
+      .from(chargingSessions)
+      .where(and(eq(chargingSessions.userId, userId), eq(chargingSessions.vehicleId, vehicleId)))
+      .orderBy(desc(chargingSessions.date), desc(chargingSessions.createdAt)),
+    db
+      .select()
+      .from(batteryChecks)
+      .where(and(eq(batteryChecks.userId, userId), eq(batteryChecks.vehicleId, vehicleId)))
+      .orderBy(desc(batteryChecks.date)),
   ]);
-  return { vehicle, fuel, maintenance, costs, reminders: rems };
+  return { vehicle, fuel, maintenance, costs, reminders: rems, charges, battery };
 });
 
 export type VehicleBundle = Awaited<ReturnType<typeof getVehicleBundle>>;
@@ -64,15 +74,19 @@ export type FuelEntry = VehicleBundle["fuel"][number];
 export type MaintenanceRecord = VehicleBundle["maintenance"][number];
 export type CostRecord = VehicleBundle["costs"][number];
 export type Reminder = VehicleBundle["reminders"][number];
+export type ChargingSession = VehicleBundle["charges"][number];
+export type BatteryCheck = VehicleBundle["battery"][number];
 
 /** Everything the user owns, for "Download all my data". */
 export async function exportAllForUser(userId: string) {
-  const [vs, fuel, maintenance, costs, rems] = await Promise.all([
+  const [vs, fuel, maintenance, costs, rems, charges, battery] = await Promise.all([
     db.select().from(vehicles).where(eq(vehicles.userId, userId)),
     db.select().from(fuelEntries).where(eq(fuelEntries.userId, userId)),
     db.select().from(maintenanceRecords).where(eq(maintenanceRecords.userId, userId)),
     db.select().from(costRecords).where(eq(costRecords.userId, userId)),
     db.select().from(reminders).where(eq(reminders.userId, userId)),
+    db.select().from(chargingSessions).where(eq(chargingSessions.userId, userId)),
+    db.select().from(batteryChecks).where(eq(batteryChecks.userId, userId)),
   ]);
-  return { vehicles: vs, fuel, maintenance, costs, reminders: rems };
+  return { vehicles: vs, fuel, maintenance, costs, reminders: rems, charging: charges, batteryChecks: battery };
 }

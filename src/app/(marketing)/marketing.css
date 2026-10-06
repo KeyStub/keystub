@@ -427,3 +427,48 @@
 .mk-band-white { background: var(--mk-white); border-top: 1px solid var(--mk-line); }
 .mk-muted { color: var(--mk-ink-3); }
 .mk-rowline { border-bottom: 1px solid var(--mk-line); }
+
+/* ---------- sign in / sign up / password pages ---------- */
+.auth-split { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .auth-split { grid-template-columns: 1fr; } .auth-visual { display: none; } }
+.auth-form-side { display: flex; flex-direction: column; padding: 22px clamp(20px, 5vw, 56px) 24px; min-width: 0; }
+.auth-top { display: flex; justify-content: space-between; align-items: center; }
+.auth-top .logo { color: var(--mk-ink); }
+.auth-form-wrap { width: min(420px, 100%); margin: auto; padding-block: 40px; }
+.auth-form-wrap h1 { font-size: clamp(30px, 4vw, 38px); font-weight: 800; line-height: 1.05; }
+.auth-form-wrap .sub { color: var(--mk-ink-2); margin: 10px 0 26px; font-size: 16px; line-height: 1.5; }
+.auth-form-wrap .field label { color: var(--mk-ink-2); font-size: 13px; }
+.auth-form-wrap .input { background: var(--mk-white); border: 1.5px solid var(--mk-line); color: var(--mk-ink); padding: 12px 14px; font-size: 15px; border-radius: 12px; }
+.auth-form-wrap .input:focus { outline: none; border-color: var(--mk-accent-line); box-shadow: 0 0 0 4px rgba(244, 196, 48, 0.22); }
+.auth-form-wrap .field .hint { color: var(--mk-ink-3); }
+.auth-form-wrap .btn.primary { background: var(--mk-cta-bg); border-color: var(--mk-cta-bg); color: var(--mk-cta-ink); padding: 13px 18px; font-size: 15px; border-radius: 999px; }
+.auth-form-wrap .muted { color: var(--mk-ink-3); }
+.auth-form-wrap a { color: var(--mk-ink); font-weight: 600; text-underline-offset: 3px; }
+.auth-form-wrap .auth-foot { text-align: center; color: var(--mk-ink-2); margin-top: 18px; font-size: 14.5px; }
+.auth-form-wrap .note { border-radius: 12px; }
+.auth-legal { text-align: center; font-size: 13px; color: var(--mk-ink-3); }
+.auth-legal a { color: var(--mk-ink-3); }
+.auth-visual { position: relative; overflow: hidden; display: grid; align-items: center; padding: 56px clamp(28px, 4vw, 64px); }
+.auth-visual::before { content: ""; position: absolute; right: -20%; top: -20%; width: 80%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, rgba(244, 196, 48, 0.18), rgba(244, 196, 48, 0)); }
+.auth-visual-inner { position: relative; max-width: 520px; }
+.auth-visual h2 { font-size: clamp(32px, 3.6vw, 46px); line-height: 1.04; font-weight: 800; margin-top: 14px; color: #ffffff; }
+.auth-visual ul { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; color: #d7deea; font-size: 15.5px; }
+.auth-visual li { display: flex; gap: 10px; align-items: center; }
+.auth-visual li svg { color: #f4c430; flex: none; }
+.auth-phone { margin-top: 36px; display: flex; justify-content: flex-start; }
+.auth-phone .phone { transform: rotate(-4deg); }
+@media (prefers-reduced-motion: no-preference) { .auth-phone .phone { animation: mk-float 7s ease-in-out infinite; } }
+
+/* ---------- EV band ---------- */
+.ev-band { padding-block: 110px; }
+.ev-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.ev-list { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 14px; }
+.ev-list li { display: flex; gap: 12px; align-items: flex-start; color: #d5dcea; line-height: 1.55; font-size: 15.5px; }
+.ev-list li svg { flex: none; margin-top: 3px; color: var(--mk-yellow); }
+.ev-list b { color: #ffffff; }
+.ev-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ev-card { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--mk-radius); padding: 22px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ev-card .k { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #b9c4d8; font-weight: 600; }
+.ev-card b { font-family: var(--font-display-stack); font-size: clamp(26px, 4vw, 36px); color: var(--mk-yellow); line-height: 1.05; }
+.ev-card .s { font-size: 13px; color: #b9c4d8; }
+@media (max-width: 900px) { .ev-grid { grid-template-columns: 1fr; gap: 36px; } .ev-band { padding-block: 80px; } }

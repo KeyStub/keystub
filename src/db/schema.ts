@@ -30,6 +30,10 @@ export const user = pgTable("user", {
   // How far ahead a reminder counts as "due soon" (user setting on the Account page).
   reminderLeadDays: integer("reminder_lead_days").notNull().default(30),
   reminderLeadKm: integer("reminder_lead_km").notNull().default(500),
+  // EV settings: home electricity price, and the gas car to compare against.
+  homeKwhPrice: doublePrecision("home_kwh_price").notNull().default(0.18), // $ per kWh
+  compareL100: doublePrecision("compare_l100").notNull().default(9), // L/100 km of a comparable gas vehicle
+  compareFuelPrice: doublePrecision("compare_fuel_price").notNull().default(1.6), // $ per litre
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -126,6 +130,10 @@ export const vehicles = pgTable(
     id: id(),
     userId: owner(),
     nickname: text("nickname"),
+    /** "gas" | "diesel" | "hybrid" | "phev" (plug-in hybrid) | "ev" (battery electric). */
+    powertrain: text("powertrain").notNull().default("gas"),
+    batteryKwh: doublePrecision("battery_kwh"), // usable capacity, EV/PHEV
+    ratedRangeKm: integer("rated_range_km"), // official range when new, EV/PHEV
     year: integer("year"),
     make: text("make"),
     model: text("model"),
@@ -215,6 +223,48 @@ export const costRecords = pgTable(
     ...timestamps,
   },
   (t) => [index("cost_user_vehicle_date_idx").on(t.userId, t.vehicleId, t.date)],
+);
+
+export const chargingSessions = pgTable(
+  "charging_sessions",
+  {
+    id: id(),
+    userId: owner(),
+    vehicleId: vehicleRef(),
+    date: date("date").notNull(),
+    kwh: doublePrecision("kwh").notNull(), // energy added, as measured by the charger
+    costCents: integer("cost_cents").notNull(), // 0 for free charging
+    /** true when the cost was worked out from kWh x the user's home rate */
+    costEstimated: boolean("cost_estimated").notNull().default(false),
+    pricePerKwh: doublePrecision("price_per_kwh"),
+    /** "home" | "work" | "public" (Level 2) | "fast" (DC fast) | "other" */
+    location: text("location").notNull().default("home"),
+    network: text("network"), // e.g. a charging network or station name
+    odometer: integer("odometer"),
+    startPct: integer("start_pct"),
+    endPct: integer("end_pct"),
+    minutes: integer("minutes"),
+    notes: text("notes"),
+    ...legacyCols,
+    ...timestamps,
+  },
+  (t) => [index("charge_user_vehicle_date_idx").on(t.userId, t.vehicleId, t.date)],
+);
+
+export const batteryChecks = pgTable(
+  "battery_checks",
+  {
+    id: id(),
+    userId: owner(),
+    vehicleId: vehicleRef(),
+    date: date("date").notNull(),
+    odometer: integer("odometer"),
+    healthPct: doublePrecision("health_pct"), // state of health, if the car or an app reports it
+    rangeAtFullKm: integer("range_at_full_km"), // estimated range shown at 100%
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("battery_user_vehicle_date_idx").on(t.userId, t.vehicleId, t.date)],
 );
 
 export const reminders = pgTable(

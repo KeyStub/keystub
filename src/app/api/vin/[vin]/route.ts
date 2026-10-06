@@ -16,7 +16,23 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/vin/[vin]">) {
   const row = (await r.json())?.Results?.[0] ?? {};
   const t = (s: unknown) => (typeof s === "string" && s.trim() ? s.trim() : undefined);
   const title = (s?: string) => s && s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  const elec = (t(row.ElectrificationLevel) ?? "").toUpperCase();
+  const fuel = (t(row.FuelTypePrimary) ?? "").toLowerCase();
+  const powertrain = elec.startsWith("BEV")
+    ? "ev"
+    : elec.startsWith("PHEV")
+      ? "phev"
+      : elec.includes("HEV")
+        ? "hybrid"
+        : fuel === "electric"
+          ? "ev"
+          : fuel.includes("diesel")
+            ? "diesel"
+            : fuel
+              ? "gas"
+              : undefined;
   return NextResponse.json({
+    powertrain,
     year: t(row.ModelYear),
     make: title(t(row.Make)),
     model: t(row.Model),

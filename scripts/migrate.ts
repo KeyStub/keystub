@@ -14,6 +14,9 @@ export async function runMigrations() {
 
 if (process.argv[1]?.replace(/\\/g, "/").endsWith("scripts/migrate.ts")) {
   (async () => {
+    if (process.env.VERCEL && !process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not set in Vercel → Settings → Environment Variables. Add it, then redeploy.");
+    }
     const { url, stop } = await ensureLocalDb();
     process.env.DATABASE_URL = url;
     await runMigrations();

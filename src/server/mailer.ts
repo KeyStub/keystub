@@ -5,8 +5,9 @@ import { APP_NAME } from "@/lib/brand";
 
 /**
  * Sends transactional email through Resend when RESEND_API_KEY is set (free tier: 3,000/month).
- * Without a key — local testing — the message is printed to the server console and appended to
- * .data/outbox.log so verification and reset links can still be clicked.
+ * Without a key — local testing, or a fresh deploy before Resend is connected — the message is
+ * printed to the server log (and, locally, appended to .data/outbox.log) so verification and
+ * reset links can still be clicked.
  */
 export async function sendEmail(msg: { to: string; subject: string; text: string; html?: string }) {
   const key = process.env.RESEND_API_KEY;
@@ -15,9 +16,14 @@ export async function sendEmail(msg: { to: string; subject: string; text: string
   if (!key) {
     const entry = `\n=== ${new Date().toISOString()} ===\nTo: ${msg.to}\nSubject: ${msg.subject}\n\n${msg.text}\n`;
     console.log(`[dev-mail]${entry}`);
-    const dir = path.join(process.cwd(), ".data");
-    await mkdir(dir, { recursive: true });
-    await appendFile(path.join(dir, "outbox.log"), entry);
+    if (process.env.VERCEL) return; // read-only file system: the console log above is the copy
+    try {
+      const dir = path.join(process.cwd(), ".data");
+      await mkdir(dir, { recursive: true });
+      await appendFile(path.join(dir, "outbox.log"), entry);
+    } catch {
+      // not writable here; the console copy is enough
+    }
     return;
   }
 

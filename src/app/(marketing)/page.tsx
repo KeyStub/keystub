@@ -110,8 +110,8 @@ export default function Home() {
             <div className="mk-eyebrow">Features</div>
             <h2 className="mk-h2">Everything your car costs, in one place.</h2>
             <p className="mk-sub">
-              Fuel, EV charging, maintenance, insurance and registration are built in, plus parking, tolls, roadside assistance, seasonal tires and more. Custom
-              categories and miles / gallons / MPG are <Link href="/coming-soon">coming soon</Link>.
+              Fuel, EV charging, maintenance, insurance and registration are built in, plus parking, tolls, roadside assistance, seasonal tires and more. Kilometres or
+              miles, litres or gallons, L/100 km or MPG, in your currency. Custom categories are <Link href="/coming-soon">coming soon</Link>.
             </p>
           </div>
           <div className="bento">

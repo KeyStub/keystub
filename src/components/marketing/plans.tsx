@@ -35,7 +35,7 @@ export function PlanCardsMk() {
           <small>/year</small>
         </div>
         <p className="blurb">
-          or {PLANS.pro.priceMonthly}/month, CAD. {PLANS.pro.blurb}
+          or {PLANS.pro.priceMonthly}/month, CAD or USD. {PLANS.pro.blurb}
         </p>
         <ul>
           {PLANS.pro.features.map((f) => (

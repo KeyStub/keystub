@@ -34,6 +34,11 @@ export const user = pgTable("user", {
   homeKwhPrice: doublePrecision("home_kwh_price").notNull().default(0.18), // $ per kWh
   compareL100: doublePrecision("compare_l100").notNull().default(9), // L/100 km of a comparable gas vehicle
   compareFuelPrice: doublePrecision("compare_fuel_price").notNull().default(1.6), // $ per litre
+  // Display / entry units and currency. Data is always stored metric; money is in this currency.
+  distanceUnit: text("distance_unit").notNull().default("km"), // "km" | "mi"
+  volumeUnit: text("volume_unit").notNull().default("L"), // "L" | "gal" (US) | "impgal"
+  economyUnit: text("economy_unit").notNull().default("l100"), // "l100" | "kml" | "mpg" | "mpgimp"
+  currency: text("currency").notNull().default("CAD"), // ISO 4217
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

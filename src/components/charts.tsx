@@ -1,9 +1,10 @@
 import { CATEGORIES, type Category } from "@/lib/calc";
-import { money, moneyShort } from "@/lib/format";
+import { DEFAULT_UNITS, makeFmt, type UnitPrefs } from "@/lib/units";
 
 const COLORS: Record<Category, string> = { Fuel: "var(--s1)", Charging: "var(--s5)", Maintenance: "var(--s2)", Insurance: "var(--s3)", Other: "var(--s4)" };
 
-export function CategoryBars({ totals }: { totals: Record<Category, number> }) {
+export function CategoryBars({ totals, units = DEFAULT_UNITS }: { totals: Record<Category, number>; units?: UnitPrefs }) {
+  const { money, moneyShort } = makeFmt(units);
   const cats = CATEGORIES.map((c) => ({ label: c, val: totals[c] })).filter((c) => c.val > 0);
   if (!cats.length) return <p className="muted">No spending recorded yet.</p>;
   const max = Math.max(...cats.map((c) => c.val));
@@ -33,7 +34,8 @@ export function CategoryBars({ totals }: { totals: Record<Category, number> }) {
   );
 }
 
-export function MonthlyTrend({ months }: { months: ({ month: string } & Record<Category, number>)[] }) {
+export function MonthlyTrend({ months, units = DEFAULT_UNITS }: { months: ({ month: string } & Record<Category, number>)[]; units?: UnitPrefs }) {
+  const { money, moneyShort } = makeFmt(units);
   if (!months.length) return <p className="muted">Not enough data in this range.</p>;
   const max = Math.max(1, ...months.map((m) => CATEGORIES.reduce((s, c) => s + m[c], 0)));
   const w = 640, h = 220, padL = 52, padB = 24, padT = 10;

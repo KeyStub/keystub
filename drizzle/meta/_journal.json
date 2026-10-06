@@ -29,6 +29,13 @@
       "when": 1791253995922,
       "tag": "0003_ev_support",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791257051468,
+      "tag": "0004_units_currency",
+      "breakpoints": true
     }
   ]
 }

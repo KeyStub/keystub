@@ -12,7 +12,7 @@ const FAQ = [
   ["Can I cancel Pro any time?", "Yes. Cancel from your account in two clicks. You keep Pro until the end of the period you've paid for, then move back to Free. Your data stays."],
   ["What happens to my data if I leave?", "It's yours. Download everything as a backup file or a spreadsheet at any time, on any plan."],
   ["What does \"coming soon\" mean?", "Those features are being built now. Pro members get them automatically, at no extra cost, as soon as they're ready."],
-  ["What currency are prices in?", "Canadian dollars, before applicable sales tax."],
+  ["What currency are prices in?", "Canadian dollars in Canada and US dollars in the US, before applicable sales tax. The app itself works in CAD, USD, GBP, EUR, AUD or NZD, with kilometres or miles and litres or gallons."],
 ];
 
 export default function PricingPage() {

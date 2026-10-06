@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ExportSummary } from "@/lib/legacy-import";
-import { money } from "@/lib/format";
 import { importLegacyBackup } from "@/server/actions";
 import { useToast } from "./ui";
+import { useFmt } from "./units-provider";
 
 type Result = { expected: ExportSummary; written: ExportSummary; inserted: number; updated: number };
 
@@ -22,6 +22,7 @@ export function ImportPanel({ vehicles }: { vehicles: { id: string; name: string
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+  const u = useFmt();
   const router = useRouter();
 
   async function run(dryRun: boolean, text = json, tgt = target) {
@@ -47,7 +48,7 @@ export function ImportPanel({ vehicles }: { vehicles: { id: string; name: string
     <tr key={label}>
       <td>{label}</td>
       <td className="num tabular">{t.count}</td>
-      <td className="num tabular">{money(t.cents)}</td>
+      <td className="num tabular">{u.money(t.cents)}</td>
     </tr>
   );
 

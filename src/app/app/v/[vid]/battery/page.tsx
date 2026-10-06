@@ -1,6 +1,7 @@
 import { BatteryLog } from "@/components/ev";
 import { StatTile } from "@/components/ui";
-import { fmtDate, numFmt } from "@/lib/format";
+import { fmtDate } from "@/lib/format";
+import { makeFmt } from "@/lib/units";
 import { getVehicleBundle } from "@/server/data";
 import { requireUser } from "@/server/session";
 
@@ -11,6 +12,7 @@ export default async function BatteryPage({ params }: PageProps<"/app/v/[vid]/ba
   const { vid } = await params;
   const b = await getVehicleBundle(user.id, vid);
   const v = b.vehicle;
+  const u = makeFmt(user.units);
   const latestHealth = b.battery.find((r) => r.healthPct != null);
   const latestRange = b.battery.find((r) => r.rangeAtFullKm != null);
   const firstRange = b.battery.findLast((r) => r.rangeAtFullKm != null);
@@ -22,12 +24,12 @@ export default async function BatteryPage({ params }: PageProps<"/app/v/[vid]/ba
         <StatTile label="Battery health" value={latestHealth ? `${latestHealth.healthPct!.toFixed(1)}%` : "—"} sub={latestHealth ? `as of ${fmtDate(latestHealth.date)}` : "add a check"} />
         <StatTile
           label="Range at 100%"
-          value={latestRange ? `${numFmt(latestRange.rangeAtFullKm!)} km` : "—"}
-          sub={latestRange && v.ratedRangeKm ? `${Math.round((latestRange.rangeAtFullKm! / v.ratedRangeKm) * 100)}% of ${numFmt(v.ratedRangeKm)} km rated` : v.ratedRangeKm ? `rated ${numFmt(v.ratedRangeKm)} km when new` : "add rated range in Vehicle"}
+          value={latestRange ? u.dist(latestRange.rangeAtFullKm) : "—"}
+          sub={latestRange && v.ratedRangeKm ? `${Math.round((latestRange.rangeAtFullKm! / v.ratedRangeKm) * 100)}% of ${u.dist(v.ratedRangeKm)} rated` : v.ratedRangeKm ? `rated ${u.dist(v.ratedRangeKm)} when new` : "add rated range in Vehicle"}
         />
         <StatTile
           label="Range change"
-          value={rangeChange != null ? `${rangeChange > 0 ? "+" : ""}${numFmt(rangeChange)} km` : "—"}
+          value={rangeChange != null ? `${rangeChange > 0 ? "+" : rangeChange < 0 ? "−" : ""}${u.dist(Math.abs(rangeChange))}` : "—"}
           sub={rangeChange != null ? "first check to latest" : "needs 2+ checks"}
         />
         <StatTile label="Battery size" value={v.batteryKwh ? `${v.batteryKwh} kWh` : "—"} sub={v.batteryKwh ? "usable capacity" : "add it in Vehicle"} />

@@ -56,6 +56,7 @@ export const COMPARISON: { label: string; free: boolean | string; pro: boolean |
   { label: "Fuel, maintenance, insurance, registration and other logs", free: "Unlimited", pro: "Unlimited" },
   { label: "Dashboard: total cost, cost per km, cost per month", free: true, pro: true },
   { label: "Gas, diesel, hybrid, plug-in hybrid and electric vehicles", free: true, pro: true },
+  { label: "Kilometres or miles, litres or gallons, L/100 km or MPG, and your currency", free: true, pro: true },
   { label: "EV charging log: home vs public, $/kWh, kWh/100 km, savings vs gas", free: true, pro: true },
   { label: "EV battery health tracking", free: true, pro: true },
   { label: "Reports, monthly trends and keep-vs-replace calculator", free: true, pro: true },

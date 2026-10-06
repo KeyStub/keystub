@@ -1,7 +1,8 @@
 import { VehicleDangerZone } from "@/components/vehicle-danger-zone";
 import { VehicleForm } from "@/components/vehicle-form";
 import { odometerAnomalies } from "@/lib/calc";
-import { fmtDate, numFmt, vehicleName } from "@/lib/format";
+import { fmtDate, vehicleName } from "@/lib/format";
+import { makeFmt } from "@/lib/units";
 import { getVehicleBundle } from "@/server/data";
 import { requireUser } from "@/server/session";
 
@@ -9,6 +10,7 @@ export const metadata = { title: "Vehicle" };
 
 export default async function VehiclePage({ params }: PageProps<"/app/v/[vid]/vehicle">) {
   const user = await requireUser();
+  const u = makeFmt(user.units);
   const { vid } = await params;
   const b = await getVehicleBundle(user.id, vid);
   const anomalies = odometerAnomalies([
@@ -30,7 +32,7 @@ export default async function VehiclePage({ params }: PageProps<"/app/v/[vid]/ve
         ) : (
           anomalies.map((a, i) => (
             <div className="note" key={i} style={{ marginTop: 8, marginBottom: 0 }}>
-              {a.src} entry on {fmtDate(a.date)} shows {numFmt(a.odo)} km, lower than {numFmt(a.prevOdo)} km recorded on {fmtDate(a.prevDate)}.
+              {a.src} entry on {fmtDate(a.date)} shows {u.dist(a.odo)}, lower than {u.dist(a.prevOdo)} recorded on {fmtDate(a.prevDate)}.
             </div>
           ))
         )}

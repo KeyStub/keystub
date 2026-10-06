@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import { fmtDate, numFmt, todayISO } from "@/lib/format";
+import { fmtDate, todayISO } from "@/lib/format";
 import { deleteBatteryCheck, saveBatteryCheck, saveCharge } from "@/server/actions";
 import type { BatteryCheck } from "@/server/data";
 import { Field, IconButton, Modal, useConfirm, useOpenOnAdd, useToast } from "./ui";
+import { useFmt } from "./units-provider";
 
 /** Plug-in version of the quick fill-up: kWh + where, cost estimated at home if left blank. */
 export function QuickCharge({ vehicleId, homeKwhPrice }: { vehicleId: string; homeKwhPrice: number }) {
@@ -13,6 +14,7 @@ export function QuickCharge({ vehicleId, homeKwhPrice }: { vehicleId: string; ho
   const [loc, setLoc] = useState("home");
   const formRef = useRef<HTMLFormElement>(null);
   const toast = useToast();
+  const u = useFmt();
   const confirm = useConfirm();
   const router = useRouter();
 
@@ -53,7 +55,7 @@ export function QuickCharge({ vehicleId, homeKwhPrice }: { vehicleId: string; ho
           </select>
         </div>
         <div className="field" style={{ marginBottom: 8 }}>
-          <label htmlFor="qc-cost">Cost $</label>
+          <label htmlFor="qc-cost">Cost {u.symbol}</label>
           <input
             className="input"
             id="qc-cost"
@@ -76,7 +78,7 @@ export function QuickCharge({ vehicleId, homeKwhPrice }: { vehicleId: string; ho
       </button>
       {loc === "home" && (
         <p className="muted" style={{ fontSize: 12, margin: "8px 0 0" }}>
-          Blank cost at home is estimated at ${homeKwhPrice.toFixed(3)}/kWh.
+          Blank cost at home is estimated at {u.price(homeKwhPrice)}/kWh.
         </p>
       )}
     </form>
@@ -89,6 +91,7 @@ export function BatteryLog({ vehicleId, rows, ratedRangeKm }: { vehicleId: strin
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const toast = useToast();
+  const u = useFmt();
   const confirm = useConfirm();
   const router = useRouter();
   const ex = editing ?? null;
@@ -137,14 +140,14 @@ export function BatteryLog({ vehicleId, rows, ratedRangeKm }: { vehicleId: strin
                 <div className="l-main">
                   <div className="l-title">{fmtDate(r.date)}</div>
                   <div className="l-sub">
-                    {[r.odometer != null ? `${numFmt(r.odometer)} km` : null, r.notes].filter(Boolean).join(" · ") || "—"}
+                    {[r.odometer != null ? u.dist(r.odometer) : null, r.notes].filter(Boolean).join(" · ") || "—"}
                   </div>
                 </div>
                 <div className="l-val tabular" style={{ textAlign: "right" }}>
                   {r.healthPct != null && <div>{r.healthPct.toFixed(1)}% health</div>}
                   {r.rangeAtFullKm != null && (
                     <div className="muted" style={{ fontSize: 12.5 }}>
-                      {numFmt(r.rangeAtFullKm)} km at 100%
+                      {u.dist(r.rangeAtFullKm)} at 100%
                       {ratedRangeKm ? ` (${Math.round((r.rangeAtFullKm / ratedRangeKm) * 100)}% of rated)` : ""}
                     </div>
                   )}
@@ -178,16 +181,16 @@ export function BatteryLog({ vehicleId, rows, ratedRangeKm }: { vehicleId: strin
             <Field label="Date" htmlFor="bc-date">
               <input className="input" id="bc-date" name="date" type="date" required defaultValue={ex?.date ?? todayISO()} />
             </Field>
-            <Field label="Odometer (km)" htmlFor="bc-odo">
-              <input className="input" id="bc-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={ex?.odometer ?? ""} />
+            <Field label={`Odometer (${u.distUnit})`} htmlFor="bc-odo">
+              <input className="input" id="bc-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={u.distInput(ex?.odometer)} />
             </Field>
           </div>
           <div className="row2">
             <Field label="Battery health (%)" htmlFor="bc-h" hint="State of health (SoH), if the car, dealer or an app shows it.">
               <input className="input" id="bc-h" name="healthPct" type="number" step="0.1" min={1} max={110} inputMode="decimal" defaultValue={ex?.healthPct ?? ""} />
             </Field>
-            <Field label="Range at 100% (km)" htmlFor="bc-r" hint="The estimate shown after a full charge.">
-              <input className="input" id="bc-r" name="rangeAtFullKm" type="number" min={1} inputMode="numeric" defaultValue={ex?.rangeAtFullKm ?? ""} />
+            <Field label={`Range at 100% (${u.distUnit})`} htmlFor="bc-r" hint="The estimate shown after a full charge.">
+              <input className="input" id="bc-r" name="rangeAtFullKm" type="number" min={1} inputMode="numeric" defaultValue={u.distInput(ex?.rangeAtFullKm)} />
             </Field>
           </div>
           <Field label="Notes" htmlFor="bc-notes">

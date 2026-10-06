@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { fmtDate, numFmt } from "@/lib/format";
+import { fmtDate } from "@/lib/format";
 import { completeReminder, deleteReminder, saveReminder } from "@/server/actions";
 import type { ReminderView } from "@/server/reminders";
 import { Field, IconButton, Modal, StatusChip, useConfirm, useOpenOnAdd, useToast } from "./ui";
+import { useFmt } from "./units-provider";
 
 const TYPES = ["Oil Change", "Tire Rotation", "Seasonal Tires", "Fluid Service", "Inspection", "Registration", "Insurance", "Custom"];
 type Raw = { title: string; type: string | null; dueDate: string | null; dueOdometer: number | null };
@@ -27,6 +28,7 @@ export function RemindersView({
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const toast = useToast();
+  const u = useFmt();
   const confirm = useConfirm();
   const router = useRouter();
 
@@ -47,7 +49,7 @@ export function RemindersView({
     <>
       <div className="toolbar">
         <p className="grow muted" style={{ margin: 0, fontSize: 13 }}>
-          Due soon = within {prefs.leadDays} days or {prefs.leadKm.toLocaleString("en-CA")} km (<Link href="/app/account#reminders">change</Link>). Renewal dates come from the Vehicle tab; next-service dates from maintenance records.
+          Due soon = within {prefs.leadDays} days or {u.dist(prefs.leadKm)} (<Link href="/app/account#reminders">change</Link>). Renewal dates come from the Vehicle tab; next-service dates from maintenance records.
         </p>
         <button className="btn primary" onClick={() => setEditing({ id: null, r: {} })}>
           + Add reminder
@@ -79,7 +81,7 @@ export function RemindersView({
                         {r.virtual ? <span className="muted"> (from vehicle profile / costs)</span> : null}
                       </div>
                       <div className="l-sub">
-                        {[r.dueDate ? fmtDate(r.dueDate) : null, r.dueOdometer != null ? `${numFmt(r.dueOdometer)} km` : null].filter(Boolean).join(" · ") || "—"}
+                        {[r.dueDate ? fmtDate(r.dueDate) : null, r.dueOdometer != null ? u.dist(r.dueOdometer) : null].filter(Boolean).join(" · ") || "—"}
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
@@ -153,8 +155,8 @@ export function RemindersView({
             <Field label="Due date" htmlFor="r-date">
               <input className="input" id="r-date" name="dueDate" type="date" defaultValue={editing?.r.dueDate ?? ""} />
             </Field>
-            <Field label="Due odometer (km)" htmlFor="r-odo">
-              <input className="input" id="r-odo" name="dueOdometer" type="number" min={0} defaultValue={editing?.r.dueOdometer ?? ""} />
+            <Field label={`Due odometer (${u.distUnit})`} htmlFor="r-odo">
+              <input className="input" id="r-odo" name="dueOdometer" type="number" min={0} defaultValue={u.distInput(editing?.r.dueOdometer)} />
             </Field>
           </div>
           <p className="muted" style={{ fontSize: 12 }}>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PrintButton } from "@/components/print-button";
-import { fmtDate, money, numFmt, vehicleName } from "@/lib/format";
+import { fmtDate, numFmt, vehicleName } from "@/lib/format";
+import { makeFmt } from "@/lib/units";
 import { getVehicleBundle } from "@/server/data";
 import { requireUser } from "@/server/session";
 import { serverToday } from "@/server/today";
@@ -9,6 +10,7 @@ export const metadata = { title: "Service history" };
 
 export default async function HistoryPage({ params }: PageProps<"/app/v/[vid]/history">) {
   const user = await requireUser();
+  const u = makeFmt(user.units);
   const { vid } = await params;
   if (user.effectivePlan !== "pro")
     return (
@@ -33,7 +35,7 @@ export default async function HistoryPage({ params }: PageProps<"/app/v/[vid]/hi
       <div className="card" style={{ padding: 24 }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Service history — {vehicleName(v)}</h1>
         <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
-          {[v.vin ? `VIN ${v.vin}` : null, v.currentOdometer != null ? `${numFmt(v.currentOdometer)} km` : null, `Generated ${fmtDate(await serverToday())}`]
+          {[v.vin ? `VIN ${v.vin}` : null, v.currentOdometer != null ? u.dist(v.currentOdometer) : null, `Generated ${fmtDate(await serverToday())}`]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -41,7 +43,7 @@ export default async function HistoryPage({ params }: PageProps<"/app/v/[vid]/hi
           <thead>
             <tr>
               <th>Date</th>
-              <th className="num">Odometer</th>
+              <th className="num">Odometer ({u.distUnit})</th>
               <th>Work done</th>
               <th>Shop</th>
               <th className="num">Cost</th>
@@ -51,14 +53,14 @@ export default async function HistoryPage({ params }: PageProps<"/app/v/[vid]/hi
             {records.map((r) => (
               <tr key={r.id}>
                 <td style={{ whiteSpace: "nowrap" }}>{fmtDate(r.date)}</td>
-                <td className="num tabular">{r.odometer != null ? numFmt(r.odometer) : "—"}</td>
+                <td className="num tabular">{r.odometer != null ? numFmt(u.distToUser(r.odometer)!) : "—"}</td>
                 <td>
                   {r.category && <b>{r.category}: </b>}
                   {r.description?.startsWith("(migrated") ? <span className="muted">details not recorded</span> : r.description || "—"}
                   {r.receiptRef && <div className="muted" style={{ fontSize: 12 }}>Ref: {r.receiptRef}</div>}
                 </td>
                 <td>{r.shop || "—"}</td>
-                <td className="num tabular">{money(r.totalCostCents)}</td>
+                <td className="num tabular">{u.money(r.totalCostCents)}</td>
               </tr>
             ))}
             <tr>
@@ -66,7 +68,7 @@ export default async function HistoryPage({ params }: PageProps<"/app/v/[vid]/hi
                 {records.length} records
               </td>
               <td className="num tabular" style={{ fontWeight: 700 }}>
-                {money(total)}
+                {u.money(total)}
               </td>
             </tr>
           </tbody>

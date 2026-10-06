@@ -153,7 +153,7 @@ Shown on the website as "Coming soon" until built.
 - Migration 0003 (needs to run on Neon at deploy, done automatically by the migrate step).
 
 ## Ideas for "works with any vehicle" (not built yet, for Jarin to prioritise)
-- Units: miles / US & imperial gallons / MPG, and currency (already on Coming soon). Most important for the US launch.
+- [x] Units (miles, gallons, MPG) and currency: built 2026-10-05.
 - Lease tracking: km allowance vs actual, projected overage cost.
 - Loan / financing: payment schedule, interest paid vs principal.
 - Depreciation & resale estimate in the true cost (purchase − estimated value today).
@@ -167,3 +167,11 @@ Shown on the website as "Coming soon" until built.
 - Needed for the US before launch: miles / US gallons / MPG and per-user currency (CAD or USD); pricing in USD for US customers (Stripe supports a CAD and a USD price per plan); US-friendly wording (e.g. "registration renewal" is fine, "licence" vs "license").
 - US sales tax on software: only required once sales into a state pass its threshold (usually US$100k or 200 transactions per year), so not at the start. Stripe Tax can monitor thresholds.
 - **Later, worldwide:** EU/UK charge VAT on digital services from the FIRST sale to consumers (no threshold for foreign sellers), and Australia/NZ/others have similar rules. Before opening those markets, either register via EU OSS / UK HMRC, or switch to a merchant of record (Paddle or Lemon Squeezy) that collects and files tax everywhere for ~5% + 50¢ per sale. Also needs translations, more currencies and date/number formats, and GDPR wording in the privacy policy.
+
+## Units & currency (built 2026-10-05)
+- Account → **Units & currency**: quick presets (Canada / United States / United Kingdom) or mix: km or miles; litres, US gallons or imperial gallons; L/100 km, km/L, MPG (US) or MPG (UK); currency CAD, USD, GBP, EUR, AUD or NZD.
+- New accounts get defaults from the visitor's country (Vercel's geo header, else browser language): US → miles/gallons/MPG/USD, UK → miles/litres/MPG(UK)/GBP, Canada and everyone else → metric/CAD (EUR/AUD/NZD where they apply).
+- Everything is still **stored in metric**; only display and entry change, so switching units never alters records. Currency is a label only (no exchange-rate conversion). EV efficiency shows mi/kWh for miles users. CSV export is in the user's units; the JSON backup stays metric.
+- Billing: set `STRIPE_CURRENCIES=cad,usd` and give both Stripe prices a USD amount ("currency options"); US accounts are then charged in USD. Pricing page and FAQ say CAD or USD.
+- Migration 0004 (user unit columns; existing accounts stay km / litres / CAD).
+- Later: per-vehicle odometer unit (e.g. a US-import car with a miles odometer owned in Canada).

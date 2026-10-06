@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { CHARGE_LOCATIONS } from "@/lib/calc";
-import { centsToInput, fmtDate, money, numFmt, todayISO } from "@/lib/format";
+import { centsToInput, fmtDate, numFmt, todayISO } from "@/lib/format";
 import {
   clearReviewFlag,
   deleteRecord,
@@ -16,6 +16,7 @@ import {
 } from "@/server/actions";
 import type { ChargingSession, CostRecord, FuelEntry, MaintenanceRecord } from "@/server/data";
 import { Field, IconButton, Modal, useConfirm, useOpenOnAdd, useToast } from "./ui";
+import { useFmt } from "./units-provider";
 
 export const FUEL_GRADES = ["Regular", "Mid-grade", "Premium", "Diesel", "E85"];
 export const MAINT_CATEGORIES = [
@@ -110,6 +111,7 @@ function LogTable<T extends { id: string; date: string; reviewFlag: string | nul
   rowType?: (r: T) => string | null;
   onOpen: (r: T | null) => void;
 }) {
+  const u = useFmt();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
@@ -131,7 +133,7 @@ function LogTable<T extends { id: string; date: string; reviewFlag: string | nul
   async function remove(r: T) {
     const ok = await confirm({
       title: `Delete ${singular}?`,
-      message: `This permanently deletes the record dated ${fmtDate(r.date)} for ${money(amount(r))}. This can't be undone.`,
+      message: `This permanently deletes the record dated ${fmtDate(r.date)} for ${u.money(amount(r))}. This can't be undone.`,
       confirmLabel: "Delete",
       danger: true,
     });
@@ -170,7 +172,7 @@ function LogTable<T extends { id: string; date: string; reviewFlag: string | nul
           {shown.length} record{shown.length === 1 ? "" : "s"}
         </span>
         <span style={{ fontWeight: 700, fontSize: 15 }} className="tabular">
-          Total: {money(total)}
+          Total: {u.money(total)}
         </span>
       </div>
       <div className="card table-wrap">
@@ -302,6 +304,7 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
   useOpenOnAdd(() => setEditing(null));
   const [busy, setBusy] = useState(false);
   const save = useSaver();
+  const u = useFmt();
   const totalRef = useRef<HTMLInputElement>(null);
   const totalTouched = useRef(false);
   const ex = editing ?? null;
@@ -329,19 +332,19 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
         }}
         columns={[
           { label: "Date", render: (r) => fmtDate(r.date) },
-          { label: "Odometer", num: true, hideSm: true, render: (r) => (r.odometer != null ? `${numFmt(r.odometer)} km` : "—") },
-          { label: "Litres", num: true, hideSm: true, render: (r) => (r.litres != null ? numFmt(r.litres, 2) : "—") },
+          { label: "Odometer", num: true, hideSm: true, render: (r) => u.dist(r.odometer) },
+          { label: u.volWord, num: true, hideSm: true, render: (r) => u.vol(r.litres) },
           {
-            label: "$/L",
+            label: u.perVolLabel,
             num: true,
             hideSm: true,
             render: (r) => {
               const ppl = r.pricePerLitre ?? (r.litres ? r.totalPaidCents / 100 / r.litres : null);
-              return ppl != null ? `$${ppl.toFixed(3)}` : "—";
+              return ppl != null ? u.price(u.perVolToUser(ppl)!) : "—";
             },
           },
           { label: "Station", render: (r) => r.station || "—" },
-          { label: "Total", num: true, render: (r) => money(r.totalPaidCents) },
+          { label: "Total", num: true, render: (r) => u.money(r.totalPaidCents) },
         ]}
       />
       <FormModal
@@ -362,12 +365,12 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
           <Field label="Date" htmlFor="f-date">
             <input className="input" id="f-date" name="date" type="date" required defaultValue={ex?.date ?? todayISO()} />
           </Field>
-          <Field label="Odometer (km)" htmlFor="f-odo">
-            <input className="input" id="f-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={ex?.odometer ?? ""} />
+          <Field label={`Odometer (${u.distUnit})`} htmlFor="f-odo">
+            <input className="input" id="f-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={u.distInput(ex?.odometer)} />
           </Field>
         </div>
         <div className="row3">
-          <Field label="Litres" htmlFor="f-litres">
+          <Field label={u.volWord} htmlFor="f-litres">
             <input
               className="input"
               id="f-litres"
@@ -376,11 +379,11 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
               step="0.001"
               min={0}
               inputMode="decimal"
-              defaultValue={ex?.litres ?? ""}
+              defaultValue={u.volInput(ex?.litres)}
               onInput={(e) => autoTotal(e.currentTarget.form)}
             />
           </Field>
-          <Field label="Price / litre" htmlFor="f-ppl">
+          <Field label={`Price (${u.perVolLabel})`} htmlFor="f-ppl">
             <input
               className="input"
               id="f-ppl"
@@ -389,11 +392,11 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
               step="0.001"
               min={0}
               inputMode="decimal"
-              defaultValue={ex?.pricePerLitre ?? ""}
+              defaultValue={u.perVolInput(ex?.pricePerLitre)}
               onInput={(e) => autoTotal(e.currentTarget.form)}
             />
           </Field>
-          <Field label="Total paid ($)" htmlFor="f-total">
+          <Field label={u.moneyLabel("Total paid")} htmlFor="f-total">
             <input
               ref={totalRef}
               className="input"
@@ -411,7 +414,7 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
         </div>
         <div className="row2">
           <Field label="Gas station" htmlFor="f-station">
-            <input className="input" id="f-station" name="station" defaultValue={ex?.station ?? ""} placeholder="e.g. Pincher Creek CO-OP" list="station-list" />
+            <input className="input" id="f-station" name="station" defaultValue={ex?.station ?? ""} placeholder="e.g. Shell on Main St" list="station-list" />
             <datalist id="station-list">
               {[...new Set(rows.map((r) => r.station).filter(Boolean))].map((s) => (
                 <option key={s} value={s!} />
@@ -454,6 +457,7 @@ export function MaintenanceLog({ vehicleId, rows }: { vehicleId: string; rows: M
   useOpenOnAdd(() => setEditing(null));
   const [busy, setBusy] = useState(false);
   const save = useSaver();
+  const u = useFmt();
   const totalRef = useRef<HTMLInputElement>(null);
   const totalTouched = useRef(false);
   const ex = editing ?? null;
@@ -487,9 +491,9 @@ export function MaintenanceLog({ vehicleId, rows }: { vehicleId: string; rows: M
           {
             label: "Next service",
             hideSm: true,
-            render: (r) => (r.nextServiceDate ? fmtDate(r.nextServiceDate) : r.nextServiceOdometer != null ? `${numFmt(r.nextServiceOdometer)} km` : "—"),
+            render: (r) => (r.nextServiceDate ? fmtDate(r.nextServiceDate) : r.nextServiceOdometer != null ? u.dist(r.nextServiceOdometer) : "—"),
           },
-          { label: "Total", num: true, render: (r) => money(r.totalCostCents) },
+          { label: "Total", num: true, render: (r) => u.money(r.totalCostCents) },
         ]}
       />
       <FormModal
@@ -515,8 +519,8 @@ export function MaintenanceLog({ vehicleId, rows }: { vehicleId: string; rows: M
           <Field label="Date" htmlFor="m-date">
             <input className="input" id="m-date" name="date" type="date" required defaultValue={ex?.date ?? todayISO()} />
           </Field>
-          <Field label="Odometer (km)" htmlFor="m-odo">
-            <input className="input" id="m-odo" name="odometer" type="number" min={0} defaultValue={ex?.odometer ?? ""} />
+          <Field label={`Odometer (${u.distUnit})`} htmlFor="m-odo">
+            <input className="input" id="m-odo" name="odometer" type="number" min={0} defaultValue={u.distInput(ex?.odometer)} />
           </Field>
         </div>
         <div className="row2">
@@ -538,9 +542,9 @@ export function MaintenanceLog({ vehicleId, rows }: { vehicleId: string; rows: M
         <div className="row3">
           {(
             [
-              ["partsCost", "Parts ($)", ex?.partsCents],
-              ["labourCost", "Labour ($)", ex?.labourCents],
-              ["taxCost", "Tax ($)", ex?.taxCents],
+              ["partsCost", u.moneyLabel("Parts"), ex?.partsCents],
+              ["labourCost", u.moneyLabel("Labour"), ex?.labourCents],
+              ["taxCost", u.moneyLabel("Tax"), ex?.taxCents],
             ] as const
           ).map(([name, label, val]) => (
             <Field key={name} label={label} htmlFor={`m-${name}`}>
@@ -557,7 +561,7 @@ export function MaintenanceLog({ vehicleId, rows }: { vehicleId: string; rows: M
             </Field>
           ))}
         </div>
-        <Field label="Total cost ($)" htmlFor="m-total" hint="Auto-fills from parts + labour + tax; edit it if the invoice included other fees.">
+        <Field label={u.moneyLabel("Total cost")} htmlFor="m-total" hint="Auto-fills from parts + labour + tax; edit it if the invoice included other fees.">
           <input
             ref={totalRef}
             className="input"
@@ -575,8 +579,8 @@ export function MaintenanceLog({ vehicleId, rows }: { vehicleId: string; rows: M
           <Field label="Next service date" htmlFor="m-nd" hint="Creates a reminder.">
             <input className="input" id="m-nd" name="nextServiceDate" type="date" defaultValue={ex?.nextServiceDate ?? ""} />
           </Field>
-          <Field label="Next service odometer" htmlFor="m-no">
-            <input className="input" id="m-no" name="nextServiceOdometer" type="number" min={0} defaultValue={ex?.nextServiceOdometer ?? ""} />
+          <Field label={`Next service odometer (${u.distUnit})`} htmlFor="m-no">
+            <input className="input" id="m-no" name="nextServiceOdometer" type="number" min={0} defaultValue={u.distInput(ex?.nextServiceOdometer)} />
           </Field>
         </div>
         <div className="row2">
@@ -602,6 +606,7 @@ export function CostLog({ vehicleId, rows }: { vehicleId: string; rows: CostReco
   useOpenOnAdd(() => setEditing(null));
   const [busy, setBusy] = useState(false);
   const save = useSaver();
+  const u = useFmt();
   const ex = editing ?? null;
   return (
     <>
@@ -619,7 +624,7 @@ export function CostLog({ vehicleId, rows }: { vehicleId: string; rows: CostReco
           { label: "Type", render: (r) => r.type },
           { label: "Provider", hideSm: true, render: (r) => r.provider || "—" },
           { label: "Next due", hideSm: true, render: (r) => (r.nextDueDate ? fmtDate(r.nextDueDate) : "—") },
-          { label: "Amount", num: true, render: (r) => money(r.amountCents) },
+          { label: "Amount", num: true, render: (r) => u.money(r.amountCents) },
         ]}
       />
       <FormModal
@@ -648,7 +653,7 @@ export function CostLog({ vehicleId, rows }: { vehicleId: string; rows: CostReco
           </Field>
         </div>
         <div className="row2">
-          <Field label="Amount ($)" htmlFor="c-amt">
+          <Field label={u.moneyLabel("Amount")} htmlFor="c-amt">
             <input className="input" id="c-amt" name="amount" type="number" step="0.01" min={0.01} required defaultValue={centsToInput(ex?.amountCents)} />
           </Field>
           <Field label="Provider" htmlFor="c-prov">
@@ -676,6 +681,7 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
   const [busy, setBusy] = useState(false);
   const [loc, setLoc] = useState("home");
   const save = useSaver();
+  const u = useFmt();
   const ex = editing ?? null;
   const open = (r: ChargingSession | null) => {
     setLoc(r?.location ?? "home");
@@ -699,14 +705,14 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
           { label: "Where", render: (r) => r.network || CHARGE_LOCATIONS[r.location] || r.location },
           { label: "kWh", num: true, render: (r) => numFmt(r.kwh, 1) },
           { label: "Battery", num: true, hideSm: true, render: (r) => (r.startPct != null && r.endPct != null ? `${r.startPct}→${r.endPct}%` : "—") },
-          { label: "$/kWh", num: true, hideSm: true, render: (r) => (r.pricePerKwh != null ? `$${r.pricePerKwh.toFixed(3)}` : "—") },
-          { label: "Odometer", num: true, hideSm: true, render: (r) => (r.odometer != null ? `${numFmt(r.odometer)} km` : "—") },
+          { label: `${u.symbol}/kWh`, num: true, hideSm: true, render: (r) => (r.pricePerKwh != null ? u.price(r.pricePerKwh) : "—") },
+          { label: "Odometer", num: true, hideSm: true, render: (r) => u.dist(r.odometer) },
           {
             label: "Cost",
             num: true,
             render: (r) => (
               <span title={r.costEstimated ? "Estimated from your home electricity rate" : undefined}>
-                {r.costCents === 0 ? "Free" : money(r.costCents)}
+                {r.costCents === 0 ? "Free" : u.money(r.costCents)}
                 {r.costEstimated ? "*" : ""}
               </span>
             ),
@@ -715,7 +721,7 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
       />
       {rows.some((r) => r.costEstimated) && (
         <p className="muted" style={{ fontSize: 12.5, marginTop: 8 }}>
-          * Estimated from your home electricity rate (${homeKwhPrice.toFixed(3)}/kWh). Change it under Account → Energy.
+          * Estimated from your home electricity rate ({u.price(homeKwhPrice)}/kWh). Change it under Account → Energy.
         </p>
       )}
       <FormModal
@@ -749,9 +755,9 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
             <input className="input" id="ch-kwh" name="kwh" type="number" step="0.01" min={0.01} required inputMode="decimal" defaultValue={ex?.kwh ?? ""} />
           </Field>
           <Field
-            label="Cost ($)"
+            label={u.moneyLabel("Cost")}
             htmlFor="ch-cost"
-            hint={loc === "home" ? `Leave blank to estimate at ${"$"}${homeKwhPrice.toFixed(3)}/kWh. Enter 0 if free.` : "Enter 0 if it was free."}
+            hint={loc === "home" ? `Leave blank to estimate at ${u.price(homeKwhPrice)}/kWh. Enter 0 if free.` : "Enter 0 if it was free."}
           >
             <input
               className="input"
@@ -787,8 +793,8 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
             <input className="input" id="ch-m" name="minutes" type="number" min={0} defaultValue={ex?.minutes ?? ""} />
           </Field>
         </div>
-        <Field label="Odometer (km)" htmlFor="ch-odo" hint="Add it now and then: it's how efficiency (kWh/100 km) is worked out.">
-          <input className="input" id="ch-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={ex?.odometer ?? ""} />
+        <Field label={`Odometer (${u.distUnit})`} htmlFor="ch-odo" hint={`Add it now and then: it's how efficiency (${u.evEffUnit}) is worked out.`}>
+          <input className="input" id="ch-odo" name="odometer" type="number" min={0} inputMode="numeric" defaultValue={u.distInput(ex?.odometer)} />
         </Field>
         <Field label="Notes" htmlFor="ch-notes">
           <textarea className="input" id="ch-notes" name="notes" rows={2} defaultValue={ex?.notes ?? ""} />

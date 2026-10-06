@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { makeFmt } from "@/lib/units";
 import { AppTopBar } from "@/components/app-top-bar";
 import { vehicleName } from "@/lib/format";
 import { PLANS } from "@/lib/plans";
@@ -10,6 +11,7 @@ export const metadata = { title: "Your garage" };
 
 export default async function GaragePage({ searchParams }: PageProps<"/app">) {
   const user = await requireUser();
+  const u = makeFmt(user.units);
   const vs = await listVehicles(user.id);
   const sp = await searchParams;
   // One vehicle: go straight to it (the common case), unless the user explicitly opened the garage.
@@ -53,7 +55,7 @@ export default async function GaragePage({ searchParams }: PageProps<"/app">) {
               <Link key={v.id} href={`/app/v/${v.id}`} className="card" style={{ textDecoration: "none", color: "inherit" }}>
                 <div className="veh-name">{vehicleName(v)}</div>
                 <div className="veh-sub">
-                  {v.currentOdometer != null ? `${v.currentOdometer.toLocaleString("en-CA")} km` : "Odometer not set"}
+                  {v.currentOdometer != null ? u.dist(v.currentOdometer) : "Odometer not set"}
                 </div>
               </Link>
             ))}

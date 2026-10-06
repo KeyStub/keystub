@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CATEGORIES, monthlyTrend, totalsByCategory, type DatedAmount } from "@/lib/calc";
-import { money, moneyShort } from "@/lib/format";
+import { useFmt } from "./units-provider";
 import { MonthlyTrend } from "./charts";
 
 function shift(today: string, months: number) {
@@ -22,6 +22,8 @@ export function ReportsView({
   currentMonthly: number;
   vehicleLabel: string;
 }) {
+  const u = useFmt();
+  const { money, moneyShort } = u;
   const [range, setRange] = useState("all");
   const [price, setPrice] = useState("");
   const [monthly, setMonthly] = useState("");
@@ -86,7 +88,7 @@ export function ReportsView({
       </div>
       <h3 className="section-title">Monthly trend</h3>
       <div className="card">
-        <MonthlyTrend months={trend} />
+        <MonthlyTrend units={u.prefs} months={trend} />
       </div>
       <h3 className="section-title">Keep vs. replace</h3>
       <div className="card no-print">
@@ -96,11 +98,11 @@ export function ReportsView({
         </p>
         <div className="row2">
           <div className="field">
-            <label htmlFor="cmp-price">Candidate purchase price ($)</label>
+            <label htmlFor="cmp-price">Candidate purchase price ({u.symbol})</label>
             <input className="input" id="cmp-price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="cmp-monthly">Candidate est. monthly cost ($)</label>
+            <label htmlFor="cmp-monthly">Candidate est. monthly cost ({u.symbol})</label>
             <input className="input" id="cmp-monthly" type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
           </div>
         </div>

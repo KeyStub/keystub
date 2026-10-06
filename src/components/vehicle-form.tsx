@@ -6,6 +6,7 @@ import { POWERTRAINS, usesCharging } from "@/lib/calc";
 import { centsToInput } from "@/lib/format";
 import { saveVehicle } from "@/server/actions";
 import { Field, useToast } from "./ui";
+import { useFmt } from "./units-provider";
 
 type V = {
   id?: string;
@@ -33,6 +34,7 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
   const v = vehicle ?? {};
   const router = useRouter();
   const toast = useToast();
+  const u = useFmt();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vin, setVin] = useState(v.vin ?? "");
@@ -105,8 +107,8 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
             <Field label="Usable battery (kWh)" htmlFor="batteryKwh" hint="Optional. From the spec sheet, e.g. 77.4">
               <input className="input" id="batteryKwh" name="batteryKwh" type="number" step="0.1" min={1} max={300} inputMode="decimal" defaultValue={v.batteryKwh ?? ""} />
             </Field>
-            <Field label="Rated range when new (km)" htmlFor="ratedRangeKm" hint="Optional. Used to compare against your real range.">
-              <input className="input" id="ratedRangeKm" name="ratedRangeKm" type="number" min={1} max={2000} inputMode="numeric" defaultValue={v.ratedRangeKm ?? ""} />
+            <Field label={`Rated range when new (${u.distUnit})`} htmlFor="ratedRangeKm" hint="Optional. Used to compare against your real range.">
+              <input className="input" id="ratedRangeKm" name="ratedRangeKm" type="number" min={1} max={2000} inputMode="numeric" defaultValue={u.distInput(v.ratedRangeKm)} />
             </Field>
           </div>
         )}
@@ -130,11 +132,11 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
           <Field label="Purchase date" htmlFor="purchaseDate">
             <input className="input" id="purchaseDate" name="purchaseDate" type="date" defaultValue={v.purchaseDate ?? ""} />
           </Field>
-          <Field label="Purchase price ($)" htmlFor="purchasePrice">
+          <Field label={u.moneyLabel("Purchase price")} htmlFor="purchasePrice">
             <input className="input" id="purchasePrice" name="purchasePrice" type="number" step="0.01" min={0} defaultValue={centsToInput(v.purchasePriceCents)} />
           </Field>
-          <Field label="Current odometer (km)" htmlFor="currentOdometer">
-            <input className="input" id="currentOdometer" name="currentOdometer" type="number" min={0} defaultValue={v.currentOdometer ?? ""} />
+          <Field label={`Current odometer (${u.distUnit})`} htmlFor="currentOdometer">
+            <input className="input" id="currentOdometer" name="currentOdometer" type="number" min={0} defaultValue={u.distInput(v.currentOdometer)} />
           </Field>
         </div>
         <Field label="Licence plate" hint="Private — only you can see it." htmlFor="plate">
@@ -148,7 +150,7 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
           <Field label="Insurance provider" htmlFor="insuranceProvider">
             <input className="input" id="insuranceProvider" name="insuranceProvider" defaultValue={v.insuranceProvider ?? ""} />
           </Field>
-          <Field label="Insurance policy cost ($)" htmlFor="insurancePolicyCost">
+          <Field label={u.moneyLabel("Insurance policy cost")} htmlFor="insurancePolicyCost">
             <input
               className="input"
               id="insurancePolicyCost"

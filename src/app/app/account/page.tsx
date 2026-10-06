@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { AccountForms } from "@/components/account-forms";
 import { AppTopBar } from "@/components/app-top-bar";
-import { AppearanceSettings, EnergySettings, ReminderSettings } from "@/components/settings-forms";
+import { AppearanceSettings, EnergySettings, ReminderSettings, UnitSettings } from "@/components/settings-forms";
 import { ImportPanel } from "@/components/import-panel";
 import { db } from "@/db";
 import { importLog } from "@/db/schema";
@@ -71,6 +71,11 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
           Appearance
         </h3>
         <AppearanceSettings />
+
+        <h3 className="section-title" id="units">
+          Units &amp; currency
+        </h3>
+        <UnitSettings prefs={user.units} />
 
         <h3 className="section-title" id="reminders">
           Reminders

@@ -14,7 +14,8 @@ import {
   usesCharging,
   usesFuel,
 } from "@/lib/calc";
-import { fmtDate, money, moneyShort, numFmt } from "@/lib/format";
+import { fmtDate, numFmt } from "@/lib/format";
+import { makeFmt } from "@/lib/units";
 import { getVehicleBundle } from "@/server/data";
 import { collectReminders } from "@/server/reminders";
 import { requireUser } from "@/server/session";
@@ -28,6 +29,8 @@ export default async function DashboardPage({
   const user = await requireUser();
   const { vid } = await params;
   const b = await getVehicleBundle(user.id, vid);
+  const u = makeFmt(user.units);
+  const { money, moneyShort } = u;
   const today = await serverToday();
 
   const pt = b.vehicle.powertrain;
@@ -111,9 +114,9 @@ export default async function DashboardPage({
           sub={earliest ? `since ${fmtDate(earliest)}` : "—"}
         />
         <StatTile
-          label="Cost per km"
-          value={costPerKm != null ? `$${(costPerKm / 100).toFixed(costPerKm < 10 ? 3 : 2)}` : "—"}
-          sub={km ? `${numFmt(km)} km recorded` : "need 2+ odometer readings"}
+          label={`Cost ${u.perDistWord}`}
+          value={u.perDist(costPerKm)}
+          sub={km ? `${u.dist(km)} recorded` : "need 2+ odometer readings"}
         />
         <StatTile
           label="Total + vehicle"
@@ -130,7 +133,7 @@ export default async function DashboardPage({
         <div>
           <h3 className="section-title">Spending breakdown</h3>
           <div className="card">
-            <CategoryBars totals={totals} />
+            <CategoryBars totals={totals} units={user.units} />
           </div>
           <h3 className="section-title">Recent activity</h3>
           <div className="card">
@@ -185,7 +188,7 @@ export default async function DashboardPage({
                         {r.dueDate
                           ? fmtDate(r.dueDate)
                           : r.dueOdometer != null
-                            ? `${numFmt(r.dueOdometer)} km`
+                            ? u.dist(r.dueOdometer)
                             : "—"}
                       </div>
                     </div>
@@ -216,7 +219,7 @@ export default async function DashboardPage({
                       </div>
                       <div className="l-val tabular">
                         {ev.kwhPer100 != null
-                          ? `${ev.kwhPer100.toFixed(1)} kWh/100 km`
+                          ? `${u.evEffValue(ev.kwhPer100)} ${u.evEffUnit}`
                           : "—"}
                       </div>
                     </div>
@@ -230,7 +233,7 @@ export default async function DashboardPage({
                       </div>
                       <div className="l-val tabular">
                         {ev.avgPricePerKwh != null
-                          ? `$${ev.avgPricePerKwh.toFixed(3)}/kWh`
+                          ? `${u.price(ev.avgPricePerKwh)}/kWh`
                           : "—"}
                       </div>
                     </div>
@@ -239,7 +242,7 @@ export default async function DashboardPage({
                         <div className="l-title">Saved vs gas</div>
                         <div className="l-sub">
                           {ev.distanceKm
-                            ? `over ${numFmt(ev.distanceKm)} km`
+                            ? `over ${u.dist(ev.distanceKm)}`
                             : "add odometer to 2+ charges"}
                         </div>
                       </div>
@@ -265,13 +268,13 @@ export default async function DashboardPage({
                       style={{ fontSize: 26, fontWeight: 700 }}
                       className="tabular"
                     >
-                      {lastEco.l100.toFixed(1)} L/100 km
+                      {u.econ(lastEco.l100)}
                     </div>
                     <p
                       className="muted"
                       style={{ fontSize: 12.5, margin: "6px 0 0" }}
                     >
-                      Last full-to-full fill ({numFmt(lastEco.dist)} km,{" "}
+                      Last full-to-full fill ({u.dist(lastEco.dist)},{" "}
                       {fmtDate(lastEco.date)})
                     </p>
                   </>

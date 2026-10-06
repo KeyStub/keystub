@@ -30,11 +30,6 @@ const COMING = [
     Icon: IconPump,
   },
   {
-    t: "Miles, gallons and MPG",
-    d: "Not into kilometres and litres? Switch to miles, US or imperial gallons and MPG, and pick your currency. KeyStub sets sensible defaults for your country.",
-    Icon: IconChart,
-  },
-  {
     t: "Bank-statement import",
     d: "Upload a statement and KeyStub suggests the fuel, insurance and repair entries it finds, skipping things that aren't car costs. You approve each one.",
     pro: true,

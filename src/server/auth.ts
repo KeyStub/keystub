@@ -6,6 +6,7 @@ import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
 import { db } from "@/db";
 import { APP_NAME } from "@/lib/brand";
 import { TRIAL_DAYS } from "@/lib/plans";
+import { countryFromHeaders, defaultsForCountry } from "@/lib/units";
 import * as schema from "@/db/schema";
 import { linkEmail, sendEmail } from "./mailer";
 
@@ -32,6 +33,10 @@ export const auth = betterAuth({
       homeKwhPrice: { type: "number", defaultValue: 0.18, input: false },
       compareL100: { type: "number", defaultValue: 9, input: false },
       compareFuelPrice: { type: "number", defaultValue: 1.6, input: false },
+      distanceUnit: { type: "string", defaultValue: "km", input: false },
+      volumeUnit: { type: "string", defaultValue: "L", input: false },
+      economyUnit: { type: "string", defaultValue: "l100", input: false },
+      currency: { type: "string", defaultValue: "CAD", input: false },
     },
     deleteUser: { enabled: true },
   },
@@ -73,8 +78,15 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Every new account starts with a -day Pro trial (no card). See src/lib/plans.ts.
-        before: async (user) => ({ data: { ...user, trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000) } }),
+        // Every new account starts with a TRIAL_DAYS-day Pro trial (no card; see src/lib/plans.ts), and
+        // units + currency matching the visitor's country (changeable any time in Account).
+        before: async (user, ctx) => ({
+          data: {
+            ...user,
+            trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
+            ...defaultsForCountry(countryFromHeaders(ctx?.headers)),
+          },
+        }),
       },
     },
   },

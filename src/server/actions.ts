@@ -8,7 +8,8 @@ import { db } from "@/db";
 import { ImportVerificationError, importExport } from "@/db/import-core";
 import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, user as userTable, vehicles } from "@/db/schema";
 import { laterLowerOdometer, priorOdometer } from "@/lib/calc";
-import { fmtDate, money, numFmt } from "@/lib/format";
+import { fmtDate } from "@/lib/format";
+import { makeFmt, toMetric, type Fmt, type UnitPrefs } from "@/lib/units";
 import { PLANS } from "@/lib/plans";
 import { requireUser } from "./session";
 
@@ -57,16 +58,23 @@ async function odometerRows(userId: string, vehicleId: string) {
   return [...f, ...m, ...c];
 }
 
-function odometerWarnings(rows: { id: string; date: string; odometer: number | null }[], date: string, odo: number, excludeId: string | null, checkLater: boolean) {
+function odometerWarnings(
+  f: Fmt,
+  rows: { id: string; date: string; odometer: number | null }[],
+  date: string,
+  odo: number,
+  excludeId: string | null,
+  checkLater: boolean,
+) {
   const out: string[] = [];
   if (checkLater) {
     const later = laterLowerOdometer(rows, date, odo, excludeId);
     if (later)
-      out.push(`You have a record on ${fmtDate(later.date)} with ${numFmt(later.odo)} km, which is lower than ${numFmt(odo)} km on ${fmtDate(date)}.`);
+      out.push(`You have a record on ${fmtDate(later.date)} with ${f.dist(later.odo)}, which is lower than ${f.dist(odo)} on ${fmtDate(date)}.`);
   }
   const before = priorOdometer(rows, date, excludeId);
   if (before && odo < before.odo)
-    out.push(`Your most recent prior reading was ${numFmt(before.odo)} km on ${fmtDate(before.date)} — higher than ${numFmt(odo)} km.`);
+    out.push(`Your most recent prior reading was ${f.dist(before.odo)} on ${fmtDate(before.date)} — higher than ${f.dist(odo)}.`);
   return out;
 }
 
@@ -86,6 +94,8 @@ async function bumpOdometer(userId: string, vehicleId: string, odo: number | nul
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+const fmtOf = (u: UnitPrefs) => makeFmt(u);
 
 function fail(e: unknown): ActionResult {
   if (e instanceof z.ZodError) return { ok: false, error: e.issues[0]?.message ?? "Invalid input" };
@@ -113,12 +123,16 @@ export async function saveFuel(vehicleId: string, id: string | null, input: unkn
     const user = await requireUser();
     await ownedVehicle(user.id, vehicleId);
     const d = fuelSchema.parse(input);
+    const m = toMetric(user.units);
+    d.odometer = m.dist(d.odometer);
+    d.litres = m.vol(d.litres);
+    d.pricePerLitre = m.perVol(d.pricePerLitre);
     const totalPaidCents = cents(d.totalPaid)!;
 
     if (!acknowledged) {
       const warnings: string[] = [];
       if (d.date > today()) warnings.push("This date is in the future.");
-      if (d.odometer != null) warnings.push(...odometerWarnings(await odometerRows(user.id, vehicleId), d.date, d.odometer, id, true));
+      if (d.odometer != null) warnings.push(...odometerWarnings(fmtOf(user.units), await odometerRows(user.id, vehicleId), d.date, d.odometer, id, true));
       const [dup] = await db
         .select({ id: fuelEntries.id })
         .from(fuelEntries)
@@ -131,7 +145,7 @@ export async function saveFuel(vehicleId: string, id: string | null, input: unkn
             id ? ne(fuelEntries.id, id) : undefined,
           ),
         );
-      if (dup) warnings.push(`There's already a fuel entry on ${fmtDate(d.date)} for ${money(totalPaidCents)}.`);
+      if (dup) warnings.push(`There's already a fuel entry on ${fmtDate(d.date)} for ${fmtOf(user.units).money(totalPaidCents)}.`);
       if (warnings.length) return { ok: false, warnings };
     }
 
@@ -182,12 +196,15 @@ export async function saveMaintenance(vehicleId: string, id: string | null, inpu
     const user = await requireUser();
     await ownedVehicle(user.id, vehicleId);
     const d = maintSchema.parse(input);
+    const m = toMetric(user.units);
+    d.odometer = m.dist(d.odometer);
+    d.nextServiceOdometer = m.dist(d.nextServiceOdometer);
     const totalCostCents = cents(d.totalCost)!;
 
     if (!acknowledged) {
       const warnings: string[] = [];
       if (d.date > today()) warnings.push("This date is in the future.");
-      if (d.odometer != null) warnings.push(...odometerWarnings(await odometerRows(user.id, vehicleId), d.date, d.odometer, id, false));
+      if (d.odometer != null) warnings.push(...odometerWarnings(fmtOf(user.units), await odometerRows(user.id, vehicleId), d.date, d.odometer, id, false));
       const [dup] = await db
         .select({ id: maintenanceRecords.id })
         .from(maintenanceRecords)
@@ -200,7 +217,7 @@ export async function saveMaintenance(vehicleId: string, id: string | null, inpu
             id ? ne(maintenanceRecords.id, id) : undefined,
           ),
         );
-      if (dup) warnings.push(`There's already a maintenance entry on ${fmtDate(d.date)} for ${money(totalCostCents)}.`);
+      if (dup) warnings.push(`There's already a maintenance entry on ${fmtDate(d.date)} for ${fmtOf(user.units).money(totalCostCents)}.`);
       if (warnings.length) return { ok: false, warnings };
     }
 
@@ -291,7 +308,7 @@ export async function saveCost(vehicleId: string, id: string | null, input: unkn
             id ? ne(costRecords.id, id) : undefined,
           ),
         );
-      if (dup) warnings.push(`There's already a ${d.type} entry on ${fmtDate(d.date)} for ${money(amountCents)}.`);
+      if (dup) warnings.push(`There's already a ${d.type} entry on ${fmtDate(d.date)} for ${fmtOf(user.units).money(amountCents)}.`);
       if (warnings.length) return { ok: false, warnings };
     }
 
@@ -368,6 +385,7 @@ export async function saveReminder(vehicleId: string, id: string | null, input: 
     const user = await requireUser();
     await ownedVehicle(user.id, vehicleId);
     const d = reminderSchema.parse(input);
+    d.dueOdometer = toMetric(user.units).dist(d.dueOdometer);
     if (id) {
       const r = await db
         .update(reminders)
@@ -443,6 +461,9 @@ export async function saveVehicle(id: string | null, input: unknown): Promise<Ac
   try {
     const user = await requireUser();
     const d = vehicleSchema.parse(input);
+    const m = toMetric(user.units);
+    d.currentOdometer = m.dist(d.currentOdometer);
+    d.ratedRangeKm = m.dist(d.ratedRangeKm);
     if (!d.make && !d.model && !d.nickname) return { ok: false, error: "Enter at least a make/model or a nickname." };
     const isPlugIn = d.powertrain === "ev" || d.powertrain === "phev";
     const values = {
@@ -558,7 +579,7 @@ export async function importLegacyBackup(
 
 const reminderPrefsSchema = z.object({
   leadDays: z.preprocess((v) => Number(v), z.number().int().min(1, "At least 1 day").max(365, "At most 365 days")),
-  leadKm: z.preprocess((v) => Number(v), z.number().int().min(0).max(20000, "At most 20,000 km")),
+  leadKm: z.preprocess((v) => Number(v), z.number().int().min(0).max(20000, "That's too far ahead")),
 });
 
 /** How far ahead reminders count as "due soon" (and, later, when reminder emails go out). */
@@ -568,7 +589,7 @@ export async function saveReminderPrefs(input: unknown): Promise<ActionResult> {
     const d = reminderPrefsSchema.parse(input);
     await db
       .update(userTable)
-      .set({ reminderLeadDays: d.leadDays, reminderLeadKm: d.leadKm, updatedAt: new Date() })
+      .set({ reminderLeadDays: d.leadDays, reminderLeadKm: toMetric(user.units).dist(d.leadKm)!, updatedAt: new Date() })
       .where(eq(userTable.id, user.id));
     revalidatePath("/app", "layout");
     return { ok: true };
@@ -599,6 +620,7 @@ export async function saveCharge(vehicleId: string, id: string | null, input: un
     const user = await requireUser();
     await ownedVehicle(user.id, vehicleId);
     const d = chargeSchema.parse(input);
+    d.odometer = toMetric(user.units).dist(d.odometer);
     let costCents: number;
     let costEstimated = false;
     if (d.cost == null) {
@@ -610,7 +632,7 @@ export async function saveCharge(vehicleId: string, id: string | null, input: un
       const warnings: string[] = [];
       if (d.date > today()) warnings.push("This date is in the future.");
       if (d.startPct != null && d.endPct != null && d.endPct < d.startPct) warnings.push("The battery % at the end is lower than at the start.");
-      if (d.odometer != null) warnings.push(...odometerWarnings(await odometerRows(user.id, vehicleId), d.date, d.odometer, id, true));
+      if (d.odometer != null) warnings.push(...odometerWarnings(fmtOf(user.units), await odometerRows(user.id, vehicleId), d.date, d.odometer, id, true));
       if (warnings.length) return { ok: false, warnings };
     }
 
@@ -665,6 +687,9 @@ export async function saveBatteryCheck(vehicleId: string, id: string | null, inp
     const user = await requireUser();
     await ownedVehicle(user.id, vehicleId);
     const d = batterySchema.parse(input);
+    const m = toMetric(user.units);
+    d.odometer = m.dist(d.odometer);
+    d.rangeAtFullKm = m.dist(d.rangeAtFullKm);
     if (id) {
       const r = await db
         .update(batteryChecks)
@@ -702,8 +727,8 @@ export async function deleteBatteryCheck(id: string): Promise<ActionResult> {
 
 const energySchema = z.object({
   homeKwhPrice: z.preprocess((v) => Number(v), z.number().min(0).max(5, "That price per kWh looks too high")),
-  compareL100: z.preprocess((v) => Number(v), z.number().min(1).max(40)),
-  compareFuelPrice: z.preprocess((v) => Number(v), z.number().min(0).max(10)),
+  compareL100: z.preprocess((v) => Number(v), z.number().positive("Enter the comparison car's fuel economy")),
+  compareFuelPrice: z.preprocess((v) => Number(v), z.number().min(0)),
 });
 
 /** Home electricity price (for estimating home charging cost) and the gas car to compare against. */
@@ -711,6 +736,39 @@ export async function saveEnergyPrefs(input: unknown): Promise<ActionResult> {
   try {
     const user = await requireUser();
     const d = energySchema.parse(input);
+    const m = toMetric(user.units);
+    const compareL100 = m.econ(d.compareL100);
+    const compareFuelPrice = m.perVol(d.compareFuelPrice)!;
+    if (!(compareL100 >= 1 && compareL100 <= 40)) return { ok: false, error: "That fuel economy looks off for a car. Check the number and unit." };
+    if (compareFuelPrice > 10) return { ok: false, error: "That fuel price looks too high. Check the number and unit." };
+    await db
+      .update(userTable)
+      .set({ homeKwhPrice: d.homeKwhPrice, compareL100, compareFuelPrice, updatedAt: new Date() })
+      .where(eq(userTable.id, user.id));
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ============================ UNITS & CURRENCY ============================ */
+
+const unitsSchema = z.object({
+  distanceUnit: z.enum(["km", "mi"]),
+  volumeUnit: z.enum(["L", "gal", "impgal"]),
+  economyUnit: z.enum(["l100", "kml", "mpg", "mpgimp"]),
+  currency: z.enum(["CAD", "USD", "GBP", "EUR", "AUD", "NZD"]),
+});
+
+/**
+ * Display / entry units and currency. Stored data is metric, so switching units never changes
+ * any record. Currency is a label only: amounts are NOT converted between currencies.
+ */
+export async function saveUnitPrefs(input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const d = unitsSchema.parse(input);
     await db.update(userTable).set({ ...d, updatedAt: new Date() }).where(eq(userTable.id, user.id));
     revalidatePath("/app", "layout");
     return { ok: true };

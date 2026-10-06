@@ -1,0 +1,415 @@
+<title>Name Shortlist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Martian+Mono:wght@500;700&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one reading column; each candidate is a "spec sheet" row — logo tile left, details right; stacks on phones. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --fg: #171b21;
+  --fg-2: #4a5360;
+  --fg-3: #7a8491;
+  --line: #dde1e7;
+  --accent: #c2410c;
+  --good: #1a7f4b;
+  --good-bg: #e3f4ea;
+  --warn: #8a5a00;
+  --warn-bg: #fbf0d6;
+  --bad: #b42318;
+  --bad-bg: #fbe5e3;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1216; --surface: #171b21; --fg: #eef1f5; --fg-2: #b6bdc7; --fg-3: #8590a0; --line: #2a313b;
+    --accent: #fb8a4c; --good: #5fd08f; --good-bg: #13301f; --warn: #f0c060; --warn-bg: #33280f; --bad: #ff8a80; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1216; --surface: #171b21; --fg: #eef1f5; --fg-2: #b6bdc7; --fg-3: #8590a0; --line: #2a313b;
+  --accent: #fb8a4c; --good: #5fd08f; --good-bg: #13301f; --warn: #f0c060; --warn-bg: #33280f; --bad: #ff8a80; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15.5px/1.6 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-variation-settings: "wdth" 112; font-weight: 800; letter-spacing: -0.015em; line-height: 1.05; }
+h2 { font-size: 22px; font-weight: 750; margin-block: 48px 14px; }
+.lede { color: var(--fg-2); max-width: 64ch; margin: 12px 0 0; font-size: 17px; }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+p { margin: 0; }
+.muted { color: var(--fg-3); }
+
+.found { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.found > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.found b { display: block; font-family: var(--display); font-size: 15px; margin-bottom: 4px; }
+.found p { color: var(--fg-2); font-size: 14.5px; }
+
+.cand { display: grid; grid-template-columns: 240px 1fr; gap: 24px; padding-block: 28px; border-top: 1px solid var(--line); }
+.cand:first-of-type { border-top: 0; }
+@media (max-width: 720px) { .cand { grid-template-columns: 1fr; } }
+.tile { border-radius: 14px; aspect-ratio: 1 / 1; max-width: 100%; display: grid; place-items: center; gap: 0; padding: 18px; }
+.tile svg { width: 64%; height: auto; }
+.tile .word { margin-top: -10px; font-size: 26px; }
+.body { min-width: 0; display: grid; gap: 14px; align-content: start; }
+.head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.head h3 { font-size: 30px; font-variation-settings: "wdth" 108; font-weight: 800; letter-spacing: -0.01em; }
+.rank { font: 500 12px var(--mono); padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--surface); }
+.meaning { color: var(--fg-2); max-width: 64ch; }
+.domains { display: flex; gap: 6px; flex-wrap: wrap; font: 500 13px var(--mono); }
+.dom { padding: 3px 9px; border-radius: 6px; }
+.dom.ok { background: var(--good-bg); color: var(--good); }
+.dom.no { background: var(--bad-bg); color: var(--bad); text-decoration: line-through; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.sw { display: grid; grid-template-columns: 22px auto; align-items: center; gap: 7px; font: 12.5px var(--mono); color: var(--fg-2); }
+.sw i { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--line); display: block; }
+.tags { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.tags li { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.tags li::before { content: "“"; color: var(--fg-3); }
+.tags li::after { content: "”"; color: var(--fg-3); }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; }
+@media (max-width: 520px) { .pc { grid-template-columns: 1fr; } }
+.pc ul { margin: 4px 0 0; padding-left: 18px; color: var(--fg-2); }
+.label { font: 500 11.5px var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--fg-3); }
+
+.rej { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rej th, .rej td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rej th { font: 500 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); }
+.rej td:first-child { font-family: var(--display); font-weight: 700; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 70ch; }
+.note { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin-top: 16px; max-width: 75ch; }
+a { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Brand naming · rounds 1 &amp; 2</div>
+  <h1>Finding a name for the car-cost tracker</h1>
+  <p class="lede">Ten names that passed three tests: they say what the product does, they're easy to draw, and the key domains were unregistered when checked on October 1, 2026. Round 1 is first, then six new ones from round 2, with a side-by-side comparison to help narrow them down.</p>
+
+  <h2>What the brand stands for</h2>
+  <div class="found">
+    <div><b>Promise</b><p>The honest number behind your car: what it really costs per month and per kilometre, including the things people forget.</p></div>
+    <div><b>Who it's for</b><p>Everyday drivers on a budget, families with two cars, and anyone deciding whether to keep fixing the old one or replace it.</p></div>
+    <div><b>Personality</b><p>Straight-talking, practical and a little warm. Like a friend who's good with money and knows cars, not a bank and not a gearhead forum.</p></div>
+    <div><b>Proof points</b><p>Total cost of ownership, keep-vs-replace, 10-second fill-ups, your data exportable anytime, built in Canada.</p></div>
+  </div>
+
+  <h2>The shortlist</h2>
+
+  <!-- 1. Wheeltab -->
+  <section class="cand">
+    <div class="tile" style="background:#1e2733">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Wheeltab logo sketch: a wheel with a price tag hanging from the rim">
+        <circle cx="56" cy="56" r="40" fill="none" stroke="#eceff2" stroke-width="10"/>
+        <circle cx="56" cy="56" r="9" fill="#eceff2"/>
+        <g stroke="#eceff2" stroke-width="5" stroke-linecap="round">
+          <line x1="56" y1="47" x2="56" y2="22"/><line x1="64.6" y1="53.2" x2="88.3" y2="45.5"/><line x1="61.3" y1="63.3" x2="75.9" y2="83.5"/><line x1="50.7" y1="63.3" x2="36.1" y2="83.5"/><line x1="47.4" y1="53.2" x2="23.7" y2="45.5"/>
+        </g>
+        <path d="M86 86 l20 4 l-4 22 l-20 -4 z" fill="#f2662b"/>
+        <circle cx="90" cy="92" r="2.6" fill="#1e2733"/>
+        <line x1="88" y1="86" x2="84" y2="82" stroke="#f2662b" stroke-width="3"/>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-variation-settings:'wdth' 115;font-weight:800;color:#eceff2">wheeltab</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Wheeltab</h3><span class="rank">My pick</span></div>
+      <p class="meaning">A running tab on your wheels. "Tab" means a bill you keep adding to, which is exactly what owning a car is. Works in kilometres and miles, so it isn't boxed into Canada if you grow.</p>
+      <div class="domains"><span class="dom ok">wheeltab.com</span><span class="dom ok">wheeltab.ca</span><span class="dom ok">wheeltab.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Keep a tab on your wheels.</li><li>What your car really costs.</li><li>Every kilometre, accounted for.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#1e2733"></i>Asphalt</span><span class="sw"><i style="background:#f2662b"></i>Signal orange</span><span class="sw"><i style="background:#eceff2"></i>Chalk</span><span class="sw"><i style="background:#2e8c8a"></i>Guardrail teal</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free, including .com</li><li>Easy to say, spell and remember</li><li>Logo writes itself: a wheel plus a tag</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>An unrelated Chrome extension uses the name (different category, low risk)</li><li>Some people may read "tab" as a browser tab</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Odotab -->
+  <section class="cand">
+    <div class="tile" style="background:#121417">
+      <svg viewBox="0 0 120 70" role="img" aria-label="Odotab logo sketch: an odometer counter whose last digit is a dollar sign">
+        <rect x="4" y="10" width="112" height="50" rx="9" fill="#23272d"/>
+        <g font-family="Martian Mono, monospace" font-size="30" font-weight="700" text-anchor="middle">
+          <rect x="11" y="17" width="22" height="36" rx="4" fill="#f5f6f7"/><text x="22" y="46" fill="#121417">2</text>
+          <rect x="37" y="17" width="22" height="36" rx="4" fill="#f5f6f7"/><text x="48" y="46" fill="#121417">5</text>
+          <rect x="63" y="17" width="22" height="36" rx="4" fill="#f5f6f7"/><text x="74" y="46" fill="#121417">6</text>
+          <rect x="89" y="17" width="22" height="36" rx="4" fill="#ffb020"/><text x="100" y="46" fill="#121417">$</text>
+        </g>
+      </svg>
+      <div class="word" style="font-family:'Martian Mono',monospace;font-weight:700;font-size:22px;color:#ffb020;margin-top:8px">odotab</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Odotab</h3><span class="dom ok" style="font:500 12px var(--mono)">runner-up</span></div>
+      <p class="meaning">Odometer plus tab: the running total that climbs with every kilometre. The rolling-digit logo, with the last digit turning into a dollar sign, is the most ownable image on this list.</p>
+      <div class="domains"><span class="dom ok">odotab.com</span><span class="dom ok">odotab.ca</span><span class="dom ok">odotab.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Your car's running total.</li><li>Watch the dollars, not just the kilometres.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#121417"></i>Dash black</span><span class="sw"><i style="background:#ffb020"></i>Gauge amber</span><span class="sw"><i style="background:#f5f6f7"></i>Dial white</span><span class="sw"><i style="background:#e5484d"></i>Redline</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free</li><li>Very distinctive logo and animation potential</li><li>No existing products found under the name</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>"Odo" is car slang some people won't know</li><li>Could be misheard as "Odoo", a large business-software brand</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Kilotab -->
+  <section class="cand">
+    <div class="tile" style="background:#1f4d3f">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Kilotab logo sketch: a receipt with km written on it and a torn bottom edge">
+        <path d="M28 14 h64 v80 l-8 6 l-8 -6 l-8 6 l-8 -6 l-8 6 l-8 -6 l-8 6 l-8 -6 z" fill="#f3f5f4"/>
+        <text x="60" y="64" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="34" fill="#1f4d3f">km</text>
+        <rect x="40" y="74" width="40" height="5" rx="2.5" fill="#d7263d"/>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-weight:800;color:#f3f5f4">kilotab</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Kilotab</h3></div>
+      <p class="meaning">Kilometre plus tab. Openly Canadian and metric, which is a real selling point at home: most competitors are American and think in miles.</p>
+      <div class="domains"><span class="dom ok">kilotab.com</span><span class="dom ok">kilotab.ca</span><span class="dom ok">kilotab.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Made for kilometres.</li><li>The true cost, by the kilometre.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#1f4d3f"></i>Spruce</span><span class="sw"><i style="background:#d7263d"></i>Maple red</span><span class="sw"><i style="background:#f3f5f4"></i>Snow</span><span class="sw"><i style="background:#5b6b73"></i>Slate</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free</li><li>Strong home-market identity</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>Feels limited if you later target the US</li><li>"Kilo" has drug-slang baggage for some people</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. TrueOdo -->
+  <section class="cand">
+    <div class="tile" style="background:#1b3a6b">
+      <svg viewBox="0 0 120 90" role="img" aria-label="TrueOdo logo sketch: a half-circle gauge whose needle ends in a check mark">
+        <path d="M14 70 A46 46 0 0 1 106 70" fill="none" stroke="#eef2f6" stroke-width="9" stroke-linecap="round"/>
+        <g stroke="#eef2f6" stroke-width="3"><line x1="60" y1="26" x2="60" y2="34"/><line x1="28" y1="40" x2="33" y2="45"/><line x1="92" y1="40" x2="87" y2="45"/></g>
+        <path d="M46 62 l10 10 l22 -26" fill="none" stroke="#2bb673" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="word" style="font-family:'Fraunces',serif;font-weight:600;color:#eef2f6">TrueOdo</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>TrueOdo</h3></div>
+      <p class="meaning">The true cost behind your odometer reading. Sounds trustworthy and slightly premium.</p>
+      <div class="domains"><span class="dom ok">trueodo.com</span><span class="dom ok">trueodo.ca</span><span class="dom ok">trueodo.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Know the true cost.</li><li>Honest numbers for every drive.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#1b3a6b"></i>Ink blue</span><span class="sw"><i style="background:#2bb673"></i>Check green</span><span class="sw"><i style="background:#eef2f6"></i>Fog</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free</li><li>Trust is built into the name</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>"True" car brands are crowded (TrueCar, TrueDelta), so it's easy to confuse and harder to trademark</li><li>Two capitals in the name are easy to mistype</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <h2>Round 2: six more</h2>
+
+  <!-- 5. Penny & Piston -->
+  <section class="cand">
+    <div class="tile" style="background:#2b2622">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Penny and Piston logo sketch: a copper coin with a piston inside">
+        <circle cx="60" cy="60" r="46" fill="#b4652f"/>
+        <circle cx="60" cy="60" r="38" fill="none" stroke="#e0a26f" stroke-width="2"/>
+        <rect x="44" y="34" width="32" height="22" rx="4" fill="#2b2622"/>
+        <g stroke="#b4652f" stroke-width="2.5"><line x1="46" y1="41" x2="74" y2="41"/><line x1="46" y1="47" x2="74" y2="47"/></g>
+        <rect x="56" y="56" width="8" height="18" fill="#2b2622"/>
+        <circle cx="60" cy="80" r="8" fill="none" stroke="#2b2622" stroke-width="5"/>
+      </svg>
+      <div class="word" style="font-family:'Fraunces',serif;font-weight:600;font-size:22px;color:#e0a26f">Penny &amp; Piston</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Penny &amp; Piston</h3><span class="dom ok" style="font:500 12px var(--mono)">most character</span></div>
+      <p class="meaning">Money meets machine. It sounds like a friendly local garage you'd trust, warm and a little vintage, which stands out against the cold tech names in this category. The coin-with-a-piston logo works on a sticker, an app icon or a shop sign.</p>
+      <div class="domains"><span class="dom ok">pennyandpiston.com</span><span class="dom ok">.ca</span><span class="dom ok">.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Every penny your car costs.</li><li>Look after the pennies. Look after the car.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#b4652f"></i>Copper</span><span class="sw"><i style="background:#2b2622"></i>Motor oil</span><span class="sw"><i style="background:#c9a227"></i>Brass</span><span class="sw"><i style="background:#d9dde2"></i>Steel</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>Memorable, warm, very brandable</li><li>Lends itself to a great look and voice</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>Long domain and "&amp;" can't be typed in it</li><li>Canada retired the penny in 2013, which is either charming or dated</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Keystub -->
+  <section class="cand">
+    <div class="tile" style="background:#18263f">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Keystub logo sketch: a car key whose head is a ticket stub">
+        <path d="M18 34 h44 a6 6 0 0 0 0 12 a6 6 0 0 0 0 12 a6 6 0 0 0 0 12 v-0 h-44 z" fill="#f4c430"/>
+        <g fill="#18263f"><circle cx="30" cy="52" r="5"/></g>
+        <path d="M62 46 h40 v8 h-6 v6 h-6 v-6 h-6 v6 h-6 v-6 h-16 z" fill="#f2f4f7"/>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-variation-settings:'wdth' 110;font-weight:800;color:#f4c430">keystub</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Keystub</h3></div>
+      <p class="meaning">Your car key plus the receipt stub. Every cost of owning the car, kept with the key. Short, crisp and easy to spell.</p>
+      <div class="domains"><span class="dom ok">keystub.com</span><span class="dom ok">keystub.ca</span><span class="dom ok">keystub.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Every receipt, on the same key ring.</li><li>Own the car. Know the cost.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#18263f"></i>Night navy</span><span class="sw"><i style="background:#f4c430"></i>Ticket yellow</span><span class="sw"><i style="background:#f2f4f7"></i>Paper</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free</li><li>Only other use found is an academic research paper</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>Meaning takes a second to click</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Tallywheel -->
+  <section class="cand">
+    <div class="tile" style="background:#26282c">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Tallywheel logo sketch: a wheel containing four tally marks crossed by a fifth">
+        <circle cx="60" cy="60" r="44" fill="none" stroke="#eef0f2" stroke-width="9"/>
+        <g stroke="#eef0f2" stroke-width="6" stroke-linecap="round"><line x1="40" y1="40" x2="40" y2="80"/><line x1="52" y1="40" x2="52" y2="80"/><line x1="64" y1="40" x2="64" y2="80"/><line x1="76" y1="40" x2="76" y2="80"/></g>
+        <line x1="32" y1="76" x2="86" y2="44" stroke="#3ba776" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-weight:800;color:#eef0f2">tallywheel</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Tallywheel</h3></div>
+      <p class="meaning">Keeping a tally on your wheels. Tally marks inside a tire make an instantly readable icon, and "tally" is friendlier than "ledger" or "tracker."</p>
+      <div class="domains"><span class="dom ok">tallywheel.com</span><span class="dom ok">tallywheel.ca</span><span class="dom ok">tallywheel.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Keep a tally on your wheels.</li><li>Add it up. Drive on.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#26282c"></i>Graphite</span><span class="sw"><i style="background:#3ba776"></i>Tally green</span><span class="sw"><i style="background:#eef0f2"></i>Paper</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free, no conflicts found</li><li>Strongest icon of round 2</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>Three syllables, a bit longer to say</li><li>"Tally" is a popular form-builder brand (different category)</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Carfare -->
+  <section class="cand">
+    <div class="tile" style="background:#0b5cad">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Carfare logo sketch: a round transit token with a car silhouette">
+        <circle cx="60" cy="60" r="44" fill="#e8b100"/>
+        <circle cx="60" cy="60" r="34" fill="none" stroke="#0b5cad" stroke-width="3" stroke-dasharray="4 5"/>
+        <path d="M36 66 l5 -12 a6 6 0 0 1 6 -4 h26 a6 6 0 0 1 6 4 l5 12 v8 h-48 z" fill="#0b5cad"/>
+        <circle cx="45" cy="75" r="5" fill="#e8b100"/><circle cx="75" cy="75" r="5" fill="#e8b100"/>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-weight:800;color:#ffffff">carfare</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Carfare</h3></div>
+      <p class="meaning">A real English word: the money it takes to get somewhere. Instantly understood, and it already means what the app measures.</p>
+      <div class="domains"><span class="dom no">carfare.com</span><span class="dom ok">carfare.ca</span><span class="dom ok">carfare.app</span><span class="dom ok">getcarfare.com</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>What it really costs to get there.</li><li>Your carfare, all in one place.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#0b5cad"></i>Transit blue</span><span class="sw"><i style="background:#e8b100"></i>Token gold</span><span class="sw"><i style="background:#ffffff"></i>White</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>Real word, so zero explaining</li><li>.ca and .app are free</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>.com is taken; a UAE car-rental company called CarFare exists</li><li>A dictionary word is harder to trademark</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Gaugetab -->
+  <section class="cand">
+    <div class="tile" style="background:#14213d">
+      <svg viewBox="0 0 120 90" role="img" aria-label="Gaugetab logo sketch: a gauge whose needle points to a price tag">
+        <path d="M14 72 A46 46 0 0 1 106 72" fill="none" stroke="#edf2f4" stroke-width="8" stroke-linecap="round"/>
+        <line x1="60" y1="72" x2="88" y2="38" stroke="#e63946" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="60" cy="72" r="7" fill="#edf2f4"/>
+        <path d="M88 22 h18 v16 l-9 7 l-9 -7 z" fill="#e63946"/>
+        <text x="97" y="35" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="12" fill="#edf2f4">$</text>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-weight:800;color:#edf2f4">gaugetab</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Gaugetab</h3></div>
+      <p class="meaning">A gauge for what your car costs. Uses the dashboard instrument everyone already reads every day.</p>
+      <div class="domains"><span class="dom ok">gaugetab.com</span><span class="dom ok">gaugetab.ca</span><span class="dom ok">gaugetab.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>The gauge your dashboard is missing.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#14213d"></i>Midnight</span><span class="sw"><i style="background:#e63946"></i>Needle red</span><span class="sw"><i style="background:#edf2f4"></i>Mist</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free, no conflicts found</li><li>Great tagline built in</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>"Gauge" is often misspelled "guage"</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Dashtally -->
+  <section class="cand">
+    <div class="tile" style="background:#222831">
+      <svg viewBox="0 0 120 100" role="img" aria-label="Dashtally logo sketch: four rising bars under a dashboard arc">
+        <path d="M18 40 A50 50 0 0 1 102 40" fill="none" stroke="#00adb5" stroke-width="6" stroke-linecap="round"/>
+        <g fill="#eeeeee"><rect x="30" y="66" width="12" height="20" rx="2"/><rect x="48" y="58" width="12" height="28" rx="2"/><rect x="66" y="50" width="12" height="36" rx="2"/><rect x="84" y="40" width="12" height="46" rx="2" fill="#00adb5"/></g>
+      </svg>
+      <div class="word" style="font-family:'Archivo',sans-serif;font-weight:800;color:#eeeeee">dashtally</div>
+    </div>
+    <div class="body">
+      <div class="head"><h3>Dashtally</h3></div>
+      <p class="meaning">Your dashboard's running tally. Reads as "dash" (dashboard) and "tally" (running count), and suits the app's dashboard-first design.</p>
+      <div class="domains"><span class="dom ok">dashtally.com</span><span class="dom ok">dashtally.ca</span><span class="dom ok">dashtally.app</span></div>
+      <div><div class="label">Taglines</div>
+        <ul class="tags"><li>Your car, added up.</li></ul></div>
+      <div><div class="label">Colours</div>
+        <div class="swatches"><span class="sw"><i style="background:#222831"></i>Charcoal</span><span class="sw"><i style="background:#00adb5"></i>Aqua</span><span class="sw"><i style="background:#eeeeee"></i>Light</span></div></div>
+      <div class="pc">
+        <div><div class="label">For</div><ul><li>All three domains free, no conflicts found</li></ul></div>
+        <div><div class="label">Watch</div><ul><li>"Dash" also suggests DoorDash or analytics software</li><li>Less emotional than the others</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <h2>Side by side</h2>
+  <div class="scroll">
+    <table class="rej">
+      <thead><tr><th>Name</th><th>.com</th><th>Says what it does</th><th>Logo ease</th><th>Works outside Canada</th><th>Main risk</th></tr></thead>
+      <tbody>
+        <tr><td>Wheeltab</td><td>Free</td><td>Yes</td><td>Easy</td><td>Yes</td><td>"Tab" read as browser tab</td></tr>
+        <tr><td>Odotab</td><td>Free</td><td>Mostly</td><td>Easy, distinctive</td><td>Yes</td><td>"Odo" jargon, Odoo</td></tr>
+        <tr><td>Penny &amp; Piston</td><td>Free</td><td>Feel more than function</td><td>Easy, distinctive</td><td>Yes</td><td>Long; can't type "&amp;"</td></tr>
+        <tr><td>Tallywheel</td><td>Free</td><td>Yes</td><td>Easiest</td><td>Yes</td><td>Slightly long</td></tr>
+        <tr><td>Keystub</td><td>Free</td><td>Takes a second</td><td>Medium</td><td>Yes</td><td>Less obvious meaning</td></tr>
+        <tr><td>Gaugetab</td><td>Free</td><td>Yes</td><td>Easy</td><td>Yes</td><td>Misspelled "guage"</td></tr>
+        <tr><td>Dashtally</td><td>Free</td><td>Mostly</td><td>Easy</td><td>Yes</td><td>Generic feel</td></tr>
+        <tr><td>Carfare</td><td>Taken</td><td>Yes (real word)</td><td>Easy</td><td>Yes</td><td>UAE rental company; weak trademark</td></tr>
+        <tr><td>Kilotab</td><td>Free</td><td>Yes</td><td>Easy</td><td>Canada only</td><td>"Kilo" slang</td></tr>
+        <tr><td>TrueOdo</td><td>Free</td><td>Yes</td><td>Easy</td><td>Yes</td><td>Crowded "True" car brands</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted" style="margin-top:10px;font-size:14px">Also free on all three domains, if any spark something: Fuelstub, Needletab, Pennyodo, Ownerstab, Kmtally, Milestab, Honestodo, Pistonpenny.</p>
+
+  <h2>Names I ruled out</h2>
+  <div class="scroll">
+    <table class="rej">
+      <thead><tr><th>Name</th><th>Why not</th></tr></thead>
+      <tbody>
+        <tr><td>Glovebook</td><td>Great idea, but "GloveBox" is already both a car fuel/expense tracker and an insurance app, which is a trademark risk.</td></tr>
+        <tr><td>Glovebox, Pitlane, Fillup, Tankful, Lugnut</td><td>.com, .ca and .app all taken.</td></tr>
+        <tr><td>Carfolio, Ownly, CarCost, Revlog, Roadbook</td><td>All three domains taken.</td></tr>
+        <tr><td>Pitstop, Drivewise, Upkeep, Vroomly</td><td>Existing car or maintenance brands.</td></tr>
+        <tr><td>Daily Driver</td><td>Only the .app domain free, and it's a common phrase, so it would be hard to protect.</td></tr>
+        <tr><td>Keepwell, Wellkept, Carwell, Klicks, Keyledger</td><td>All three domains taken.</td></tr>
+        <tr><td>Pennywheel, Wheelmoney, Cartally, Odokeep</td><td>.com taken; only .ca and .app free.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Before you commit</h2>
+  <ol class="steps">
+    <li>Say each name out loud to three people and ask them to spell it back. The one nobody misspells wins ties.</li>
+    <li>Search the Canadian trademarks database (CIPO) and the US one (USPTO) for your favourite. I found no app conflicts for the top three, but that isn't a legal clearance.</li>
+    <li>Check social handles (Instagram, TikTok, X) are free.</li>
+    <li>Buy the .com and .ca together (about $15–25 CAD each per year). Unregistered domains can be taken any day, so don't wait long.</li>
+    <li>Then I'll set the name across the app and website, turn the logo sketch into a proper logo, and build the colour palette into the design.</li>
+  </ol>
+  <p class="note">"Free" means no registration record existed when I checked the domain registries on October 1, 2026. The logos are quick sketches to judge the idea, not finished artwork.</p>
+</div>

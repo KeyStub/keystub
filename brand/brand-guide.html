@@ -1,0 +1,124 @@
+<title>KeyStub Brand Kit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a single reading column; the logo hero on navy, then colour swatches, type specimens, file guide, rules. */
+:root {
+  --navy: #18263F; --yellow: #F4C430; --paper: #F2F4F7; --ink: #16202F; --slate: #47546A; --white: #FFFFFF;
+  --bg: #F2F4F7; --surface: #FFFFFF; --fg: #16202F; --fg-2: #47546A; --line: #D9DEE7;
+  --display: "Archivo", "Arial Black", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0E141F; --surface: #172133; --fg: #EEF2F8; --fg-2: #AEB9CC; --line: #2A3549; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0E141F; --surface: #172133; --fg: #EEF2F8; --fg-2: #AEB9CC; --line: #2A3549; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 18px; padding-block: 0 72px; }
+h1, h2 { font-family: var(--display); font-weight: 800; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 22px; margin-block: 44px 14px; }
+p { margin: 0; }
+a { color: inherit; }
+.hero { background: var(--navy); color: var(--white); padding-block: 40px 34px; }
+.hero .wrap { padding-block: 0; display: grid; gap: 18px; }
+.hero img { width: min(520px, 100%); height: auto; display: block; }
+.hero p { color: #C9D3E6; max-width: 60ch; }
+.lede { color: var(--fg-2); max-width: 64ch; }
+
+.logos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.logo-card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.logo-card .art { aspect-ratio: 16 / 9; display: grid; place-items: center; padding: 18px; }
+.logo-card .art img { max-height: 100%; max-width: 100%; height: auto; }
+.logo-card .cap { padding: 10px 14px; font-size: 13.5px; border-top: 1px solid var(--line); }
+.logo-card .cap b { display: block; font-weight: 600; }
+.logo-card .cap code { font: 12px var(--mono); color: var(--fg-2); word-break: break-all; }
+.on-white { background: #FFFFFF; } .on-navy { background: var(--navy); } .on-photo { background: linear-gradient(135deg, #3B4A5E, #1D2735); }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.sw { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.sw .chip { height: 86px; }
+.sw .info { padding: 10px 12px; display: grid; gap: 2px; font-size: 13px; }
+.sw .info b { font-size: 14px; }
+.sw button { justify-self: start; font: 500 12.5px var(--mono); border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.sw .use { color: var(--fg-2); }
+
+.type { display: grid; gap: 12px; }
+.spec { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: var(--surface); display: grid; gap: 6px; }
+.spec .k { font: 500 12px var(--mono); color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.spec .big { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6vw, 46px); line-height: 1.05; }
+.spec .body-sample { font-size: 17px; max-width: 60ch; }
+.spec a { color: var(--fg-2); font-size: 13.5px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-2); }
+td code { font: 12.5px var(--mono); word-break: break-all; }
+.scroll { overflow-x: auto; }
+ul.rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <img src="4-logo/keystub-logo-on-navy-1000.png" alt="KeyStub logo: a car key whose head is a yellow ticket stub, next to the word KeyStub">
+    <p>A car key whose head is a ticket stub. The key is the car; the stub is the receipt for everything it costs. Tagline: <b style="color:#fff">Know what your car really costs.</b></p>
+  </div>
+</header>
+
+<div class="wrap">
+  <h2>Logo versions</h2>
+  <div class="logos">
+    <div class="logo-card"><div class="art on-white"><img src="4-logo/keystub-logo-navy-1000.png" alt="Navy logo on white"></div><div class="cap"><b>Navy: for white or light backgrounds</b><code>4-logo/keystub-logo-navy.svg / .png</code></div></div>
+    <div class="logo-card"><div class="art on-photo"><img src="4-logo/keystub-logo-white-1000.png" alt="White and yellow logo on a dark background"></div><div class="cap"><b>White + yellow: for dark backgrounds and photos</b><code>4-logo/keystub-logo-white.svg / .png</code></div></div>
+    <div class="logo-card"><div class="art on-white"><img src="2-app-icon/keystub-icon-rounded-512.png" alt="App icon" style="max-height:150px"></div><div class="cap"><b>App icon / favicon</b><code>2-app-icon/keystub-icon-rounded-*.png</code></div></div>
+    <div class="logo-card"><div class="art on-white"><img src="3-social/keystub-profile-picture.png" alt="Social profile picture" style="max-height:150px;border-radius:50%"></div><div class="cap"><b>Profile picture (all socials)</b><code>3-social/keystub-profile-picture.png</code></div></div>
+  </div>
+
+  <h2>Colours</h2>
+  <p class="lede" style="margin-bottom:14px">Navy and yellow carry the brand; the rest are for text and backgrounds. Tap a code to copy it.</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#18263F"></div><div class="info"><b>KeyStub Navy</b><button type="button" data-copy="#18263F">#18263F</button><span>RGB 24, 38, 63</span><span class="use">Main colour, backgrounds, logo on light</span></div></div>
+    <div class="sw"><div class="chip" style="background:#F4C430"></div><div class="info"><b>Ticket Yellow</b><button type="button" data-copy="#F4C430">#F4C430</button><span>RGB 244, 196, 48</span><span class="use">Accent: buttons and highlights on navy. Never yellow text on white.</span></div></div>
+    <div class="sw"><div class="chip" style="background:#F2F4F7"></div><div class="info"><b>Paper</b><button type="button" data-copy="#F2F4F7">#F2F4F7</button><span>RGB 242, 244, 247</span><span class="use">Light backgrounds, the key blade</span></div></div>
+    <div class="sw"><div class="chip" style="background:#16202F"></div><div class="info"><b>Ink</b><button type="button" data-copy="#16202F">#16202F</button><span>RGB 22, 32, 47</span><span class="use">Body text on light</span></div></div>
+    <div class="sw"><div class="chip" style="background:#47546A"></div><div class="info"><b>Slate</b><button type="button" data-copy="#47546A">#47546A</button><span>RGB 71, 84, 106</span><span class="use">Secondary text, captions</span></div></div>
+    <div class="sw"><div class="chip" style="background:#FFFFFF"></div><div class="info"><b>White</b><button type="button" data-copy="#FFFFFF">#FFFFFF</button><span>RGB 255, 255, 255</span><span class="use">Text and logo on navy</span></div></div>
+  </div>
+
+  <h2>Fonts</h2>
+  <div class="type">
+    <div class="spec"><span class="k">Headlines &amp; logo · Archivo ExtraBold (800)</span><div class="big">Every kilometre, accounted for.</div><a href="https://fonts.google.com/specimen/Archivo" target="_blank" rel="noopener">Archivo on Google Fonts (free) ↗</a></div>
+    <div class="spec"><span class="k">Body, buttons, captions · IBM Plex Sans (400 / 500 / 600)</span><p class="body-sample">Log a fill-up in ten seconds. KeyStub adds up fuel, maintenance, insurance and registration so you can see your real cost per kilometre.</p><a href="https://fonts.google.com/specimen/IBM+Plex+Sans" target="_blank" rel="noopener">IBM Plex Sans on Google Fonts (free) ↗</a></div>
+  </div>
+  <p class="lede" style="margin-top:10px">In Canva, type "Archivo" and "IBM Plex Sans" in the font menu. Both fonts are free to use anywhere, including commercially.</p>
+
+  <h2>Which file to upload where</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Where</th><th>File</th></tr></thead>
+    <tbody>
+      <tr><td>Instagram, Facebook, X, YouTube, TikTok profile photo</td><td><code>3-social/keystub-profile-picture.png</code></td></tr>
+      <tr><td>X header</td><td><code>3-social/keystub-x-header-1500x500.png</code></td></tr>
+      <tr><td>Facebook cover</td><td><code>3-social/keystub-facebook-cover-1640x624.png</code></td></tr>
+      <tr><td>YouTube banner</td><td><code>3-social/keystub-youtube-banner-2560x1440.png</code></td></tr>
+      <tr><td>Google Workspace logo (Admin console → Account → Personalization)</td><td><code>4-logo/keystub-logo-navy-1000.png</code></td></tr>
+      <tr><td>Email signature, documents, invoices</td><td><code>4-logo/keystub-logo-navy-1000.png</code></td></tr>
+      <tr><td>Canva or any design tool (editable, scales to any size)</td><td>any <code>.svg</code> file</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Rules</h2>
+  <ul class="rules">
+    <li>Leave clear space around the logo at least the size of the key's ring hole.</li>
+    <li>Navy logo on light backgrounds; white + yellow logo on navy, dark colours or photos.</li>
+    <li>Don't stretch, rotate, outline, add shadows, or recolour the logo outside these versions.</li>
+    <li>Headlines in Archivo ExtraBold; everything else in IBM Plex Sans. No other fonts.</li>
+  </ul>
+</div>
+
+<script>
+document.querySelectorAll("[data-copy]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    const v = b.getAttribute("data-copy"), t = b.textContent;
+    const done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = t; }, 1200); };
+    try { navigator.clipboard.writeText(v).then(done, function () {}); } catch (e) {}
+  });
+});
+</script>

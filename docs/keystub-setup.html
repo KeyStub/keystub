@@ -1,0 +1,669 @@
+<title>KeyStub Setup Checklist</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one working column. Phases are headed sections with a progress count; every step is an open card: checkbox + title, then
+   "You'll need", numbered click-by-click instructions with links, and a "Done when" line. Nothing is hidden behind taps. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --fg: #16202f;
+  --fg-2: #47546a;
+  --fg-3: #6f7b91;
+  --line: #d9dee7;
+  --navy: #18263f;
+  --ticket: #f4c430;
+  --ticket-wash: #fdf3cf;
+  --accent: #1d4ed8;
+  --done: #1a7f4b;
+  --done-wash: #e4f4ea;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131b; --surface: #161d28; --fg: #eef2f8; --fg-2: #b5c0d2; --fg-3: #8d99ae; --line: #2a3445;
+    --navy: #1c2c4a; --ticket: #f4c430; --ticket-wash: #3a3112; --accent: #8db1ff; --done: #5fd08f; --done-wash: #14301f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131b; --surface: #161d28; --fg: #eef2f8; --fg-2: #b5c0d2; --fg-3: #8d99ae; --line: #2a3445;
+  --navy: #1c2c4a; --ticket: #f4c430; --ticket-wash: #3a3112; --accent: #8db1ff; --done: #5fd08f; --done-wash: #14301f;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.62 var(--body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 18px; padding-block: 0 72px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+.hero { background: var(--navy); color: #ffffff; padding-block: 32px 28px; margin-bottom: 24px; }
+.hero .wrap { padding-block: 0; }
+.brand { font: 800 15px var(--display); font-variation-settings: "wdth" 112; color: var(--ticket); }
+.hero h1 { font-size: clamp(28px, 4.6vw, 40px); font-weight: 800; font-variation-settings: "wdth" 110; margin-top: 6px; line-height: 1.08; }
+.hero p { color: #c9d3e6; margin-top: 10px; max-width: 64ch; }
+.overall { margin-top: 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font: 500 13px var(--mono); color: #c9d3e6; }
+.bar { flex: 1; min-width: 180px; height: 8px; background: rgba(255,255,255,0.14); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--ticket); transition: width .3s; }
+
+.costs { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 10px; }
+.cost { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.cost .k { font: 500 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--fg-3); }
+.cost .v { font: 700 20px var(--display); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.cost .s { font-size: 12.5px; color: var(--fg-3); }
+.toc { margin-top: 18px; display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 14px; }
+
+.phase { margin-top: 40px; }
+.phase-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--fg); padding-bottom: 8px; margin-bottom: 14px; }
+.phase-head h2 { font-size: 22px; font-weight: 800; }
+.phase-head .when { font-size: 13.5px; color: var(--fg-2); }
+.phase-count { font: 500 12.5px var(--mono); color: var(--fg-3); }
+
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; margin-bottom: 12px; display: grid; gap: 12px; }
+.step-head { display: grid; grid-template-columns: 24px auto 1fr; align-items: start; gap: 4px 12px; }
+.step-head input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--done); cursor: pointer; }
+.num { font: 500 13px var(--mono); color: var(--fg-3); padding-top: 3px; }
+.step-head h3 { font-size: 17.5px; font-weight: 750; line-height: 1.3; }
+.meta { grid-column: 3; font: 500 12px var(--mono); color: var(--fg-3); }
+.step.done { background: transparent; }
+.step.done h3 { color: var(--fg-3); text-decoration: line-through; }
+.step.done .num { color: var(--done); }
+.step.done .body { display: none; }
+.step.done .done-note { display: block; }
+.done-note { display: none; font-size: 13px; color: var(--fg-3); }
+.body { display: grid; gap: 12px; padding-left: 36px; min-width: 0; }
+@media (max-width: 560px) { .body { padding-left: 0; } .step-head { grid-template-columns: 24px 1fr; } .num { display: none; } .meta { grid-column: 2; } }
+.label { font: 500 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--fg-3); margin-bottom: 4px; }
+.need { margin: 0; padding-left: 18px; color: var(--fg-2); font-size: 14px; }
+ol.how { margin: 0; padding-left: 22px; display: grid; gap: 7px; }
+ol.how li { padding-left: 4px; }
+ol.how ul { margin: 5px 0 0; padding-left: 18px; display: grid; gap: 3px; color: var(--fg-2); font-size: 14px; }
+.path { font-family: var(--mono); font-size: 12.5px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; white-space: normal; }
+code { font-family: var(--mono); font-size: 12.5px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; }
+.doneWhen { font-size: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.doneWhen b { color: var(--done); font-weight: 600; }
+.tip { background: var(--ticket-wash); border-left: 3px solid var(--ticket); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 14px; }
+.claude { background: var(--done-wash); border-left: 3px solid var(--done); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 14px; }
+.tip b, .claude b { font-weight: 600; }
+.accounts { margin-top: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.accounts h2 { font-size: 19px; font-weight: 800; }
+.accounts > p { color: var(--fg-2); font-size: 14px; margin-top: 4px; max-width: 70ch; }
+.acct-scroll { overflow-x: auto; margin-top: 12px; }
+table.acct { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 640px; }
+table.acct th { text-align: left; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); padding: 0 8px 7px; border-bottom: 1px solid var(--line); }
+table.acct td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.acct td:first-child { font-weight: 600; white-space: nowrap; }
+table.acct .em { font-family: var(--mono); font-size: 12.5px; }
+.pill { display: inline-block; font: 500 11.5px var(--mono); padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.pill.ok { background: var(--done-wash); color: var(--done); }
+.pill.wip { background: var(--ticket-wash); color: var(--fg); }
+.pill.todo { background: var(--bg); color: var(--fg-3); border: 1px solid var(--line); }
+.muted { color: var(--fg-3); }
+.foot { margin-top: 36px; font-size: 13px; color: var(--fg-3); max-width: 72ch; }
+.reset { margin-top: 10px; font: 500 12.5px var(--mono); background: none; border: 1px solid var(--line); color: var(--fg-2); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand">KeyStub</div>
+    <h1>Setup checklist, step by step</h1>
+    <p>Everything to go from a chosen name to a registered business with its app online. Work top to bottom; each step sets up the next. Tick a step when it's done and it folds away.</p>
+    <div class="overall"><span id="overall-text">0 of 0 done</span><div class="bar" aria-hidden="true"><i id="overall-bar"></i></div></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="costs">
+    <div class="cost"><div class="k">One-time</div><div class="v">$59 + permit?</div><div class="s">AMA trade name (online); MD home occupation permit if required</div></div>
+    <div class="cost"><div class="k">Per year</div><div class="v">≈ $140–150</div><div class="s">domains ≈ $30, email ≈ $110 (no MD business licence)</div></div>
+    <div class="cost"><div class="k">Free</div><div class="v">$0</div><div class="s">Venn, Google Password Manager, GitHub, Neon, Vercel, Resend</div></div>
+    <div class="cost"><div class="k">Later</div><div class="v">Per sale</div><div class="s">Stripe ≈ 2.9% + 30¢ per payment</div></div>
+  </div>
+  <nav class="toc" aria-label="Phases">
+    <a href="#p1">1 · Claim the name</a><a href="#p2">2 · Email &amp; socials</a><a href="#p3">3 · Make it official</a><a href="#p4">4 · App online</a><a href="#p5">5 · Before charging</a><a href="#p0">Already done</a><a href="#accounts">Account list</a>
+  </nav>
+
+  <section class="accounts" id="accounts">
+    <h2>KeyStub accounts</h2>
+    <p>Every account the business uses and which email goes where. Rule of thumb: <b>sign in with accounts@</b>, show customers <b>support@</b>. Only Google (and anything that uses "Sign in with Google", like YouTube) signs in as <b>admin@</b>. Status as of October 5, 2026; tell Claude as each one is created and this list gets updated.</p>
+    <div class="acct-scroll">
+      <table class="acct">
+        <thead><tr><th>Account</th><th>Used for</th><th>Sign in with</th><th>Public email</th><th>Status</th><th>Step</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://admin.google.com" target="_blank" rel="noopener">Google Workspace</a></td><td>Email, Drive, password manager</td><td class="em">admin@keystub.com</td><td class="em">support@ (send-as)</td><td><span class="pill ok">Set up</span><br><span class="muted" style="font-size:12px">aliases + logo done</span></td><td>04–05</td></tr>
+          <tr><td><a href="https://porkbun.com" target="_blank" rel="noopener">Porkbun</a></td><td>keystub.com, keystub.ca, DNS</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill ok">Created</span><br><span class="muted" style="font-size:12px">switch login from personal email</span></td><td>03, 05</td></tr>
+          <tr><td>Chrome profile</td><td>Saves every KeyStub password</td><td class="em">admin@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>02</td></tr>
+          <tr><td><a href="https://www.instagram.com/keystubapp/" target="_blank" rel="noopener">Instagram</a></td><td>Social, business account (@keystubapp)</td><td class="em">accounts@keystub.com</td><td class="em">support@</td><td><span class="pill ok">Created</span><br><span class="muted" style="font-size:12px">business account</span></td><td>06</td></tr>
+          <tr><td><a href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">Facebook Page</a></td><td>Social, linked to Instagram</td><td>Your personal Facebook (Page admin)</td><td class="em">support@</td><td><span class="pill ok">Created</span></td><td>06</td></tr>
+          <tr><td><a href="https://x.com/i/flow/signup" target="_blank" rel="noopener">X</a></td><td>Social</td><td class="em">accounts@keystub.com</td><td class="em">support@</td><td><span class="pill ok">Created</span></td><td>06</td></tr>
+          <tr><td><a href="https://www.youtube.com/create_channel" target="_blank" rel="noopener">YouTube</a></td><td>Videos (reserve name)</td><td class="em">admin@keystub.com</td><td class="em">support@</td><td><span class="pill wip">Waiting</span><br><span class="muted" style="font-size:12px">unlocks about Nov 4, 2026</span></td><td>06</td></tr>
+          <tr><td><a href="https://www.tiktok.com/signup" target="_blank" rel="noopener">TikTok</a> <span class="muted">(optional)</span></td><td>Social</td><td class="em">accounts@keystub.com</td><td class="em">support@</td><td><span class="pill todo">Skipped</span><br><span class="muted" style="font-size:12px">needs its own phone number</span></td><td>06</td></tr>
+          <tr><td><a href="https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/business-account.html" target="_blank" rel="noopener">CRA My Business Account</a></td><td>Business number, GST</td><td>Your existing CRA sign-in</td><td>—</td><td><span class="pill ok">Exists</span></td><td>08</td></tr>
+          <tr><td><a href="https://app.venn.ca/signup" target="_blank" rel="noopener">Venn</a></td><td>Business bank account and card</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>09</td></tr>
+          <tr><td><a href="https://www.waveapps.com" target="_blank" rel="noopener">Wave</a> <span class="muted">(optional)</span></td><td>Bookkeeping</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>11</td></tr>
+          <tr><td><a href="https://github.com" target="_blank" rel="noopener">GitHub</a></td><td>App code (private)</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>12</td></tr>
+          <tr><td><a href="https://neon.com" target="_blank" rel="noopener">Neon</a></td><td>Database</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>13</td></tr>
+          <tr><td><a href="https://vercel.com/signup" target="_blank" rel="noopener">Vercel</a></td><td>Website and app hosting</td><td>"Continue with GitHub"</td><td>—</td><td><span class="pill todo">To do</span></td><td>14</td></tr>
+          <tr><td><a href="https://resend.com/signup" target="_blank" rel="noopener">Resend</a></td><td>App emails (noreply@)</td><td class="em">accounts@keystub.com</td><td>—</td><td><span class="pill todo">To do</span></td><td>16</td></tr>
+          <tr><td><a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener">Stripe</a></td><td>Payments (later)</td><td class="em">accounts@keystub.com</td><td class="em">billing@</td><td><span class="pill todo">To do</span></td><td>20</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= PHASE 1 ================= -->
+  <section class="phase" id="p1" data-phase>
+    <div class="phase-head"><div><h2>1 · Claim the name</h2><div class="when">Today, about 45 minutes. Domains can be taken any day.</div></div><span class="phase-count"></span></div>
+
+    <article class="step" id="s-tm">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 1 done"><span class="num">01</span><h3>Quick trademark and social handle check</h3><span class="meta">15 min · free</span></div>
+      <p class="done-note">Done. No conflicts found.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>Nothing but a browser</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Open the <a href="https://ised-isde.canada.ca/cipo/trademark-search/srch" target="_blank" rel="noopener">Canadian Trademarks Database</a>. Type <b>KeyStub</b> in the search box and press Search. Then also try <b>Key Stub</b> (with a space).
+            <ul><li>Look at each result's goods and services. A match for <b>software, apps, websites or vehicle services</b> is a problem; a match for hardware or machine parts is fine.</li></ul></li>
+          <li>Open the <a href="https://tmsearch.uspto.gov" target="_blank" rel="noopener">US trademark search</a>, search <b>keystub</b>, and check the same way.</li>
+          <li>Check the social handles are free. Visit each address below; a "page isn't available" or "this account doesn't exist" message means the name is free:
+            <ul>
+              <li>Instagram: <a href="https://www.instagram.com/keystubapp/" target="_blank" rel="noopener">instagram.com/keystubapp</a></li>
+              <li>X: <a href="https://x.com/keystubapp" target="_blank" rel="noopener">x.com/keystubapp</a></li>
+              <li>Facebook: <a href="https://www.facebook.com/keystubapp" target="_blank" rel="noopener">facebook.com/keystubapp</a></li>
+              <li>YouTube: <a href="https://www.youtube.com/@keystubapp" target="_blank" rel="noopener">youtube.com/@keystubapp</a></li>
+              <li>TikTok (optional): <a href="https://www.tiktok.com/@keystubapp" target="_blank" rel="noopener">tiktok.com/@keystubapp</a></li>
+            </ul>The handle is <b>keystubapp</b> on every platform (keystub was taken on Instagram). If any of these is taken, tell Claude before creating accounts so the handle stays identical everywhere.</li>
+          <li>Wait to create the social accounts until step 06, after your KeyStub email exists.</li>
+        </ol></div>
+        <div class="tip"><b>If something matches</b> in software, apps or vehicles, stop and tell me before buying anything.</div>
+        <p class="doneWhen"><b>Done when:</b> no software or vehicle matches, and you've noted which handles are free.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-pw">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 2 done"><span class="num">02</span><h3>Make a KeyStub Chrome profile for passwords</h3><span class="meta">10 min · free</span></div>
+      <p class="done-note">Done. All KeyStub work happens in the KeyStub Chrome profile.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>Google Chrome on your computer</li><li>Your phone, for Google Authenticator</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>In Chrome, click your <b>profile picture</b> (top right) → <b>Add</b> → <b>Continue without an account</b>. Name it <b>KeyStub</b> and pick a colour so it's easy to tell apart (<a href="https://support.google.com/chrome/answer/2364824" target="_blank" rel="noopener">Google: multiple Chrome profiles</a>).</li>
+          <li>Do <b>all KeyStub work in that window</b> from now on. When a sign-up page asks for a password, click the password box and choose Chrome's <b>Use suggested password</b>; Chrome saves it automatically.</li>
+          <li>In step 04, once admin@keystub.com exists, you'll sign in to this profile and turn on sync. Everything saved so far moves into the KeyStub Google account (<a href="https://support.google.com/chrome/answer/185277" target="_blank" rel="noopener">Google: sign in to Chrome</a>).</li>
+          <li>Install <b>Google Authenticator</b> on your phone (App Store or Google Play). It holds the 6-digit codes for two-step login on Porkbun, GitHub, Venn and others (<a href="https://support.google.com/accounts/answer/1066447" target="_blank" rel="noopener">Google Authenticator help</a>).</li>
+          <li>For things that aren't website logins (your business number, the database connection string, API keys), open <b>Google Password Manager</b> in the KeyStub profile (<span class="path">⋮ → Passwords and autofill → Google Password Manager</span>), add an entry, and use its <b>Note</b> field.</li>
+        </ol></div>
+        <div class="tip"><b>Why now:</b> you're about to create about 10 business accounts. Unique passwords plus two-step login on each is what keeps the business, and later your customers' data, safe. Keeping them in a KeyStub-only profile keeps them separate from your personal and Vinyl Hut logins.</div>
+        <p class="doneWhen"><b>Done when:</b> a KeyStub Chrome profile exists and Google Authenticator is on your phone.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-domain">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 3 done"><span class="num">03</span><h3>Buy keystub.com and keystub.ca</h3><span class="meta">15 min · ≈ $30 CAD/yr</span></div>
+      <p class="done-note">Done. Both domains owned, auto-renew on.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>A credit card (personal is fine for now; keep the receipt)</li><li>Your home address (kept private)</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://porkbun.com" target="_blank" rel="noopener">porkbun.com</a> → <b>Sign Up</b> (top right). Use your personal email for now; you'll change it to your KeyStub email in step 05. Do this in the KeyStub Chrome profile and let Chrome suggest and save the password.</li>
+          <li>In the big search box, type <b>keystub</b> and press Enter.</li>
+          <li>Click the cart button next to <b>keystub.com</b> and <b>keystub.ca</b>. Optional extras: keystub.app, and keystubb.com to catch misspellings.</li>
+          <li>Open the cart. Set the term to <b>1 year</b> for each domain; auto-renew handles the rest, and there's no discount for buying more years. (Optional: 3 years on keystub.com locks in today's price.)</li>
+          <li>Leave <b>WHOIS Privacy</b> on (it's free and hides your home address). Don't add any paid extras (hosting, email, SSL); you don't need them.</li>
+          <li>Checkout. For the .ca, Porkbun asks about Canadian presence: choose <b>Canadian citizen</b> (or <b>Permanent resident of Canada</b> if that's your status; either qualifies) and registrant type <b>individual</b>. Use <b>your own full legal name</b> as the owner, not "KeyStub": a trade name isn't a separate legal person. If you incorporate later, the domain can be transferred to the corporation.</li>
+          <li>After paying, open <span class="path">Account → Domain Management</span> and confirm both domains show <b>auto-renew on</b> (it is by default; <a href="https://kb.porkbun.com/article/70-how-to-turn-off-auto-renew" target="_blank" rel="noopener">how auto-renew works</a>).</li>
+          <li>Turn on two-step login: <span class="path">Account → Settings / Billing → Account Security Settings → 2FA – App Based</span> (<a href="https://kb.porkbun.com/article/19-how-to-enable-two-factor-authentication" target="_blank" rel="noopener">Porkbun's guide</a>).</li>
+          <li>Save the receipt email as a PDF; it goes in your KeyStub records (step 11).</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> keystub.com and keystub.ca are in Domain Management with auto-renew on.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= PHASE 2 ================= -->
+  <section class="phase" id="p2" data-phase>
+    <div class="phase-head"><div><h2>2 · Business email &amp; social accounts</h2><div class="when">Right after the domains, about 1½ hours. Every account after this uses your KeyStub email.</div></div><span class="phase-count"></span></div>
+
+    <article class="step" id="s-gws">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 4 done"><span class="num">04</span><h3>Set up Google Workspace on keystub.com</h3><span class="meta">30 min · ≈ $9.20/month</span></div>
+      <p class="done-note">Done. Email working at keystub.com.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>Porkbun open in another tab</li><li>A credit card</li><li>Your phone (for verification)</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://workspace.google.com/pricing" target="_blank" rel="noopener">Google Workspace pricing</a> → under <b>Business Starter</b>, click <b>Get started</b>.</li>
+          <li>Business name: <b>KeyStub</b>. Number of employees: <b>Just you</b>. Region: <b>Canada</b>.</li>
+          <li>Enter your contact info (your personal email is fine here).</li>
+          <li>When asked "Does your business have a domain?", choose <b>Yes, I have one I can use</b> and enter <b>keystub.com</b>.</li>
+          <li>Create your sign-in username: <b>admin@keystub.com</b>. This is the private super-admin account that controls everything: you only use it to sign in to Google. Use a Chrome-suggested password. Other services get <b>accounts@</b> and customers see <b>support@</b> (both added in step 05).</li>
+          <li>Choose the plan: the <b>annual / fixed-term</b> option is cheaper (still billed monthly). Enter your card.</li>
+          <li>Google now asks you to <b>verify the domain</b> and shows a TXT record (a long string starting <code>google-site-verification=</code>). Copy it.</li>
+          <li>In Porkbun: <span class="path">Account → Domain Management → keystub.com → Details → DNS Records</span>.
+            <ul>
+              <li>Click <b>Add record</b> → <b>Quick Setup</b> tab → choose <b>Google Workspace</b> → confirm. This adds the mail (MX) and SPF records for you.</li>
+              <li>Click <b>Add record</b> again → <b>Manual</b> tab → Type <b>TXT</b> → leave Host <b>blank</b> → paste Google's value into Answer → <b>Add</b>.</li>
+              <li>Full guide: <a href="https://kb.porkbun.com/article/44-how-to-connect-domain-to-google-workspace-email" target="_blank" rel="noopener">Porkbun: connect a domain to Google Workspace</a>.</li>
+            </ul></li>
+          <li>Back in Google, click <b>Verify</b> / <b>Confirm</b>. It usually works in a few minutes; it can take up to an hour (<a href="https://support.google.com/a/answer/60216" target="_blank" rel="noopener">Google's verification help</a>).</li>
+          <li>Open <a href="https://mail.google.com" target="_blank" rel="noopener">Gmail</a> signed in as admin@keystub.com. Send a test email to your personal address and reply to it.</li>
+        </ol></div>
+        <div class="tip"><b>"Turn on Gmail – Required":</b> Gmail shows this until Google sees both <b>SPF</b> and <b>DKIM</b> records. Porkbun's Quick Setup adds SPF (and the mail record) but not DKIM. On Google's "Email authentication" screen, copy the DKIM <b>Value</b> with the copy button; in Porkbun DNS add a <b>TXT</b> record with Host <code>google._domainkey</code> and that value; wait 5–10 minutes, then tick the box and click <b>Confirm</b>. Gmail usually turns on within the hour.</div>
+        <div><div class="label">If sign-up saved a different username (e.g. jarin@keystub.com)</div>
+        <ol class="how">
+          <li>Finish the steps above first, so the domain is verified.</li>
+          <li>Open the <a href="https://admin.google.com" target="_blank" rel="noopener">Google Admin console</a> → <span class="path">Menu (☰) → Directory → Users</span>.</li>
+          <li>Point at your user and click <b>Rename user</b> on the right (or click your name → <b>Update user</b>).</li>
+          <li>Under <b>Primary email</b>, change the first part to <b>admin</b> → <b>Update user</b> (<a href="https://knowledge.workspace.google.com/admin/users/change-a-users-email-address" target="_blank" rel="noopener">Google: change a user's email address</a>).</li>
+          <li>Sign out of Google everywhere (Gmail, Chrome, phone) and sign back in as <b>admin@keystub.com</b>. The password doesn't change.</li>
+          <li>The old address automatically becomes an alias and still delivers to the same inbox. Keep it or delete it under your user's <b>Alternate email addresses</b>.</li>
+        </ol></div>
+        <div class="tip"><b>Don't add a second user just to do the rename</b>: on the annual plan every added user is billed for the rest of the year. If Google won't let you rename your own account, keep the current address as your login (it's private, so that's fine) and tell Claude.</div>
+        <p class="doneWhen"><b>Done when:</b> Google says the domain is verified, the test email goes both ways, and you sign in as admin@keystub.com.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-alias">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 5 done"><span class="num">05</span><h3>Add aliases, secure the account, move logins over</h3><span class="meta">20 min · free</span></div>
+      <p class="done-note">Done. support@, hello@ and billing@ all arrive in one inbox; mail goes out from support@.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>In the <b>KeyStub Chrome profile</b>, sign in to Chrome as admin@keystub.com and turn on <b>sync</b> so your saved passwords move into this account. Then turn on two-step login: <a href="https://myaccount.google.com/signinoptions/two-step-verification" target="_blank" rel="noopener">Google 2-Step Verification</a> (signed in as admin@keystub.com) → Get started → use your phone.</li>
+          <li>Add free aliases: open the <a href="https://admin.google.com" target="_blank" rel="noopener">Google Admin console</a> → <span class="path">Directory → Users</span> → click your name → <b>Alternate email addresses (email alias)</b> → add <b>accounts</b>, <b>support</b>, <b>hello</b> and <b>billing</b> → Save (<a href="https://support.google.com/a/answer/33327" target="_blank" rel="noopener">Google's alias guide</a>). Test one by emailing support@keystub.com.</li>
+          <li>Make <b>support@</b> the address customers see: in <a href="https://mail.google.com" target="_blank" rel="noopener">Gmail</a> → gear icon → <b>See all settings</b> → <b>Accounts</b> → <b>Send mail as</b> → <b>Add another email address</b> → name <b>KeyStub Support</b>, address <b>support@keystub.com</b>, keep "Treat as an alias" ticked → Next. Then click <b>make default</b> next to it. Send yourself a test: it should arrive from support@keystub.com.</li>
+          <li>Improve delivery so your emails don't land in spam: follow <a href="https://support.google.com/a/answer/174124" target="_blank" rel="noopener">Google: set up DKIM</a>. In the Admin console go to <span class="path">Apps → Google Workspace → Gmail → Authenticate email</span>, generate a record, add it as a TXT record in Porkbun DNS (Host <code>google._domainkey</code>), then click <b>Start authentication</b>.</li>
+          <li>Optional: make <b>@keystub.ca</b> addresses work too. In the Admin console go to <span class="path">Account → Domains → Manage domains → Add a domain</span> → <b>keystub.ca</b> → choose <b>User alias domain</b>, then add the verification and mail records Google shows into keystub.ca's DNS in Porkbun (<a href="https://support.google.com/a/answer/7502379" target="_blank" rel="noopener">Google: add a user alias domain</a>). Then mail to support@keystub.ca also arrives in your inbox, at no extra cost.</li>
+          <li>Switch Porkbun to your new email: <span class="path">Account → Settings / Billing</span> → change the account email to <b>accounts@keystub.com</b>.</li>
+          <li>Next: create the social accounts (step 06).</li>
+        </ol></div>
+        <div class="tip"><b>From here on,</b> sign up for every service with <b>accounts@keystub.com</b> using <b>email and password</b>. Skip "Continue with Google" buttons: they always use admin@, never an alias. Put <b>support@keystub.com</b> anywhere customers will see it, and <b>billing@keystub.com</b> for Stripe and invoices.</div>
+        <p class="doneWhen"><b>Done when:</b> an email to support@keystub.com arrives in your inbox, your replies go out from support@, and 2-Step Verification is on.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-social">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 6 done"><span class="num">06</span><h3>Create the social media accounts</h3><span class="meta">45 min · free</span></div>
+      <p class="done-note">Done. Instagram, X and Facebook set up as KeyStub; YouTube reserved.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>The <b>KeyStub Chrome profile</b> (step 02), so Chrome saves each login</li><li>Your phone, for verification codes and Google Authenticator</li><li>For now, a simple logo image (the KeyStub sketch or just the name). Swap in the real logo after step 17.</li></ul></div>
+        <div><div class="label">Same details on every platform</div>
+        <ul class="need">
+          <li><b>Sign-up / login email:</b> accounts@keystub.com (private; verification and security emails land in your inbox)</li>
+          <li><b>Public contact email</b> on the profile: support@keystub.com</li>
+          <li><b>Display name:</b> KeyStub · <b>Handle:</b> @keystubapp (identical on every platform; letters only, no dots or underscores)</li>
+          <li><b>Bio:</b> "Know what your car really costs. Track fuel, maintenance and insurance in one place. 🇨🇦" · <b>Website:</b> keystub.com</li>
+        </ul></div>
+
+        <div><div class="label">Instagram</div>
+        <ol class="how">
+          <li>Go to <a href="https://www.instagram.com/accounts/emailsignup/" target="_blank" rel="noopener">instagram.com sign-up</a> (or the app → <b>Create new account</b>). Sign up with <b>accounts@keystub.com</b>, name <b>KeyStub</b>, username <b>keystubapp</b>.</li>
+          <li>Switch it to a business account: <span class="path">Profile → ☰ → Settings and activity → Account type and tools → Switch to professional account → Business</span>. Category: <b>App page</b> or <b>Software</b>. Add support@keystub.com as the contact email (<a href="https://help.instagram.com/502981923235522" target="_blank" rel="noopener">Instagram's guide</a>).</li>
+          <li>Skip "Connect to Facebook" for now; you'll link it after the Facebook Page exists (below).</li>
+          <li>Turn on two-factor: <span class="path">Accounts Center → Password and security → Two-factor authentication</span> → Authentication app (Google Authenticator).</li>
+        </ol></div>
+
+        <div><div class="label">Facebook Page</div>
+        <ol class="how">
+          <li>Facebook requires a business Page to be created from a <b>real personal profile</b>, so use your own Facebook account. (Don't make a second "KeyStub" personal profile; Facebook bans fake profiles.) The Page itself is separate and public; your profile stays private.</li>
+          <li>Logged in to your personal Facebook, go to <a href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">facebook.com/pages/create</a> (or <span class="path">Menu → Pages → Create new Page</span>).</li>
+          <li>Page name: <b>KeyStub</b>. Category: <b>App page</b> (or Software). Add the bio. Click <b>Create Page</b>.</li>
+          <li>In the Page's details, add contact email <b>support@keystub.com</b> and website <b>keystub.com</b>; set the username to <b>keystubapp</b>.</li>
+          <li>Link Instagram: from the Page go to <span class="path">Settings → Linked accounts → Instagram → Connect</span>, then sign in with the KeyStub Instagram login. This lets you post to both and manage them in <a href="https://business.facebook.com" target="_blank" rel="noopener">Meta Business Suite</a>.</li>
+          <li>Make sure two-factor is on for your <b>personal</b> Facebook account, since it controls the Page.</li>
+        </ol></div>
+
+        <div><div class="label">X (Twitter)</div>
+        <ol class="how">
+          <li>Go to <a href="https://x.com/i/flow/signup" target="_blank" rel="noopener">x.com sign-up</a> → <b>Create account</b> → <b>Use email instead</b> → name <b>KeyStub</b>, email <b>accounts@keystub.com</b>.</li>
+          <li>When asked for a username, change the suggested one to <b>keystubapp</b> (or edit later in <span class="path">Settings → Your account → Account information → Username</span>).</li>
+          <li>Profile: add the bio, website keystub.com, and the logo.</li>
+          <li>Turn on two-factor: <span class="path">Settings and privacy → Security and account access → Security → Two-factor authentication → Authentication app</span>.</li>
+        </ol></div>
+
+        <div><div class="label">YouTube (reserve the name now, post later)</div>
+        <ol class="how">
+          <li>YouTube uses your <b>Google sign-in</b>, which can't be an alias, so this one uses <b>admin@keystub.com</b>.</li>
+          <li>Check YouTube is on for your Workspace: <a href="https://admin.google.com" target="_blank" rel="noopener">Admin console</a> → <span class="path">Apps → Additional Google services → YouTube</span> → Service status <b>ON</b> (<a href="https://support.google.com/a/answer/6212415" target="_blank" rel="noopener">Google's guide</a>).</li>
+          <li>Signed in as admin@keystub.com, go to <a href="https://www.youtube.com/create_channel" target="_blank" rel="noopener">youtube.com/create_channel</a>. Name <b>KeyStub</b>, handle <b>@keystubapp</b> → <b>Create channel</b> (<a href="https://support.google.com/youtube/answer/1646861" target="_blank" rel="noopener">YouTube: create a channel</a>).</li>
+          <li>If YouTube says the account <b>"is not yet eligible"</b> (even with YouTube turned on), that's Google's rule for new Workspace accounts. It unlocks when the account is <b>30 days old</b> (about <b>November 4, 2026</b>, plus up to 72 hours) <b>or</b> once Google has processed <b>$30 USD</b> of charges. To unlock it sooner, prepay $30 USD in the Admin console → <span class="path">Billing → Payment accounts → Make a payment</span>; it counts as credit toward future bills (<a href="https://knowledge.workspace.google.com/admin/youtube/access-to-youtube-during-your-google-workspace-trial" target="_blank" rel="noopener">Google: YouTube during a new Workspace account</a>). Don't create the channel with a personal Gmail instead.</li>
+        </ol></div>
+
+        <div><div class="label">Optional: TikTok (skipped for now)</div>
+        <ol class="how">
+          <li><b>Skipped:</b> TikTok requires its own phone number for every account, and yours is already used by your personal account. Revisit if KeyStub gets its own phone line.</li>
+          <li><a href="https://www.tiktok.com/signup" target="_blank" rel="noopener">tiktok.com/signup</a> → <b>Use phone or email</b> → email <b>accounts@keystub.com</b>, username <b>keystubapp</b>. Then <span class="path">Profile → ☰ → Settings and privacy → Account → Switch to Business Account</span>.</li>
+        </ol></div>
+
+        <div class="tip"><b>Claim @keystubapp on every platform in one sitting</b>, including ones you won't post on yet, so nobody else takes it.</div>
+        <p class="doneWhen"><b>Done when:</b> Instagram, X and the Facebook Page exist as KeyStub (YouTube waits until about Nov 4; TikTok skipped), Instagram is linked to the Page, each login is saved in the KeyStub Chrome profile, and two-factor is on.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= PHASE 3 ================= -->
+  <section class="phase" id="p3" data-phase>
+    <div class="phase-head"><div><h2>3 · Make it official</h2><div class="when">This week or next. One AMA visit, the rest online.</div></div><span class="phase-count"></span></div>
+
+    <article class="step" id="s-trade">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 7 done"><span class="num">07</span><h3>Register the KeyStub trade name online with AMA</h3><span class="meta">15 min online · $59</span></div>
+      <p class="done-note">Done. Registration PDF saved.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>Your AMA Business Suite login (the one you used for The Vinyl Hut)</li><li>Driver's licence (government photo ID), in case it asks for ID</li><li>Your home address and phone</li><li>A card for the $59</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://ama.ab.ca/business/register-sole-proprietorship" target="_blank" rel="noopener">AMA: Register a Sole Proprietorship</a>. Under <b>"Already have the AMA Business Suite?"</b> click <b>Sign In</b>.</li>
+          <li>Start a new <b>sole proprietorship / trade name</b> registration, the same as you did for The Vinyl Hut.</li>
+          <li>Enter these details:
+            <ul>
+              <li>Trade name: <b>KeyStub</b></li>
+              <li>Owner: your full legal name</li>
+              <li>Business address: your home address</li>
+              <li>Start date: the day you submit</li>
+              <li>Nature of business: <i>"Online software service (web app) for tracking vehicle expenses, fuel, maintenance and ownership costs."</i></li>
+              <li>Contact email: <b>accounts@keystub.com</b></li>
+            </ul></li>
+          <li>If it offers an optional <b>NUANS</b> name search, <b>skip it</b>; it isn't required for a trade name.</li>
+          <li>Pay the <b>$59</b> (AMA's online price; it includes the government fee).</li>
+          <li>When it's processed (online registrations usually take 1–3 business days), download the <b>registration PDF</b> from the Business Suite and save it in your KeyStub records. Note the <b>registration number</b> and <b>date</b>: that date is KeyStub's official start date.</li>
+        </ol></div>
+        <div class="tip"><b>Prefer in person?</b> <a href="https://ama.ab.ca/appointment" target="_blank" rel="noopener">Book an AMA registries appointment</a> or call 1-866-989-6370 and ask for a Declaration of Trade Name for a sole proprietorship. Online is cheaper and you don't need to go anywhere.</div>
+        <p class="doneWhen"><b>Done when:</b> you have the KeyStub registration PDF with a registration number.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-bn">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 8 done"><span class="num">08</span><h3>Look up your existing business number</h3><span class="meta">5 min · free</span></div>
+      <p class="done-note">Done. Business number saved.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Sign in to <a href="https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/business-account.html" target="_blank" rel="noopener">CRA My Business Account</a> (the same way you did for The Vinyl Hut, e.g. through your bank's sign-in).</li>
+          <li>Your 9-digit business number is on the welcome page. It's the same number as The Vinyl Hut.</li>
+          <li>Can't sign in? See <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/find-business-number.html" target="_blank" rel="noopener">CRA: ways to find your business number</a> (it's also on any CRA letter or GST return).</li>
+          <li>Save it in Google Password Manager (KeyStub profile) as an entry with the number in the Note field.</li>
+        </ol></div>
+        <div class="tip"><b>No new business number.</b> As a sole proprietor you have one for all your businesses, and GST counts both businesses' sales together toward the $30,000 threshold.</div>
+        <p class="doneWhen"><b>Done when:</b> the business number is saved where you can find it.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-bank">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 9 done"><span class="num">09</span><h3>Open the Venn business account</h3><span class="meta">15 min online · $0/month</span></div>
+      <p class="done-note">Done. Venn open; Porkbun and Google billing moved to the Venn card.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>The AMA registration PDF (step 07)</li><li>Your business number (step 08)</li><li>Your SIN</li><li>Driver's licence, for the ID check</li><li>Your phone</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Read the short list of requirements: <a href="https://help.venn.ca/en/articles/12305438-what-are-the-requirements-to-sign-up-for-a-sole-proprietor" target="_blank" rel="noopener">Venn: sole proprietor requirements</a>.</li>
+          <li>Go to <a href="https://app.venn.ca/signup" target="_blank" rel="noopener">app.venn.ca/signup</a>. Sign up with <b>accounts@keystub.com</b> and a Chrome-suggested password.</li>
+          <li>Business type: <b>Sole proprietorship</b>. Business name: <b>KeyStub</b>. Enter your business number and SIN.</li>
+          <li>Upload the AMA registration PDF and complete the ID check with your phone.</li>
+          <li>Once approved, create a <b>virtual card</b> (instant) and turn on two-step login in settings.</li>
+          <li>Move billing to the Venn card:
+            <ul>
+              <li>Porkbun: <span class="path">Account → Settings / Billing → payment method</span></li>
+              <li>Google: <a href="https://admin.google.com" target="_blank" rel="noopener">Admin console</a> → <span class="path">Billing → Payment accounts</span></li>
+            </ul></li>
+          <li>Pay yourself back from Venn for the domain and email costs you put on your personal card, and note it as "owner reimbursement".</li>
+        </ol></div>
+        <div class="tip"><b>Rule from now on:</b> KeyStub money goes in and out only through Venn. It makes taxes simple.</div>
+        <p class="doneWhen"><b>Done when:</b> the Venn account is open and both subscriptions bill to it.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-town">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 10 done"><span class="num">10</span><h3>Check the MD of Pincher Creek rules (no business licence)</h3><span class="meta">1 call · $100 if a permit is needed</span></div>
+      <p class="done-note">Done. MD confirmed what (if anything) is needed.</p>
+      <div class="body">
+        <div><div class="label">What applies</div>
+        <ul class="need">
+          <li><b>Business licence: not needed.</b> You live in the MD of Pincher Creek No. 9, not the Town, and the MD "does not require or issue Business Licenses" (<a href="https://mdpinchercreek.ab.ca/content.php?p=178" target="_blank" rel="noopener">MD: business licences</a>). Still current as of October 2026.</li>
+          <li><b>Development permit: ask.</b> The MD's land use bylaw (Bylaw 1349-23) treats any occupation run from a residence as a <b>home occupation</b>, and home occupations aren't on its list of things that skip a permit (<a href="https://www.mdpinchercreek.ab.ca/docs/files/bylaws/Bylaw%201349-23%20MD%20Pincher%20Creek%20Land%20Use%20%202024%20(No%20Maps).pdf" target="_blank" rel="noopener">Land Use Bylaw 1349-23</a>, Sections 6.80, 15 and 47). Section 15.4 says that when it's unclear, the MD's planning commission decides.</li>
+        </ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Find out what you did for The Vinyl Hut. If the MD already gave you a home occupation permit or said none was needed, ask whether KeyStub can be added to it or is covered the same way.</li>
+          <li>If not, contact the MD's <b>Planning &amp; Development</b> office: <b>403-627-3130</b> or <b>info@mdpinchercreek.ab.ca</b> (1037 Herron Avenue) and ask: <i>"I run an online software business from my home office: computer only, no customers visiting, no signs, no employees, no stored materials. Do I need a home occupation development permit?"</i></li>
+          <li>If they say yes: fill in the <a href="https://mdpinchercreek.ab.ca/docs/files/planninganddevelopment/Development%20Permit%20Application%20Form.pdf" target="_blank" rel="noopener">Development Permit Application Form</a> (use: <b>Home occupation, online software business, home office only</b>), attach a simple <b>site plan</b> (a sketch of your lot showing the house and where the office is), and submit it with the fee: <b>$100</b> for a permitted use. Home occupation is a <i>permitted use</i> in the Agriculture and Grouped Country Residential districts, so $100 is most likely; $150 if it's treated as discretionary. More: <a href="https://mdpinchercreek.ab.ca/content.php?p=41" target="_blank" rel="noopener">MD: how to apply for a development permit</a>.</li>
+          <li>Ask whether The Vinyl Hut needs the same permit, so one conversation covers both businesses.</li>
+          <li>Save the permit, or the MD's email saying it isn't needed, in KeyStub Records.</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> you have either a home occupation permit or written confirmation from the MD that you don't need one.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-books">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 11 done"><span class="num">11</span><h3>Set up simple record-keeping</h3><span class="meta">20 min · free</span></div>
+      <p class="done-note">Done. Records folder set up.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>In <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a> (signed in as admin@keystub.com), create a folder <b>KeyStub Records</b> with subfolders: <b>Registration</b>, <b>Receipts 2026</b>, <b>Bank statements</b>, <b>Licences</b>.</li>
+          <li>Save the AMA registration, the town licence and the Porkbun and Google receipts there.</li>
+          <li>Pick one way to track money:
+            <ul>
+              <li>Simple: a Google Sheet with columns Date · What · Category · Amount in · Amount out · Receipt link</li>
+              <li>Or free bookkeeping software: <a href="https://www.waveapps.com" target="_blank" rel="noopener">Wave</a>. Sign up with accounts@keystub.com and connect the Venn account.</li>
+            </ul></li>
+          <li>Once a month, download the Venn statement into the Bank statements folder.</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> the folder exists and the first receipts are filed.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= PHASE 4 ================= -->
+  <section class="phase" id="p4" data-phase>
+    <div class="phase-head"><div><h2>4 · Put the app online</h2><div class="when">One sitting together, about 2 hours. All free tiers.</div></div><span class="phase-count"></span></div>
+
+    <article class="step" id="s-github">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 12 done"><span class="num">12</span><h3>Create a GitHub account</h3><span class="meta">10 min · free</span></div>
+      <p class="done-note">Done. Code is in a private GitHub repository.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> → <b>Sign up</b>. Email: <b>accounts@keystub.com</b>. Username: e.g. <b>keystub</b> or <b>jarin-keystub</b>. Free plan.</li>
+          <li>Verify your email, then turn on two-factor authentication: <span class="path">profile picture → Settings → Password and authentication → Enable two-factor authentication</span> (<a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication" target="_blank" rel="noopener">GitHub's guide</a>). Save the recovery codes in a Google Password Manager note.</li>
+        </ol></div>
+        <div class="claude"><b>Tell Claude</b> your GitHub username. I'll create a <b>private</b> repository, upload the code, and ask you to approve the connection.</div>
+        <p class="doneWhen"><b>Done when:</b> you can see the KeyStub code in a private repository on GitHub.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-neon">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 13 done"><span class="num">13</span><h3>Create the Neon database</h3><span class="meta">10 min · free</span></div>
+      <p class="done-note">Done. Connection string saved in Google Password Manager.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://neon.com" target="_blank" rel="noopener">neon.com</a> → <b>Sign up</b> with email: <b>accounts@keystub.com</b> and a Chrome-suggested password. (Skip "Continue with Google": it would use admin@ instead of accounts@.)</li>
+          <li>Create a project: name <b>keystub</b>; Postgres version: the default; region: <b>AWS US East (N. Virginia)</b>, next to Vercel's default server location so the app is fast (Neon has no Canadian region; storing data in the US is allowed as long as the privacy policy says so). Free plan.</li>
+          <li>On the project dashboard click <b>Connect</b>. Copy the <b>connection string</b> (it starts with <code>postgresql://</code>). <a href="https://neon.com/docs/connect/connect-from-any-app" target="_blank" rel="noopener">Neon's connection guide</a>.</li>
+          <li>Save it in Google Password Manager as an entry named "Neon database", with the string in the Note field. <b>It contains a password: never paste it into chat or email.</b></li>
+        </ol></div>
+        <div class="claude"><b>Tell Claude</b> "Neon is ready". I'll show you where to paste it yourself.</div>
+        <p class="doneWhen"><b>Done when:</b> the connection string is saved in Google Password Manager.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-vercel">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 14 done"><span class="num">14</span><h3>Deploy the app on Vercel</h3><span class="meta">20 min · free</span></div>
+      <p class="done-note">Done. App live at a .vercel.app address.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://vercel.com/signup" target="_blank" rel="noopener">vercel.com/signup</a> → choose <b>Hobby</b> → <b>Continue with GitHub</b> and approve.</li>
+          <li>Open <a href="https://vercel.com/new" target="_blank" rel="noopener">vercel.com/new</a> → <b>Import</b> the private KeyStub repository (allow Vercel to see it if asked).</li>
+          <li>Before clicking Deploy, open <b>Environment Variables</b> and add the settings I give you, including the Neon connection string from Google Password Manager.</li>
+          <li>Click <b>Deploy</b>. In about 2 minutes you get an address like <b>keystub.vercel.app</b>.</li>
+        </ol></div>
+        <div class="claude"><b>Claude does:</b> creates the database tables, then checks sign-up, sign-in and every page on the live site.</div>
+        <div class="tip">The free Hobby plan is for <a href="https://vercel.com/docs/plans/hobby" target="_blank" rel="noopener">non-commercial use</a>. It's fine for testing; switch to a paid plan (or another host) before you charge customers.</div>
+        <p class="doneWhen"><b>Done when:</b> the app opens at your .vercel.app address and you can sign up.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-real">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 15 done"><span class="num">15</span><h3>Create your real account and import your data</h3><span class="meta">15 min · with Claude</span></div>
+      <p class="done-note">Done. Totals verified; data live.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>On the live site, click <b>Start free</b> and sign up with the email you want for your own tracker.</li>
+          <li>Until step 15, the confirmation email isn't sent for real; I'll give you the confirmation link.</li>
+          <li>I run a <b>dry run</b> of the import first, then the real one, and show you the before and after totals.</li>
+          <li>Check they match exactly: <b>45 fuel / $3,235.74 · 16 maintenance / $5,377.97 · 29 insurance &amp; registration / $10,655.53</b>.</li>
+          <li>Open the <b>Fuel</b> tab → <b>Needs review</b> and decide on the 3 flagged records.</li>
+          <li>In Account, set your plan to Pro: I add your email as a founder account.</li>
+        </ol></div>
+        <div class="tip"><b>Keep the old tracker running</b> until you've used the new one for a few weeks and trust it.</div>
+        <p class="doneWhen"><b>Done when:</b> totals match and you've logged one new fill-up on the live site.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-resend">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 16 done"><span class="num">16</span><h3>Turn on real emails with Resend</h3><span class="meta">20 min · free</span></div>
+      <p class="done-note">Done. App sends from noreply@keystub.com.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Go to <a href="https://resend.com/signup" target="_blank" rel="noopener">resend.com/signup</a> and sign up with accounts@keystub.com.</li>
+          <li>Go to <b>Domains → Add domain</b> → <b>keystub.com</b>. Resend shows 3–4 DNS records (<a href="https://resend.com/docs/dashboard/domains/introduction" target="_blank" rel="noopener">Resend's domain guide</a>).</li>
+          <li>In Porkbun DNS, add each record exactly as shown (Manual tab; copy Type, Host and Value). They sit alongside Google's records without conflict.</li>
+          <li>Back in Resend, click <b>Verify DNS records</b>; wait for "Verified" (minutes to an hour).</li>
+          <li>Go to <b>API Keys → Create API key</b> (sending access). Save it in Google Password Manager. It's a password too.</li>
+        </ol></div>
+        <div class="claude"><b>Claude does:</b> you paste the key into Vercel's settings; I switch sign-up and password-reset emails to <b>noreply@keystub.com</b> and test them.</div>
+        <p class="doneWhen"><b>Done when:</b> a password-reset email from the app arrives in your inbox (not spam).</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-brand">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 17 done"><span class="num">17</span><h3>Brand it and point keystub.com at the app</h3><span class="meta">with Claude</span></div>
+      <p class="done-note">Done. KeyStub live at keystub.com.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Claude renames the app to KeyStub and builds the logo, app icon and colours. You pick from options.</li>
+          <li>In Vercel: <span class="path">Project → Settings → Domains → Add</span> → <b>keystub.com</b>, then <b>www.keystub.com</b>, then <b>keystub.ca</b> (set to redirect to keystub.com). <a href="https://vercel.com/docs/domains/working-with-domains/add-a-domain" target="_blank" rel="noopener">Vercel's domain guide</a>.</li>
+          <li>First, in Porkbun DNS for keystub.com (and keystub.ca), <b>delete Porkbun's placeholder "parked page" records</b>: the <b>ALIAS</b> record on the main domain (pointing to pixie.porkbun.com) and the <b>CNAME</b> with Host <code>*</code> (pointing to uixie.porkbun.com). Leave every TXT and MX record alone.</li>
+          <li>Vercel shows the DNS records to add (usually an <b>A</b> record and a <b>CNAME</b> for www). Add them in Porkbun DNS for each domain. <b>Don't delete</b> Google's MX/TXT records or Resend's.</li>
+          <li>Wait for Vercel to show "Valid Configuration"; the secure padlock (HTTPS) is set up automatically.</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> https://keystub.com shows the app, and email still works.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= PHASE 5 ================= -->
+  <section class="phase" id="p5" data-phase>
+    <div class="phase-head"><div><h2>5 · Before charging anyone</h2><div class="when">After a few weeks of real use.</div></div><span class="phase-count"></span></div>
+
+    <article class="step" id="s-acct">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 18 done"><span class="num">18</span><h3>One meeting with an accountant</h3><span class="meta">≈ 1 hour</span></div>
+      <p class="done-note">Done. Structure and GST decided.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Find a CPA: ask locally, or use <a href="https://www.cpaalberta.ca" target="_blank" rel="noopener">CPA Alberta</a> to find one. A small-business specialist is ideal.</li>
+          <li>Bring: both trade name registrations, your business number, and this list of questions:
+            <ul>
+              <li>Should KeyStub be <b>incorporated</b> before taking payments, given it stores customers' data?</li>
+              <li><b>GST</b>: how do KeyStub and The Vinyl Hut sales combine, and how to handle subscribers outside Canada?</li>
+              <li>What records do they want from you, and which bookkeeping software?</li>
+              <li>Can you write off home office, internet and computer costs?</li>
+            </ul></li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> you know whether to incorporate and how GST works for you.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-legal">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 19 done"><span class="num">19</span><h3>Trademark and legal pages</h3><span class="meta">varies</span></div>
+      <p class="done-note">Done. Legal pages reviewed.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Decide whether to file a trademark for KeyStub. You can file yourself through the <a href="https://ised-isde.canada.ca/cipo/trademark-search/srch" target="_blank" rel="noopener">Canadian Intellectual Property Office</a>, or have a trademark agent search and file for you (more reliable).</li>
+          <li>Have someone (a lawyer, or a reviewed template service) check the site's draft <b>Privacy Policy</b> and <b>Terms</b>. Claude updates the pages with any changes.</li>
+          <li>Make sure the privacy policy says customer data is <b>stored in the United States</b> (Neon and Vercel, US East). Canadian and Alberta privacy law allow this as long as users are told.</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> the trademark decision is made and the legal pages are reviewed.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-stripe">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 20 done"><span class="num">20</span><h3>Set up payments with Stripe</h3><span class="meta">≈ 1 hour · per-sale fees</span></div>
+      <p class="done-note">Done. Stripe live, payouts to Venn.</p>
+      <div class="body">
+        <div><div class="label">You'll need</div><ul class="need"><li>Business details (yours, or the corporation's if you incorporated)</li><li>Venn account and transit numbers for payouts</li><li>ID for verification</li></ul></div>
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Register at <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener">dashboard.stripe.com/register</a> with <b>accounts@keystub.com</b>. Later, under <span class="path">Settings → Public details</span>, set the support email customers see on receipts to <b>billing@keystub.com</b>.</li>
+          <li>Stay in <b>test mode</b> (<a href="https://docs.stripe.com/test-mode" target="_blank" rel="noopener">what test mode is</a>). Claude creates the Pro monthly and yearly prices and tests a full upgrade and cancel with test cards.</li>
+          <li>Complete <b>Activate payments</b>: business type, legal name, business number, your ID, and the Venn account for payouts.</li>
+          <li>Claude switches the app to live keys, and you make one real upgrade on your own account to confirm (then refund it).</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> a real payment shows in Stripe and pays out to Venn.</p>
+      </div>
+    </article>
+
+    <article class="step" id="s-launch">
+      <div class="step-head"><input type="checkbox" aria-label="Mark step 21 done"><span class="num">21</span><h3>Launch</h3><span class="meta">the finish line</span></div>
+      <p class="done-note">Done. KeyStub is live.</p>
+      <div class="body">
+        <div><div class="label">Steps</div>
+        <ol class="how">
+          <li>Move Vercel to the paid Pro plan (about $20 USD/month), since Hobby is non-commercial.</li>
+          <li>Announce it: friends and family, local car and community groups, Reddit (r/PersonalFinanceCanada and car subreddits, following their self-promotion rules), and your social accounts.</li>
+          <li>Ask your first 10 users what's missing.</li>
+          <li>Before marketing to the US: Claude adds per-user <b>units and currency</b> (km/miles, litres/gallons, L/100 km or MPG, CAD/USD), chosen automatically from the visitor's country and changeable in Account settings, plus a CAD/USD toggle on the pricing page and Stripe prices in both currencies. One site, keystub.com, serves both countries; keystub.ca forwards to it.</li>
+          <li>Next features to build with Claude: bank-statement import and receipt scanning.</li>
+        </ol></div>
+        <p class="doneWhen"><b>Done when:</b> someone you don't know signs up.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= ALREADY DONE ================= -->
+  <section class="phase" id="p0" data-phase>
+    <div class="phase-head"><div><h2>Already done</h2><div class="when">Finished together in this project.</div></div><span class="phase-count"></span></div>
+    <article class="step" id="s-built" data-default="1"><div class="step-head"><input type="checkbox" aria-label="App built"><span class="num">✓</span><h3>App built and tested on your PC</h3><span class="meta">Documents\santa-fe-tracker</span></div><p class="done-note">Accounts, multiple vehicles, logs, dashboard, reports, import and export, billing (off until Stripe).</p><div class="body"></div></article>
+    <article class="step" id="s-import" data-default="1"><div class="step-head"><input type="checkbox" aria-label="Import verified"><span class="num">✓</span><h3>Data import verified on a test account</h3><span class="meta">matches the handoff exactly</span></div><p class="done-note">45 fuel ($3,235.74) · 16 maintenance ($5,377.97) · 29 insurance &amp; registration ($10,655.53).</p><div class="body"></div></article>
+    <article class="step" id="s-name" data-default="1"><div class="step-head"><input type="checkbox" aria-label="Name chosen"><span class="num">✓</span><h3>Name chosen: KeyStub</h3><span class="meta">capital S, single b</span></div><p class="done-note">Sole proprietorship under your name; reuse The Vinyl Hut's business number; Venn, Porkbun, Google Workspace.</p><div class="body"></div></article>
+  </section>
+
+  <p class="foot">Ticks are saved in this browser only. Your progress is also tracked in the project's <code>docs/launch-checklist.md</code>, which I update when you tell me a step is done. Prices are approximate as of October 2026, in CAD unless noted, before GST.</p>
+  <button class="reset" id="reset" type="button">Clear my ticks</button>
+</div>
+
+<script>
+(function () {
+  const KEY = "keystub-setup-v2";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  const steps = Array.from(document.querySelectorAll(".step"));
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
+  function isDone(s) { return s.id in saved ? !!saved[s.id] : s.dataset.default === "1"; }
+  function render() {
+    let total = 0, done = 0;
+    document.querySelectorAll("[data-phase]").forEach(function (ph) {
+      const ss = Array.from(ph.querySelectorAll(".step"));
+      const d = ss.filter(isDone).length;
+      ph.querySelector(".phase-count").textContent = d + " / " + ss.length;
+      total += ss.length; done += d;
+    });
+    steps.forEach(function (s) { const d = isDone(s); s.classList.toggle("done", d); s.querySelector("input").checked = d; });
+    document.getElementById("overall-text").textContent = done + " of " + total + " done";
+    document.getElementById("overall-bar").style.width = (total ? (done / total) * 100 : 0) + "%";
+  }
+  steps.forEach(function (s) {
+    s.querySelector("input").addEventListener("change", function (e) { saved[s.id] = e.target.checked; persist(); render(); });
+  });
+  document.getElementById("reset").addEventListener("click", function () { saved = {}; persist(); render(); });
+  render();
+})();
+</script>

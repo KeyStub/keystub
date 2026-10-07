@@ -21,8 +21,8 @@ export default async function ReportsPage({ params }: PageProps<"/app/v/[vid]/re
   return (
     <>
       <ReportsView rows={rows} today={today} currentMonthly={currentMonthly} vehicleLabel={vehicleName(b.vehicle)} />
-      <h3 className="section-title">Service history report</h3>
-      <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <h3 className="section-title no-print">Service history report</h3>
+      <div className="card no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <p className="muted" style={{ margin: 0, fontSize: 13.5, maxWidth: 560 }}>
           A clean, printable maintenance history, handy when you sell the vehicle. Buyers pay more for a documented car.
           {user.effectivePlan !== "pro" && " (Pro feature)"}

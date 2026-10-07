@@ -2,8 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { CATEGORIES, monthlyTrend, totalsByCategory, type DatedAmount } from "@/lib/calc";
+import { fmtDate } from "@/lib/format";
 import { useFmt } from "./units-provider";
 import { MonthlyTrend } from "./charts";
+
+const RANGE_LABELS: Record<string, string> = {
+  all: "All time",
+  ytd: "Year to date",
+  lastyear: "Last calendar year",
+  "3m": "Last 3 months",
+  "12m": "Last 12 months",
+};
 
 function shift(today: string, months: number) {
   const [y, m, d] = today.split("-").map(Number);
@@ -58,6 +67,12 @@ export function ReportsView({
           Print / save as PDF
         </button>
       </div>
+      <div className="print-only" style={{ marginBottom: 6 }}>
+        <h2 style={{ margin: "0 0 2px", fontSize: 20 }}>Cost report</h2>
+        <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
+          {RANGE_LABELS[range]} · Generated {fmtDate(today)}
+        </div>
+      </div>
       <h3 className="section-title">Totals by category</h3>
       <div className="card table-wrap">
         <table className="data">
@@ -90,7 +105,7 @@ export function ReportsView({
       <div className="card">
         <MonthlyTrend units={u.prefs} months={trend} />
       </div>
-      <h3 className="section-title">Keep vs. replace</h3>
+      <h3 className="section-title no-print">Keep vs. replace</h3>
       <div className="card no-print">
         <p className="muted" style={{ marginTop: 0, fontSize: 13.5 }}>
           Enter a candidate replacement&apos;s purchase price and estimated monthly running cost (fuel + insurance + maintenance) to compare against what you&apos;re

@@ -27,7 +27,7 @@ export default async function HistoryPage({ params }: PageProps<"/app/v/[vid]/hi
   const records = [...b.maintenance].filter((r) => r.category !== "Car Wash").sort((a, c) => a.date.localeCompare(c.date));
   const total = records.reduce((s, r) => s + r.totalCostCents, 0);
   return (
-    <article>
+    <article className="print-solo">
       <div className="toolbar">
         <div className="grow" />
         <PrintButton />

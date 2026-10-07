@@ -94,6 +94,14 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 ## Later: mobile apps (Play Store / App Store)
 - [ ] Goal: publish KeyStub to Google Play and the Apple App Store after the web app is proven.
 - [ ] Google Play Console developer account (one-time ~$25 USD); Apple Developer Program (~$99 USD/year; a D-U-N-S number is needed if enrolling as an organization rather than an individual). Sign up with accounts@keystub.com.
+### Before mobile app development (agreed 2026-10-06)
+- [ ] **Blocker 1:** step 15 done (Jarin's real account on keystub.com + verified import). Proves the live system end to end.
+- [ ] **Blocker 2: who publishes the app.** Apple does NOT accept sole proprietorships / trade names as organizations, so as a sole proprietor the App Store would list the seller as "Jarin Fehr". To show "KeyStub" (or a company name) the business must be incorporated and have a D-U-N-S number (free, can take up to ~30 days). Decide at the accountant meeting (step 18).
+- [ ] **Blocker 3: developer accounts** (verification takes days to weeks, start early): Apple Developer Program US$99/yr; Google Play Console US$25 once. New *personal* Google Play accounts must run a closed test with at least 12 testers for 14 days before publishing: the EV testers can be those 12.
+- [ ] Decide how app subscriptions are sold: (a) app is free, upgrades happen on keystub.com (simplest; no Apple/Google cut), or (b) in-app purchase (Apple/Google take 15% under their small-business programs). Not urgent: Stripe isn't live yet.
+- Recommended build approach: **Capacitor** (wraps the existing app in a real iOS/Android app; one codebase; adds native push notifications, camera for receipt scanning, Face ID). Apple rejects apps that are "just a website", so the first version must include native features (push reminders, camera). Alternative: Expo / React Native: more native, but a second app to build and maintain.
+- Already in place for the stores: in-app account deletion, privacy policy, terms, support email, app icon/brand, phone layout with bottom tab bar.
+- Meanwhile testers can use it as an app today: keystub.com → Share → **Add to Home Screen** (iPhone, Safari) or ⋮ → **Install app** (Android, Chrome). It opens full-screen with the bottom tab bar.
 - Registered business activity (AMA, 144 chars): "Development and operation of web and mobile software applications for tracking personal vehicle expenses, fuel, maintenance and ownership costs."
 
 ## Notes (2026-10-05)
@@ -176,3 +184,7 @@ Shown on the website as "Coming soon" until built.
 - Billing: set `STRIPE_CURRENCIES=cad,usd` and give both Stripe prices a USD amount ("currency options"); US accounts are then charged in USD. Pricing page and FAQ say CAD or USD.
 - Migration 0004 (user unit columns; existing accounts stay km / litres / CAD).
 - Later: per-vehicle odometer unit (e.g. a US-import car with a miles odometer owned in Canada).
+
+## App navigation (built 2026-10-06)
+- Website header shows "Hi, <name>" + **Open app** when signed in (menu shows who is signed in) instead of Sign in / Start free.
+- **Home** button (top bar + logo) opens the last-viewed vehicle's dashboard (/app/home; remembered in a cookie); the phone tab bar now also appears on Garage, Account and Add vehicle.

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 import { Logo } from "../logo";
 import { ThemeButton } from "../theme-toggle";
 import { IconClose, IconMenu } from "./icons";
@@ -19,6 +20,10 @@ export function MarketingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
+  // Pages are static, so whether you're signed in is checked in the browser after load.
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+  const first = user?.name?.trim().split(/\s+/)[0] || null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -56,12 +61,30 @@ export function MarketingNav() {
         </nav>
         <div className="mk-actions">
           <ThemeButton />
-          <Link href="/sign-in" className="mk-btn ghost sm signin">
-            Sign in
-          </Link>
-          <Link href="/sign-up" className="mk-btn yellow sm">
-            Start free
-          </Link>
+          <div className="mk-auth" style={{ visibility: isPending ? "hidden" : "visible" }}>
+            {user ? (
+              <>
+                <Link href="/app/account" className="mk-btn ghost sm signin mk-me" title={`Signed in as ${user.email}`}>
+                  <span className="mk-avatar" aria-hidden="true">
+                    {(first ?? user.email)[0].toUpperCase()}
+                  </span>
+                  {first ? `Hi, ${first}` : "Signed in"}
+                </Link>
+                <Link href="/app/home" className="mk-btn yellow sm">
+                  Open app <span className="arrow">→</span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/sign-in" className="mk-btn ghost sm signin">
+                  Sign in
+                </Link>
+                <Link href="/sign-up" className="mk-btn yellow sm">
+                  Start free
+                </Link>
+              </>
+            )}
+          </div>
           <button type="button" className="mk-menu-btn" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             {open ? <IconClose /> : <IconMenu />}
           </button>
@@ -73,9 +96,18 @@ export function MarketingNav() {
             {l.label}
           </Link>
         ))}
-        <Link href="/sign-in" onClick={() => setOpen(false)}>
-          Sign in
-        </Link>
+        {user ? (
+          <>
+            <Link href="/app/home" onClick={() => setOpen(false)}>
+              Open KeyStub →
+            </Link>
+            <span className="mk-menu-note">Signed in as {user.email}</span>
+          </>
+        ) : (
+          <Link href="/sign-in" onClick={() => setOpen(false)}>
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );

@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { AccountForms } from "@/components/account-forms";
 import { AppTopBar } from "@/components/app-top-bar";
+import { HomeNav } from "@/components/home-nav";
 import { AppearanceSettings, EnergySettings, ReminderSettings, UnitSettings } from "@/components/settings-forms";
 import { ImportPanel } from "@/components/import-panel";
 import { db } from "@/db";
@@ -21,8 +22,9 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
   const plan = PLANS[user.effectivePlan];
 
   return (
-    <div className="shell">
+    <div className="shell has-mnav">
       <AppTopBar />
+      <HomeNav />
       <main className="page" style={{ maxWidth: 760 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>Account</h1>
 

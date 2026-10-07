@@ -472,3 +472,14 @@
 .ev-card b { font-family: var(--font-display-stack); font-size: clamp(26px, 4vw, 36px); color: var(--mk-yellow); line-height: 1.05; }
 .ev-card .s { font-size: 13px; color: #b9c4d8; }
 @media (max-width: 900px) { .ev-grid { grid-template-columns: 1fr; gap: 36px; } .ev-band { padding-block: 80px; } }
+
+/* ---------- signed-in state in the header ---------- */
+.mk-auth { display: flex; align-items: center; gap: 8px; }
+.mk-me { gap: 8px; }
+.mk-avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--mk-navy); color: var(--mk-yellow); font: 700 11px/1 var(--font-body-stack); }
+.mk-menu-note { padding: 12px 6px; font-size: 13px; color: var(--mk-ink-2); }
+@media (max-width: 440px) {
+  .mk-auth .mk-btn.sm { padding-inline: 12px; font-size: 13px; }
+  .mk-auth .mk-btn .arrow { display: none; }
+  .mk-actions { gap: 6px; }
+}

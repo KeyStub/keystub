@@ -376,9 +376,9 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
 /* ---------- phone bottom nav ---------- */
 .mnav, .mnav-sheet, .mnav-scrim { display: none; }
 @media (max-width: 700px) {
-  .shell.has-mnav { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .shell.has-mnav:has(.mnav) { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   .has-mnav nav.tabs { display: none; }
-  .has-mnav .topbar-links { display: none !important; }
+  .has-mnav:has(.mnav) .topbar-links { display: none !important; }
   .has-mnav .header-row { gap: 6px; }
   .has-mnav .odo-pill { padding: 4px 10px; font-size: 12px; }
   .hide-sm { display: none; }

@@ -1,5 +1,6 @@
 import { AppTopBar } from "@/components/app-top-bar";
 import { MobileNav } from "@/components/mobile-nav";
+import { RememberVehicle } from "@/components/remember-vehicle";
 import { VehicleTabs } from "@/components/vehicle-tabs";
 import { fmtDate, numFmt, vehicleName } from "@/lib/format";
 import { makeFmt } from "@/lib/units";
@@ -40,6 +41,7 @@ export default async function VehicleLayout({ children, params }: LayoutProps<"/
       </header>
       <main className="page">{children}</main>
       <MobileNav vid={vid} powertrain={v.powertrain} />
+      <RememberVehicle vid={vid} />
     </div>
   );
 }

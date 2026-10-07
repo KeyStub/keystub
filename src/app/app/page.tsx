@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { makeFmt } from "@/lib/units";
 import { AppTopBar } from "@/components/app-top-bar";
+import { HomeNav } from "@/components/home-nav";
 import { vehicleName } from "@/lib/format";
 import { PLANS } from "@/lib/plans";
 import { listVehicles } from "@/server/data";
@@ -19,8 +20,9 @@ export default async function GaragePage({ searchParams }: PageProps<"/app">) {
   const limit = PLANS[user.effectivePlan].maxVehicles;
 
   return (
-    <div className="shell">
+    <div className="shell has-mnav">
       <AppTopBar />
+      <HomeNav />
       <main className="page">
         <div className="toolbar">
           <h1 className="grow" style={{ fontSize: 22, margin: 0 }}>

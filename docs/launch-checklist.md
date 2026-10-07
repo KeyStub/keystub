@@ -43,9 +43,9 @@ Domain registrant: Jarin's own legal name (individual); .ca registered under Can
 - [x] 12 DONE 2026-10-05: GitHub account **KeyStub**; code pushed to the private repo github.com/KeyStub/keystub (branch main)
 - [x] 13 DONE 2026-10-05: Neon project "KeyStub" (project id royal-surf-02570009) in **AWS US East 2 (Ohio)**; app functions pinned to Vercel **cle1 (Cleveland)** in vercel.json to sit next to it. Pooled connection string saved in Google Password Manager (never pasted in chat)
 - [x] 14 DONE 2026-10-05: Vercel Hobby (team "key-stub", via GitHub KeyStub) → project **keystub**, live at https://keystub.vercel.app ; env vars set; database tables created by the vercel-build step; checked: pages load, auth + database respond, security headers on, /preview hidden
-- [ ] 15 Real account on the live site → dry-run then real import → verify the 45/16/29 totals; review 3 flagged records
-- [ ] 16 Resend on keystub.com → API key → Claude switches app emails to noreply@keystub.com
-- [ ] 17 (PART DONE 2026-10-05: app renamed to KeyStub locally; brand colours, Archivo + IBM Plex Sans, logo, favicon/app icons, share image, installable app manifest, new homepage) Rename to KeyStub, logo and colours; delete Porkbun parking records (ALIAS @ → pixie.porkbun.com, CNAME * → uixie.porkbun.com); connect keystub.com (and .ca redirect) in Vercel
+- [x] 15 DONE 2026-10-06: Jarin's real account on https://keystub.com (email verified via Resend, founder Pro); original tracker imported and verified: maintenance $5,377.97 and insurance/registration/other $10,655.53 exact; fuel $3,235.74 imported + one real $75.00 fill-up added afterwards = $3,310.74. Remaining: review the 3 flagged records if not done yet.
+- [x] 16 DONE 2026-10-05/06: Resend (accounts@) with keystub.com verified (DKIM, SPF via send/rsend, DMARC p=none added); API key in Vercel; emails from noreply@keystub.com
+- [ ] 17 (MOSTLY DONE 2026-10-06: KeyStub brand live; keystub.com connected to Vercel (A 216.198.79.1, www CNAME, www + keystub.vercel.app 308 → keystub.com, HTTPS on); Porkbun parking ALIAS + wildcard deleted on keystub.com) Remaining: keystub.ca → add in Vercel as 308 redirect to keystub.com and swap its Porkbun parking records for the ones Vercel shows
 
 ## Phase 5: before charging anyone
 - [ ] 18 Accountant: incorporate? GST across both businesses? bookkeeping

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { emailTemplates, feedback, staff, ticketMessages } from "@/db/schema";
-import { SUPPORT_EMAIL, TEMPLATE_KEYS, ticketCode } from "@/lib/admin";
+import { adminUrl, TEMPLATE_KEYS, ticketCode, ticketReplyTo } from "@/lib/admin";
 import { APP_NAME } from "@/lib/brand";
 import type { ActionResult } from "./actions";
 import { sendEmail, supportFrom } from "./mailer";
@@ -73,7 +73,7 @@ export async function replyToTicket(ticketId: string, input: unknown): Promise<A
       await sendEmail({
         to: t.email,
         from: supportFrom(),
-        replyTo: SUPPORT_EMAIL(),
+        replyTo: ticketReplyTo(t.number),
         subject: `Re: [${code}] ${firstLine}`,
         text: `${d.body}\n\n—\n${staffName(me.user)}, ${APP_NAME} support\nTicket ${code}. Just reply to this email to continue the conversation.\n\nYou wrote:\n${quoted}`,
       });
@@ -135,24 +135,29 @@ export async function resetTemplate(key: string): Promise<ActionResult> {
 /* ---------------- staff ---------------- */
 
 const roleSchema = z.enum(["owner", "admin", "support"]);
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export async function addStaff(input: unknown): Promise<ActionResult> {
   try {
     const me = await staffForAction("staff");
     if (!me) return DENIED;
     const d = z
-      .object({ email: z.string().trim().toLowerCase().email("Enter a valid email address"), name: z.string().trim().max(120).optional(), role: roleSchema })
+      .object({
+        email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+        name: z.string().trim().max(120).optional(),
+        role: roleSchema,
+        perkEmail: z.union([z.literal(""), z.string().trim().toLowerCase().email("Enter a valid personal email, or leave it blank")]).optional(),
+      })
       .parse(input);
+    if (d.perkEmail && d.perkEmail === d.email) return { ok: false, error: "The personal account email should be different from their work email." };
     const [exists] = await db.select({ id: staff.id }).from(staff).where(sql`lower(${staff.email}) = ${d.email}`);
     if (exists) return { ok: false, error: "That person is already on the staff list." };
-    await db.insert(staff).values({ email: d.email, name: d.name || null, role: d.role, addedBy: staffName(me.user) });
+    await db.insert(staff).values({ email: d.email, name: d.name || null, role: d.role, perkEmail: d.perkEmail || null, addedBy: staffName(me.user) });
     try {
       await sendEmail({
         to: d.email,
         from: supportFrom(),
         subject: `You've been added to the ${APP_NAME} team`,
-        text: `Hi${d.name ? ` ${d.name.split(" ")[0]}` : ""},\n\n${staffName(me.user)} gave you ${d.role} access to ${APP_NAME} Admin.\n\n1. Create your staff account with this email address: ${appUrl()}/sign-up\n   (Already have one? Sign in: ${appUrl()}/sign-in)\n2. Turn on two-step verification when asked. It's required for staff.\n3. You'll land in ${APP_NAME} Admin: ${appUrl()}/admin\n\nThis is a work account: it opens straight into Admin and doesn't have a personal garage.`,
+        text: `Hi${d.name ? ` ${d.name.split(" ")[0]}` : ""},\n\n${staffName(me.user)} gave you ${d.role} access to ${APP_NAME} Admin.\n\n1. Create your staff account with this email address: ${adminUrl("/sign-up")}\n   (Already have one? Sign in: ${adminUrl("/sign-in")})\n2. Turn on two-step verification when asked. It's required for staff.\n3. You'll land in ${APP_NAME} Admin: ${adminUrl("/admin")}\n\nThis is a work account: it opens straight into Admin and doesn't have a personal garage.${d.perkEmail ? `\n\nTeam perk: your personal KeyStub account (${d.perkEmail}) gets Pro free while you're on the team.` : ""}`,
       });
     } catch (e) {
       console.error("staff invite email failed", e);
@@ -188,6 +193,23 @@ export async function removeStaff(id: string): Promise<ActionResult> {
     if (!row) return { ok: false, error: "Not found" };
     if (row.email.toLowerCase() === me.user.email.toLowerCase()) return { ok: false, error: "You can't remove yourself." };
     await db.delete(staff).where(and(eq(staff.id, id)));
+    revalidatePath("/admin/staff");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Personal account that gets free Pro while this person is on the team ("" removes it). */
+export async function setStaffPerk(id: string, perkEmail: unknown): Promise<ActionResult> {
+  try {
+    const me = await staffForAction("staff");
+    if (!me) return DENIED;
+    const e = z.union([z.literal(""), z.string().trim().toLowerCase().email("Enter a valid email, or leave it blank")]).parse(perkEmail ?? "");
+    const [row] = await db.select().from(staff).where(eq(staff.id, id));
+    if (!row) return { ok: false, error: "Not found" };
+    if (e && e === row.email.toLowerCase()) return { ok: false, error: "Use their personal email, not the work one." };
+    await db.update(staff).set({ perkEmail: e || null }).where(eq(staff.id, id));
     revalidatePath("/admin/staff");
     return { ok: true };
   } catch (e) {

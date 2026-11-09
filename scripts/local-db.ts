@@ -41,6 +41,7 @@ export async function ensureLocalDb(): Promise<{ url: string; stop: () => Promis
     password: PASSWORD,
     persistent: true,
     postgresFlags: ["-c", "listen_addresses=localhost"],
+    initdbFlags: ["--encoding=UTF8", "--locale=C"], // new local databases only; production (Neon) is UTF-8
     onLog: () => {},
   });
   const fresh = !existsSync(path.join(DIR, "PG_VERSION"));

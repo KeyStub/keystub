@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
-import { FEEDBACK_STATUSES, ROLES, TEMPLATE_PLACEHOLDERS, type StaffRole } from "@/lib/admin";
-import { addStaff, addTicketNote, removeStaff, replyToTicket, resetTemplate, saveTemplate, setStaffRole, setTicketStatus } from "@/server/admin-actions";
+import { adminPath, FEEDBACK_STATUSES, ROLES, TEMPLATE_PLACEHOLDERS, type StaffRole } from "@/lib/admin";
+import { addStaff, addTicketNote, removeStaff, replyToTicket, resetTemplate, saveTemplate, setStaffPerk, setStaffRole, setTicketStatus } from "@/server/admin-actions";
 import type { ActionResult } from "@/server/actions";
 import { Logo } from "./logo";
 import { ThemeButton } from "./theme-toggle";
@@ -45,7 +45,8 @@ export function AdminShell({
 }) {
   const path = usePathname();
   const router = useRouter();
-  const active = (href: string) => (href === "/admin" ? path === "/admin" : path === href || path.startsWith(href + "/"));
+  const home = adminPath("/admin");
+  const active = (href: string) => (href === home ? path === home : path === href || path.startsWith(href + "/"));
   return (
     <div className="adm">
       <aside className="adm-side">
@@ -77,9 +78,9 @@ export function AdminShell({
           <div className="adm-me-actions">
             <ThemeButton />
             {!dedicated && (
-              <Link href="/app/home" className="btn sm ghost">
+              <a href={`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/app/home`} className="btn sm ghost">
                 My garage
-              </Link>
+              </a>
             )}
             <button
               className="btn sm ghost"
@@ -259,7 +260,25 @@ export function PlaceholderHelp() {
 
 /* ---------------- staff ---------------- */
 
-type StaffRow = { id: string; email: string; name: string | null; role: string; addedBy: string | null; createdAt: string; hasAccount: boolean; twoFactor: boolean };
+type StaffRow = { id: string; email: string; name: string | null; role: string; perkEmail: string | null; addedBy: string | null; createdAt: string; hasAccount: boolean; twoFactor: boolean };
+
+function PerkCell({ row }: { row: StaffRow }) {
+  const run = useRun();
+  const [v, setV] = useState(row.perkEmail ?? "");
+  const dirty = v.trim().toLowerCase() !== (row.perkEmail ?? "");
+  return (
+    <form
+      className="perk-cell"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        await run(() => setStaffPerk(row.id, v), v.trim() ? "Team perk saved." : "Team perk removed.");
+      }}
+    >
+      <input className="input" type="email" value={v} onChange={(e) => setV(e.target.value)} placeholder="personal@email.com" aria-label={`Personal account for ${row.email}`} />
+      {dirty && <button className="btn sm">Save</button>}
+    </form>
+  );
+}
 
 export function StaffManager({ rows, myEmail, envOwners }: { rows: StaffRow[]; myEmail: string; envOwners: string[] }) {
   const run = useRun();
@@ -274,6 +293,7 @@ export function StaffManager({ rows, myEmail, envOwners }: { rows: StaffRow[]; m
               <th>Person</th>
               <th>Role</th>
               <th className="hide-sm">Account</th>
+              <th className="hide-sm">Free Pro for personal account</th>
               <th className="num">Actions</th>
             </tr>
           </thead>
@@ -288,6 +308,7 @@ export function StaffManager({ rows, myEmail, envOwners }: { rows: StaffRow[]; m
                 </td>
                 <td>Owner</td>
                 <td className="hide-sm">—</td>
+                <td className="hide-sm muted" style={{ fontSize: 12 }}>Owners: use FOUNDER_EMAILS</td>
                 <td className="num muted" style={{ fontSize: 12 }}>
                   Change in Vercel
                 </td>
@@ -322,6 +343,9 @@ export function StaffManager({ rows, myEmail, envOwners }: { rows: StaffRow[]; m
                   </td>
                   <td className="hide-sm" style={{ fontSize: 12.5 }}>
                     {r.hasAccount ? (r.twoFactor ? "✓ Active, 2-step on" : "Signed up, 2-step pending") : "Invited, not signed up yet"}
+                  </td>
+                  <td className="hide-sm">
+                    <PerkCell row={r} />
                   </td>
                   <td className="num">
                     {!me && (
@@ -369,6 +393,9 @@ export function StaffManager({ rows, myEmail, envOwners }: { rows: StaffRow[]; m
             <input className="input" id="st-name" name="name" maxLength={120} />
           </Field>
         </div>
+        <Field label="Personal KeyStub account (optional)" htmlFor="st-perk" hint="Team perk: this account gets Pro free while they work here, and goes back to normal automatically if they're removed.">
+          <input className="input" id="st-perk" name="perkEmail" type="email" placeholder="their personal email" />
+        </Field>
         <Field label="Role" htmlFor="st-role">
           <select className="select" id="st-role" name="role" defaultValue="support">
             {ROLES.map((x) => (

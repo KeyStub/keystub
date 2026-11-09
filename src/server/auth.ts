@@ -1,5 +1,6 @@
 import "server-only";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
@@ -15,6 +16,10 @@ export const auth = betterAuth({
   appName: APP_NAME,
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
+  // The admin site (admin.keystub.com) signs in through the same accounts system.
+  trustedOrigins: process.env.NEXT_PUBLIC_ADMIN_HOST
+    ? [`${/localhost|127.0.0.1/.test(process.env.NEXT_PUBLIC_ADMIN_HOST) ? "http" : "https"}://${process.env.NEXT_PUBLIC_ADMIN_HOST}`]
+    : [],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -83,13 +88,22 @@ export const auth = betterAuth({
       create: {
         // Every new account starts with a TRIAL_DAYS-day Pro trial (no card; see src/lib/plans.ts), and
         // units + currency matching the visitor's country (changeable any time in Account).
-        before: async (user, ctx) => ({
-          data: {
-            ...user,
-            trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
-            ...defaultsForCountry(countryFromHeaders(ctx?.headers)),
-          },
-        }),
+        before: async (user, ctx) => {
+          const { staffInfoFor } = await import("./staff");
+          const staffAcct = (await staffInfoFor(user.email))?.dedicated;
+          const host = (ctx?.headers?.get("x-forwarded-host") ?? ctx?.headers?.get("host") ?? "").toLowerCase();
+          const onAdminSite = !!process.env.NEXT_PUBLIC_ADMIN_HOST && host === process.env.NEXT_PUBLIC_ADMIN_HOST;
+          if (onAdminSite && !staffAcct)
+            throw new APIError("FORBIDDEN", { message: "This sign-up is for invited KeyStub staff. To use KeyStub, create an account at keystub.com." });
+          return {
+            data: {
+              ...user,
+              // Staff work accounts: no trial and no customer welcome tour.
+              ...(staffAcct ? { onboardedAt: new Date() } : { trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000) }),
+              ...defaultsForCountry(countryFromHeaders(ctx?.headers)),
+            },
+          };
+        },
       },
     },
   },

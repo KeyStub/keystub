@@ -2,6 +2,48 @@
 
 export const SUPPORT_EMAIL = () => process.env.SUPPORT_EMAIL || "support@keystub.com";
 
+/* ---------- where Admin lives ---------- */
+
+/** e.g. "admin.keystub.com". When set, Admin is served from that host and its URLs drop the /admin prefix. */
+export const ADMIN_HOST = process.env.NEXT_PUBLIC_ADMIN_HOST || "";
+const adminProto = () => (/localhost|127\.0\.0\.1/.test(ADMIN_HOST) ? "http" : "https");
+/** Link inside Admin: "/admin/tickets" → "/tickets" on the admin host, unchanged otherwise. */
+export const adminPath = (p: string) => (ADMIN_HOST ? p.replace(/^\/admin(?=\/|$|\?)/, "") || "/" : p);
+/** Absolute Admin URL, for emails and cross-site redirects. */
+export const adminUrl = (p: string) =>
+  ADMIN_HOST ? `${adminProto()}://${ADMIN_HOST}${adminPath(p)}` : `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${p}`;
+
+/* ---------- replies by email ---------- */
+
+/** Domain that receives email for KeyStub (Resend inbound), e.g. "inbox.keystub.com". Empty = replies go to the support inbox. */
+export const INBOUND_DOMAIN = () => process.env.INBOUND_DOMAIN || "";
+/** Reply-To for a ticket: support+ks1001@inbox.keystub.com (falls back to the support address). */
+export const ticketReplyTo = (n: number) => (INBOUND_DOMAIN() ? `support+ks${n}@${INBOUND_DOMAIN()}` : SUPPORT_EMAIL());
+/** Ticket number from a reply address (support+ks1001@…) or subject ("Re: [#KS1001] …"). */
+export function ticketNumberFrom(to: string[], subject: string) {
+  for (const t of to) {
+    const m = t.match(/\+ks-?(\d{1,9})@/i);
+    if (m) return Number(m[1]);
+  }
+  const s = subject.match(/#\s?KS-?(\d{1,9})/i);
+  return s ? Number(s[1]) : null;
+}
+/** The new part of an emailed reply: drops quoted history and common signatures. */
+export function stripQuotedReply(text: string) {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  for (const line of lines) {
+    if (/^\s*>/.test(line)) break;
+    if (/^\s*On .+(wrote|écrit)\s*:?\s*$/i.test(line)) break;
+    if (/^\s*-{2,}\s*Original Message\s*-{2,}/i.test(line)) break;
+    if (/^\s*From:\s.+/i.test(line) && out.length) break;
+    if (/^\s*Sent from my (iPhone|iPad|Android|phone)/i.test(line)) break;
+    if (/^\s*—\s*$/.test(line)) break; // our own sign-off separator
+    out.push(line);
+  }
+  return out.join("\n").trim();
+}
+
 /** "#KS1001" */
 export const ticketCode = (n: number) => `#KS${n}`;
 /** Accepts "1001", "KS1001", "#KS1001", "#ks-1001". */
@@ -35,6 +77,7 @@ export const FEEDBACK_KINDS = [
 export const TICKET_KIND_LABEL: Record<string, string> = {
   ...Object.fromEntries(FEEDBACK_KINDS.map((k) => [k.id, `${k.emoji} ${k.label}`])),
   contact: "✉️ Contact form",
+  email: "📨 Email",
 };
 
 export const CONTACT_TOPICS = [
@@ -46,7 +89,7 @@ export const CONTACT_TOPICS = [
 ] as const;
 
 export const FEEDBACK_STATUSES = [
-  { id: "new", label: "New" },
+  { id: "new", label: "Needs reply" },
   { id: "in_progress", label: "Open" },
   { id: "planned", label: "Planned" },
   { id: "done", label: "Done" },
@@ -62,6 +105,7 @@ export const TEMPLATE_KEYS = [
   { key: "auto_question", label: "Question", kind: "question" },
   { key: "auto_other", label: "Other feedback", kind: "other" },
   { key: "auto_contact", label: "Contact form", kind: "contact" },
+  { key: "auto_email", label: "Email to support", kind: "email" },
 ] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number]["key"];
 
@@ -89,6 +133,12 @@ export const DEFAULT_TEMPLATES: Record<TemplateKey, { subject: string; body: str
   auto_other: {
     subject: "Thanks for your feedback ({ticket})",
     body: `Hi {name},\n\nThanks for taking the time to write to us. Your message is ticket {ticket}, and we'll reply if there's anything to follow up on.\n\nWhat you sent:\n{message}${SIGN_OFF}`,
+  },
+  auto_email: {
+    subject: "We got your email ({ticket})",
+    body: `Hi {name},
+
+Thanks for emailing KeyStub. Your message is ticket {ticket}, and a real person will reply, usually within one business day. Just reply to this email if you have anything to add.${SIGN_OFF}`,
   },
   auto_contact: {
     subject: "We got your message ({ticket})",

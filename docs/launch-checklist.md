@@ -236,3 +236,13 @@ Shown on the website as "Coming soon" until built.
 - **Maintenance history report** (Pro): linked from the Maintenance tab and Reports; date range; choose columns (costs, odometer, shop, refs, notes, car washes); print/PDF or maintenance-only spreadsheet.
 - **Your data:** spreadsheet export with vehicle / date range / category filters, plus full backup and import.
 - Migrations 0009 (tickets, templates, staff) and 0010 (user_prefs).
+
+## Email replies into Admin, admin.keystub.com, staff perk (built 2026-11-09)
+- **Ticket emails reply into Admin:** auto-replies and staff replies use Reply-To `support+ks1001@inbox.keystub.com`; Resend receives it and calls `/api/inbound/email` (signed webhook, `email.received`), which adds the customer's message to the ticket (quoted history trimmed) and sets it back to **Needs reply**. Any other email to the inbox domain becomes a new **Email** ticket with its own auto-reply ("Email to support"). Mail from our own domains and auto-responders is ignored (no loops). Attachments: noted on the ticket; open them in Resend.
+- **To set up (Jarin):** (1) Resend → add domain `inbox.keystub.com` with **Receiving** on, add its records at Porkbun; (2) Resend → Webhooks → `https://keystub.com/api/inbound/email`, event `email.received`, copy the signing secret; (3) Vercel env: `INBOUND_DOMAIN=inbox.keystub.com`, `RESEND_WEBHOOK_SECRET=…` (Secret); the Resend API key may need **Full access** to read received emails; redeploy.
+- **Optional, "everything through Admin":** forward support@keystub.com (Gmail/Google Admin) to `support@inbox.keystub.com` so every email to support becomes a ticket.
+- **admin.keystub.com** (free): Admin is served there with clean URLs (/tickets, /staff…); keystub.com/admin redirects; separate sign-in session; staff wording on sign-in/sign-up; sign-up there only for invited staff (clear message otherwise); staff accounts get no trial or customer tour. To set up: Vercel → Domains → add `admin.keystub.com` (Production); Porkbun CNAME `admin` → value Vercel shows; Vercel env `NEXT_PUBLIC_ADMIN_HOST=admin.keystub.com` (Config); redeploy.
+- **Team perk:** Admin → Staff has "Free Pro for personal account": that customer account gets Pro while the person is on the staff list and returns to normal automatically when removed (shown as "Free Pro: KeyStub team perk"). Discount % deferred until billing exists.
+- **Tickets list** now opens on All (with counts), sorted by latest activity; statuses: Needs reply · Open · Planned · Done · Closed. Staff of any role see every ticket.
+- Local dev DB note: the old local database uses WIN1252 encoding; new local DBs are created UTF-8 (production Neon is UTF-8).
+- Migration 0011 (staff.perk_email).

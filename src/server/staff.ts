@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
 import { staff } from "@/db/schema";
-import { can, type Permission, type StaffRole } from "@/lib/admin";
+import { adminPath, can, type Permission, type StaffRole } from "@/lib/admin";
 import { getSession } from "./session";
 
 const envList = (v: string | undefined) =>
@@ -44,11 +44,11 @@ export const staffInfoFor = cache(async (email: string | null | undefined): Prom
  */
 export async function requireStaff(perm?: Permission, opts: { allowWithout2fa?: boolean } = {}) {
   const s = await getSession();
-  if (!s) redirect("/sign-in?next=/admin");
+  if (!s) redirect(`/sign-in?next=${encodeURIComponent(adminPath("/admin"))}`);
   const info = await staffInfoFor(s.user.email);
   if (!info) notFound();
   const twoFactor = !!(s.user as { twoFactorEnabled?: boolean | null }).twoFactorEnabled;
-  if (info.dedicated && !twoFactor && !opts.allowWithout2fa) redirect("/admin/security?setup=1");
+  if (info.dedicated && !twoFactor && !opts.allowWithout2fa) redirect(adminPath("/admin/security?setup=1"));
   if (perm && !can(info.role, perm)) notFound();
   return { user: s.user, ...info, twoFactor };
 }

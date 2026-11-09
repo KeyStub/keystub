@@ -377,12 +377,12 @@ export const ticketMessages = pgTable(
     ticketId: text("ticket_id")
       .notNull()
       .references(() => feedback.id, { onDelete: "cascade" }),
-    /** "reply" (emailed to the customer) | "note" (staff only) | "auto_reply" */
+    /** "reply" (emailed to the customer) | "note" (staff only) | "auto_reply" | "customer" (their emailed reply) */
     kind: text("kind").notNull(),
     body: text("body").notNull(),
     authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
     authorName: text("author_name"),
-    /** for emailed messages: "sent" | "failed" */
+    /** for emailed messages: "sent" | "failed"; for customer emails: attachment count note */
     emailStatus: text("email_status"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -408,6 +408,8 @@ export const staff = pgTable(
     /** "owner" | "admin" | "support" */
     role: text("role").notNull(),
     name: text("name"),
+    /** their personal KeyStub account, which gets free Pro while they're on the team */
+    perkEmail: text("perk_email"),
     addedBy: text("added_by"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

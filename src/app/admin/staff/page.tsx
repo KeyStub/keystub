@@ -40,7 +40,7 @@ export default async function StaffPage() {
         envOwners={envOwners}
         rows={rows.map((r) => {
           const a = accounts.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
-          return { id: r.id, email: r.email, name: r.name, role: r.role, addedBy: r.addedBy, createdAt: r.createdAt.toLocaleDateString("en-CA", { dateStyle: "medium" }), hasAccount: !!a, twoFactor: !!a?.twoFactorEnabled };
+          return { id: r.id, email: r.email, name: r.name, role: r.role, perkEmail: r.perkEmail, addedBy: r.addedBy, createdAt: r.createdAt.toLocaleDateString("en-CA", { dateStyle: "medium" }), hasAccount: !!a, twoFactor: !!a?.twoFactorEnabled };
         })}
       />
       {!process.env.ADMIN_EMAILS && (

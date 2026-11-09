@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { adminUrl } from "@/lib/admin";
 import { authClient } from "@/lib/auth-client";
+import { isInvitedStaff } from "@/server/actions";
 
 function useSubmit() {
   const [busy, setBusy] = useState(false);
@@ -12,7 +14,7 @@ function useSubmit() {
   return { busy, setBusy, error, setError, info, setInfo };
 }
 
-export function SignUpForm() {
+export function SignUpForm({ staff = false }: { staff?: boolean }) {
   const s = useSubmit();
   const [done, setDone] = useState(false);
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -22,11 +24,15 @@ export function SignUpForm() {
     if (password !== String(f.get("confirm"))) return s.setError("Passwords don't match.");
     s.setBusy(true);
     s.setError(null);
+    if (staff && !(await isInvitedStaff(f.get("email")))) {
+      s.setBusy(false);
+      return s.setError("That email isn't on the KeyStub staff list. Use the work email you were invited with, or ask an owner to add you. To use KeyStub for your own vehicles, sign up at keystub.com.");
+    }
     const { error } = await authClient.signUp.email({
       name: String(f.get("name")).trim(),
       email: String(f.get("email")).trim(),
       password,
-      callbackURL: "/app",
+      callbackURL: staff ? adminUrl("/admin") : "/app",
     });
     s.setBusy(false);
     if (error) return s.setError(error.message ?? "Couldn't create your account.");
@@ -35,7 +41,9 @@ export function SignUpForm() {
   if (done)
     return (
       <div className="note info">
-        Check your inbox — we sent a link to confirm your email. Once confirmed you&apos;ll be signed in automatically.
+        {staff
+          ? "Check your work inbox: we sent a link to confirm your email. Once confirmed, sign in here and set up two-step verification."
+          : "Check your inbox — we sent a link to confirm your email. Once confirmed you'll be signed in automatically."}
       </div>
     );
   return (
@@ -68,7 +76,7 @@ export function SignUpForm() {
   );
 }
 
-export function SignInForm() {
+export function SignInForm({ home = "/app" }: { home?: string }) {
   const s = useSubmit();
   const router = useRouter();
   const params = useSearchParams();
@@ -90,7 +98,7 @@ export function SignInForm() {
       return s.setError(error.message ?? "Couldn't sign in.");
     }
     const next = params.get("next");
-    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/app";
+    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : home;
     if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
       router.push(`/two-factor?next=${encodeURIComponent(safeNext)}`);
       return;
@@ -189,7 +197,7 @@ export function ResetForm() {
 }
 
 /** Second sign-in step for accounts with two-factor on: a code from the authenticator app, or a backup code. */
-export function TwoFactorForm() {
+export function TwoFactorForm({ home = "/app" }: { home?: string }) {
   const s = useSubmit();
   const router = useRouter();
   const params = useSearchParams();
@@ -217,7 +225,7 @@ export function TwoFactorForm() {
       return s.setError(error.message ?? "That code didn't work. Try again.");
     }
     const next = params.get("next");
-    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/app");
+    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : home);
     router.refresh();
   }
   return (

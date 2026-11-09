@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { DeleteAccount, ProfileForm } from "@/components/account-forms";
 import { requireUser } from "@/server/session";
 import { staffInfoFor } from "@/server/staff";
+import { adminUrl } from "@/lib/admin";
 
 export const metadata = { title: "Account" };
 
@@ -12,7 +12,7 @@ export default async function ProfilePage() {
     <>
       {staff && (
         <div className="note info" style={{ marginBottom: 12 }}>
-          <b>KeyStub Admin:</b> <Link href="/admin">Open the admin area</Link> (only staff can see this).
+          <b>KeyStub Admin:</b> <a href={adminUrl("/admin")}>Open the admin area</a> (only staff can see this).
         </div>
       )}
       <h2 className="acc-h2">Profile</h2>

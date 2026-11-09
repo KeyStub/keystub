@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TicketComposer, TicketStatusSelect } from "@/components/admin";
 import { db } from "@/db";
 import { feedback, ticketMessages, user, vehicles } from "@/db/schema";
-import { CONTACT_TOPICS, TICKET_KIND_LABEL, ticketCode } from "@/lib/admin";
+import { adminPath, CONTACT_TOPICS, TICKET_KIND_LABEL, ticketCode } from "@/lib/admin";
 import { effectivePlan, PLANS } from "@/lib/plans";
 import { requireStaff } from "@/server/staff";
 
@@ -35,7 +35,7 @@ export default async function TicketPage({ params }: PageProps<"/admin/tickets/[
 
   return (
     <>
-      <Link href="/admin/tickets" className="adm-back">
+      <Link href={adminPath("/admin/tickets")} className="adm-back">
         ← All tickets
       </Link>
       <div className="adm-ticket-head">
@@ -63,10 +63,10 @@ export default async function TicketPage({ params }: PageProps<"/admin/tickets/[
           {msgs.map((m) => (
             <article key={m.id} className={`adm-msg ${m.kind}`}>
               <div className="adm-msg-head">
-                <b>{m.kind === "note" ? `📝 Note · ${m.authorName ?? "Staff"}` : m.kind === "auto_reply" ? "🤖 Auto-reply sent" : `↩ Reply · ${m.authorName ?? "Staff"}`}</b>
+                <b>{m.kind === "note" ? `📝 Note · ${m.authorName ?? "Staff"}` : m.kind === "auto_reply" ? "🤖 Auto-reply sent" : m.kind === "customer" ? `📨 ${m.authorName ?? "Customer"} replied by email` : `↩ Reply · ${m.authorName ?? "Staff"}`}</b>
                 <span className="muted">
                   {when(m.createdAt)}
-                  {m.emailStatus === "failed" ? " · ⚠ email failed" : m.emailStatus === "sent" ? " · emailed" : ""}
+                  {m.emailStatus === "failed" ? " · ⚠ email failed" : m.emailStatus === "sent" ? " · emailed" : m.emailStatus ? ` · ${m.emailStatus}` : ""}
                 </span>
               </div>
               <p>{m.body}</p>

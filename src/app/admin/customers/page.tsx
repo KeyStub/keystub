@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { user, vehicles } from "@/db/schema";
 import { effectivePlan, PLANS } from "@/lib/plans";
 import { requireStaff } from "@/server/staff";
+import { adminPath } from "@/lib/admin";
 
 export const metadata = { title: "Customers" };
 
@@ -29,7 +30,7 @@ export default async function Customers({ searchParams }: PageProps<"/admin/cust
   return (
     <>
       <h1 className="adm-h1">Customers</h1>
-      <form className="adm-search" action="/admin/customers">
+      <form className="adm-search" action={adminPath("/admin/customers")}>
         <input className="input" name="q" defaultValue={q} placeholder="Search by name or email…" />
         <button className="btn">Search</button>
       </form>

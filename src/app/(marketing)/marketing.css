@@ -506,3 +506,5 @@
 .mk-contact-error { background: var(--mk-warn-bg); color: var(--mk-warn-ink); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
 .mk-contact-done h2 { margin: 0; }
 .mk-hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.mk .auth-admin-tag { font: 700 11px/1 var(--font-body-stack); letter-spacing: 0.1em; text-transform: uppercase; background: var(--mk-yellow); color: #18263f; padding: 4px 7px; border-radius: 6px; }

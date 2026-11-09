@@ -978,3 +978,11 @@ export async function savePrefs(section: "dashboard" | "reports" | "history", va
     return fail(e);
   }
 }
+
+/** Admin-site sign-up: is this email on the staff list? (So the form can explain instead of failing silently.) */
+export async function isInvitedStaff(email: unknown): Promise<boolean> {
+  const e = typeof email === "string" ? email.trim().toLowerCase() : "";
+  if (!e.includes("@")) return false;
+  const { staffInfoFor } = await import("./staff");
+  return !!(await staffInfoFor(e))?.dedicated;
+}

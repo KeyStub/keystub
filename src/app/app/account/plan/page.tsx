@@ -41,7 +41,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/app/account
                 <button className="btn">Manage billing</button>
               </form>
             ) : (
-              <span className="chip good">Founder access</span>
+              <span className="chip good">{user.planSource === "staff" ? "Free Pro: KeyStub team perk" : "Complimentary Pro"}</span>
             )
           ) : (
             <div style={{ display: "flex", gap: 8 }}>

@@ -2,7 +2,7 @@ import { and, count, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { feedback, user } from "@/db/schema";
-import { OPEN_STATUSES } from "@/lib/admin";
+import { adminPath, OPEN_STATUSES } from "@/lib/admin";
 import { requireStaff } from "@/server/staff";
 
 export const metadata = { title: "Overview" };
@@ -20,11 +20,11 @@ export default async function AdminOverview() {
     db.select({ n: count() }).from(feedback).where(eq(feedback.status, "new")),
   ]);
   const tiles = [
-    ["Customers", users.n, `${newUsers.n} new this week`, "/admin/customers"],
-    ["Email confirmed", verified.n, "finished signing up", "/admin/customers"],
-    ["On a Pro trial", trial.n, "30-day free trial", "/admin/customers"],
-    ["Paying Pro", pro.n, "billing not live yet", "/admin/customers"],
-    ["Open tickets", openTickets.n, `${newTickets.n} not answered yet`, "/admin/tickets"],
+    ["Customers", users.n, `${newUsers.n} new this week`, adminPath("/admin/customers")],
+    ["Email confirmed", verified.n, "finished signing up", adminPath("/admin/customers")],
+    ["On a Pro trial", trial.n, "30-day free trial", adminPath("/admin/customers")],
+    ["Paying Pro", pro.n, "billing not live yet", adminPath("/admin/customers")],
+    ["Open tickets", openTickets.n, `${newTickets.n} not answered yet`, adminPath("/admin/tickets")],
   ] as const;
   return (
     <>

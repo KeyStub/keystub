@@ -681,3 +681,5 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
   .adm-kind, .adm-date { display: none; }
   .adm-roles { grid-template-columns: minmax(0, 1fr); }
 }
+.perk-cell { display: flex; gap: 6px; align-items: center; min-width: 210px; }
+.perk-cell .input { padding: 6px 8px; font-size: 13px; }

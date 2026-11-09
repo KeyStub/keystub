@@ -9,12 +9,12 @@ import { APP_NAME } from "@/lib/brand";
  * printed to the server log (and, locally, appended to .data/outbox.log) so verification and
  * reset links can still be clicked.
  */
-export async function sendEmail(msg: { to: string; subject: string; text: string; html?: string; replyTo?: string }) {
+export async function sendEmail(msg: { to: string; subject: string; text: string; html?: string; replyTo?: string; from?: string }) {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? `${APP_NAME} <onboarding@resend.dev>`;
+  const from = msg.from ?? process.env.EMAIL_FROM ?? `${APP_NAME} <onboarding@resend.dev>`;
 
   if (!key) {
-    const entry = `\n=== ${new Date().toISOString()} ===\nTo: ${msg.to}${msg.replyTo ? `\nReply-To: ${msg.replyTo}` : ""}\nSubject: ${msg.subject}\n\n${msg.text}\n`;
+    const entry = `\n=== ${new Date().toISOString()} ===${msg.from ? `\nFrom: ${msg.from}` : ""}\nTo: ${msg.to}${msg.replyTo ? `\nReply-To: ${msg.replyTo}` : ""}\nSubject: ${msg.subject}\n\n${msg.text}\n`;
     console.log(`[dev-mail]${entry}`);
     if (process.env.VERCEL) return; // read-only file system: the console log above is the copy
     try {
@@ -48,3 +48,6 @@ export function linkEmail(opts: { heading: string; body: string; url: string; ct
   <p style="color:#8b8e96;font-size:13px">If you didn't request this, you can ignore this email.</p></div>`;
   return { text, html };
 }
+
+/** Sender for support emails (auto-replies, staff replies). Replies come back to the support inbox. */
+export const supportFrom = () => process.env.SUPPORT_FROM ?? `${APP_NAME} Support <${process.env.SUPPORT_EMAIL || "support@keystub.com"}>`;

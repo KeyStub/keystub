@@ -4,101 +4,104 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Field, Modal, useToast } from "./ui";
-import { TwoFactorSettings } from "./two-factor-settings";
 
-export function AccountForms({ name, email, twoFactorEnabled }: { name: string; email: string; twoFactorEnabled: boolean }) {
+export function ProfileForm({ name, email }: { name: string; email: string }) {
   const toast = useToast();
   const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [typed, setTyped] = useState("");
-  const [understood, setUnderstood] = useState(false);
-
+  const [busy, setBusy] = useState(false);
   async function saveName(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy("name");
+    setBusy(true);
     const { error } = await authClient.updateUser({ name: String(new FormData(e.currentTarget).get("name")).trim() });
-    setBusy(null);
+    setBusy(false);
     if (error) return toast(error.message ?? "Couldn't save.", true);
     toast("Name updated.");
     router.refresh();
   }
+  return (
+    <div className="card">
+      <form onSubmit={saveName} className="row2" style={{ alignItems: "end" }}>
+        <Field label="Name" htmlFor="acc-name">
+          <input className="input" id="acc-name" name="name" defaultValue={name} required maxLength={100} />
+        </Field>
+        <div className="field">
+          <button className="btn" disabled={busy}>
+            Save name
+          </button>
+        </div>
+      </form>
+      <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+        Email: <b>{email}</b>
+      </p>
+    </div>
+  );
+}
 
+export function PasswordForm() {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
   async function changePassword(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const f = new FormData(form);
     if (f.get("newPassword") !== f.get("confirm")) return toast("New passwords don't match.", true);
-    setBusy("pw");
+    setBusy(true);
     const { error } = await authClient.changePassword({
       currentPassword: String(f.get("currentPassword")),
       newPassword: String(f.get("newPassword")),
       revokeOtherSessions: true,
     });
-    setBusy(null);
+    setBusy(false);
     if (error) return toast(error.message ?? "Couldn't change password.", true);
     form.reset();
     toast("Password changed. Other devices were signed out.");
   }
+  return (
+    <form className="card" onSubmit={changePassword}>
+      <Field label="Current password" htmlFor="pw-cur">
+        <input className="input" id="pw-cur" name="currentPassword" type="password" required autoComplete="current-password" />
+      </Field>
+      <div className="row2">
+        <Field label="New password" htmlFor="pw-new">
+          <input className="input" id="pw-new" name="newPassword" type="password" required minLength={10} autoComplete="new-password" />
+        </Field>
+        <Field label="Confirm new password" htmlFor="pw-conf">
+          <input className="input" id="pw-conf" name="confirm" type="password" required minLength={10} autoComplete="new-password" />
+        </Field>
+      </div>
+      <button className="btn" disabled={busy}>
+        Change password
+      </button>
+    </form>
+  );
+}
 
+export function DeleteAccount() {
+  const toast = useToast();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [understood, setUnderstood] = useState(false);
+  const [busy, setBusy] = useState(false);
   async function deleteAccount(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy("del");
+    setBusy(true);
     const { error } = await authClient.deleteUser({ password: String(new FormData(e.currentTarget).get("password")) });
-    setBusy(null);
+    setBusy(false);
     if (error) return toast(error.message ?? "Couldn't delete account.", true);
     router.push("/?deleted=1");
   }
-
   return (
     <>
-      <h3 className="section-title">Profile</h3>
-      <div className="card">
-        <form onSubmit={saveName} className="row2" style={{ alignItems: "end" }}>
-          <Field label="Name" htmlFor="acc-name">
-            <input className="input" id="acc-name" name="name" defaultValue={name} required maxLength={100} />
-          </Field>
-          <div className="field">
-            <button className="btn" disabled={busy === "name"}>
-              Save name
-            </button>
-          </div>
-        </form>
-        <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-          Signed in as <b>{email}</b>
-        </p>
-      </div>
-
-      <h3 className="section-title">Password</h3>
-      <form className="card" onSubmit={changePassword}>
-        <Field label="Current password" htmlFor="pw-cur">
-          <input className="input" id="pw-cur" name="currentPassword" type="password" required autoComplete="current-password" />
-        </Field>
-        <div className="row2">
-          <Field label="New password" htmlFor="pw-new">
-            <input className="input" id="pw-new" name="newPassword" type="password" required minLength={10} autoComplete="new-password" />
-          </Field>
-          <Field label="Confirm new password" htmlFor="pw-conf">
-            <input className="input" id="pw-conf" name="confirm" type="password" required minLength={10} autoComplete="new-password" />
-          </Field>
-        </div>
-        <button className="btn" disabled={busy === "pw"}>
-          Change password
-        </button>
-      </form>
-
-      <TwoFactorSettings enabled={twoFactorEnabled} email={email} />
-
-      <h3 className="section-title">Delete account</h3>
       <div className="card" style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <p className="muted" style={{ margin: 0, fontSize: 13, maxWidth: 480 }}>
-          Permanently deletes your account, every vehicle and every record. Download a backup first — this can&apos;t be undone.
+          Permanently deletes your account, every vehicle and every record. Download a backup first. This can&apos;t be undone.
         </p>
-        <button className="btn danger" onClick={() => setDeleteOpen(true)}>
+        <button className="btn danger" onClick={() => setOpen(true)}>
           Delete account…
         </button>
       </div>
-      <Modal open={deleteOpen} title="Delete your account?" onClose={() => setDeleteOpen(false)}>
+      <Modal open={open} title="Delete your account?" onClose={() => setOpen(false)}>
         <form onSubmit={deleteAccount}>
           <p style={{ marginTop: 0 }}>
             Everything will be permanently deleted: your vehicles, fuel, charging, maintenance and cost records, reminders and settings. If you have a paid
@@ -118,10 +121,10 @@ export function AccountForms({ name, email, twoFactorEnabled }: { name: string; 
             <input className="input" id="del-pw" name="password" type="password" required autoComplete="current-password" />
           </Field>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button type="button" className="btn" onClick={() => setDeleteOpen(false)}>
+            <button type="button" className="btn" onClick={() => setOpen(false)}>
               Cancel
             </button>
-            <button className="btn danger" disabled={typed.trim().toLowerCase() !== "delete my account" || !understood || busy === "del"}>
+            <button className="btn danger" disabled={typed.trim().toLowerCase() !== "delete my account" || !understood || busy}>
               Delete everything
             </button>
           </div>

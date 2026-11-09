@@ -7,6 +7,7 @@ import {
   index,
   uniqueIndex,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -344,6 +345,8 @@ export const feedback = pgTable(
   "feedback",
   {
     id: id(),
+    /** support ticket number, shown as #KS1001 (sequence starts at 1001) */
+    number: integer("number").notNull().unique().default(sql`nextval('feedback_number_seq')`),
     /** null for contact-form messages from people who aren't signed in */
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     email: text("email").notNull(),
@@ -365,3 +368,59 @@ export const feedback = pgTable(
   },
   (t) => [index("feedback_status_idx").on(t.status, t.createdAt), index("feedback_user_idx").on(t.userId)],
 );
+
+/** Conversation on a support ticket: staff replies (emailed), internal notes, and auto-replies. */
+export const ticketMessages = pgTable(
+  "ticket_messages",
+  {
+    id: id(),
+    ticketId: text("ticket_id")
+      .notNull()
+      .references(() => feedback.id, { onDelete: "cascade" }),
+    /** "reply" (emailed to the customer) | "note" (staff only) | "auto_reply" */
+    kind: text("kind").notNull(),
+    body: text("body").notNull(),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    authorName: text("author_name"),
+    /** for emailed messages: "sent" | "failed" */
+    emailStatus: text("email_status"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ticket_messages_ticket_idx").on(t.ticketId, t.createdAt)],
+);
+
+/** Editable emails (auto-replies per ticket type). Missing rows fall back to the defaults in src/lib/admin.ts. */
+export const emailTemplates = pgTable("email_templates", {
+  key: text("key").primaryKey(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** KeyStub staff (admin access). Owners also come from the ADMIN_EMAILS setting. */
+export const staff = pgTable(
+  "staff",
+  {
+    id: id(),
+    email: text("email").notNull(),
+    /** "owner" | "admin" | "support" */
+    role: text("role").notNull(),
+    name: text("name"),
+    addedBy: text("added_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("staff_email_idx").on(sql`lower(${t.email})`)],
+);
+
+/** Layout and report choices (home-screen cards, report sections, maintenance history columns). */
+export const userPrefs = pgTable("user_prefs", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  dashboard: jsonb("dashboard"),
+  reports: jsonb("reports"),
+  history: jsonb("history"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

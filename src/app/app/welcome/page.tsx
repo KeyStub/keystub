@@ -5,7 +5,7 @@ import "../../(marketing)/marketing.css"; // the phone mockups reuse the homepag
 
 export const metadata = { title: "Welcome" };
 
-/** The welcome tour: shown once after sign-up, and any time from Account → Getting started. */
+/** The welcome tour: shown once after sign-up, and any time from Account → Help & feedback. */
 export default async function WelcomePage({ searchParams }: PageProps<"/app/welcome">) {
   const user = await requireUser();
   const vs = await listVehicles(user.id);

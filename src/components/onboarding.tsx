@@ -251,7 +251,7 @@ export function Onboarding({ firstName, hasVehicles, replay, units, trialDaysLef
             <li>Next service, from the date or odometer on a maintenance record.</li>
             <li>Anything else you add yourself, by date, by odometer or both.</li>
           </ul>
-          <p className="ob-note">You choose how early “Due soon” kicks in, in Account → Reminders.</p>
+          <p className="ob-note">You choose how early “Due soon” kicks in, in Account → Preferences.</p>
         </>
       ),
       visual: (
@@ -294,7 +294,7 @@ export function Onboarding({ firstName, hasVehicles, replay, units, trialDaysLef
             <Row icon={<IconDownload size={18} />} name="Your data">
               Download everything as a spreadsheet or backup, any time, on any plan.
             </Row>
-            <Row icon={<IconHome size={18} />} name="Getting started">
+            <Row icon={<IconHome size={18} />} name="Help &amp; feedback">
               Replay this tour whenever you like.
             </Row>
           </ul>
@@ -306,7 +306,7 @@ export function Onboarding({ firstName, hasVehicles, replay, units, trialDaysLef
       eyebrow: replay ? "That's the tour" : "Last step",
       title: replay ? "You're all caught up" : "Let's set you up",
       body: replay ? (
-        <p>You can replay this tour any time from Account → Getting started, or the ? at the top of the app.</p>
+        <p>You can replay this tour any time from Account → Help & feedback, or the ? at the top of the app.</p>
       ) : (
         <>
           <p>First, check your units. We guessed from where you signed up, and you can change them any time in Account.</p>
@@ -335,7 +335,7 @@ export function Onboarding({ firstName, hasVehicles, replay, units, trialDaysLef
                 ? "Miles, litres, UK MPG and pounds."
                 : preset === "ca"
                   ? "Kilometres, litres, L/100 km and Canadian dollars."
-                  : "A custom mix. Fine-tune it in Account → Units & currency."}
+                  : "A custom mix. Fine-tune it in Account → Preferences."}
           </p>
         </div>
       ),
@@ -453,7 +453,7 @@ export function Onboarding({ firstName, hasVehicles, replay, units, trialDaysLef
       {!replay && last && !hasVehicles && (
         <p className="ob-restore">
           Moving from another device or the original tracker?{" "}
-          <button type="button" className="link-btn" disabled={busy} onClick={() => finish("/app/account#import")}>
+          <button type="button" className="link-btn" disabled={busy} onClick={() => finish("/app/account/data#import")}>
             Restore a backup file
           </button>
         </p>

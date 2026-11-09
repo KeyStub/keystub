@@ -49,7 +49,7 @@ export function RemindersView({
     <>
       <div className="toolbar">
         <p className="grow muted" style={{ margin: 0, fontSize: 13 }}>
-          Due soon = within {prefs.leadDays} days or {u.dist(prefs.leadKm)} (<Link href="/app/account#reminders">change</Link>). Renewal dates come from the Vehicle tab; next-service dates from maintenance records.
+          Due soon = within {prefs.leadDays} days or {u.dist(prefs.leadKm)} (<Link href="/app/account/preferences#reminders">change</Link>). Renewal dates come from the Vehicle tab; next-service dates from maintenance records.
         </p>
         <button className="btn primary" onClick={() => setEditing({ id: null, r: {} })}>
           + Add reminder

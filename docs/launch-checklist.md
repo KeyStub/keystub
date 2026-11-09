@@ -221,3 +221,18 @@ Shown on the website as "Coming soon" until built.
 - **Where it goes:** emailed to support@keystub.com (Reply goes to the sender; change with SUPPORT_EMAIL) and saved to **KeyStub Admin → Feedback inbox** (keystub.com/admin/feedback): filter by status/type, set status, private notes. Admin access = ADMIN_EMAILS, falling back to FOUNDER_EMAILS (Jarin's emails already set on Vercel). Others get a 404.
 - **Saved stations:** see "Saved stations with smart suggestions" in git log; Account → Saved stations. Location used only on the device when allowed; privacy policy updated (feedback/contact data + location).
 - Later: public ideas board with voting (from feedback marked Planned).
+
+## KeyStub Admin, Account sections, custom reports (built 2026-11-09)
+- **Admin is a private area of the same site** (keystub.com/admin), not a separate domain: one app, one database, one login system. Customers get a plain 404. Optional later: admin.keystub.com subdomain (free, just a DNS record).
+- **Staff accounts are separate work accounts**: owners come from the `ADMIN_EMAILS` Vercel setting, others are added in Admin → Staff (Owner / Admin / Support roles; invite email sent). Work accounts open straight into Admin, have no garage, and must have two-step verification on. Until `ADMIN_EMAILS` is set, Jarin's personal (founder) account keeps owner access with a reminder banner.
+- **To do (Jarin):** create the work account (e.g. admin@keystub.com: sign up at keystub.com/sign-up), then in Vercel add `ADMIN_EMAILS=admin@keystub.com` and redeploy; sign in with it and turn on two-step verification.
+- **Support tickets:** numbered #KS1001, #KS1002…; compact list (search by #KS, email or words; filters by status and type); each opens its own page with the conversation, separate timestamped internal notes, and **reply from Admin** (emailed from support@keystub.com, subject "Re: [#KS1001] …", optional "mark as done"); customer + device details on the side. Customers see their ticket number on screen and by email.
+- **Auto-replies** per ticket type (bug, idea, question, other, contact form), editable in Admin → Auto-reply emails, with {name} {ticket} {message}; on/off per type; restore default.
+- Customer replies to those emails currently land in the support@ Gmail inbox. Later: Resend inbound email so replies appear on the ticket automatically.
+- Admin also has Overview (customers, trials, open tickets) and Customers (search; account details only). Plans & pricing and Site settings are placeholders.
+- **Account** split into Profile · Plan & billing · Preferences · Home screen · Saved stations · Security · Your data · Help & feedback.
+- **Home screen:** show/hide and reorder the top numbers and the cards.
+- **Reports:** "Customize report" (sections incl. itemized list; categories), saved as default; spreadsheet download with the same filters. Fixed: EV charging was missing from report totals.
+- **Maintenance history report** (Pro): linked from the Maintenance tab and Reports; date range; choose columns (costs, odometer, shop, refs, notes, car washes); print/PDF or maintenance-only spreadsheet.
+- **Your data:** spreadsheet export with vehicle / date range / category filters, plus full backup and import.
+- Migrations 0009 (tickets, templates, staff) and 0010 (user_prefs).

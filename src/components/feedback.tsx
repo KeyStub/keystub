@@ -2,9 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { CONTACT_TOPICS, FEEDBACK_KINDS, FEEDBACK_STATUSES } from "@/lib/admin";
-import { submitContact, submitFeedback, updateFeedback } from "@/server/actions";
-import { useToast } from "./ui";
+import { CONTACT_TOPICS, FEEDBACK_KINDS, ticketCode } from "@/lib/admin";
+import { submitContact, submitFeedback } from "@/server/actions";
 
 /** In-app: report a bug, suggest an idea, ask a question. */
 export function FeedbackForm() {
@@ -16,7 +15,7 @@ export function FeedbackForm() {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
   const from = params.get("from");
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -28,7 +27,7 @@ export function FeedbackForm() {
     setBusy(false);
     if (!res.ok) return setError("error" in res ? res.error : "Couldn't send it. Please try again.");
     form.reset();
-    setSent(true);
+    setSent(res.id ? ticketCode(Number(res.id)) : "sent");
     router.refresh();
   }
 
@@ -39,10 +38,11 @@ export function FeedbackForm() {
           ✓
         </div>
         <h2>Thanks, we got it!</h2>
+        {sent.startsWith("#") && <p style={{ margin: "0 0 6px" }}>Your ticket number is <b>{sent}</b>. We emailed you a copy.</p>}
         <p className="muted">
           Every message is read. {kind === "bug" || kind === "question" ? "If we need more details or have an answer, we'll email you." : "We'll update its status below as plans change."}
         </p>
-        <button className="btn" onClick={() => setSent(false)}>
+        <button className="btn" onClick={() => setSent(null)}>
           Send something else
         </button>
       </div>
@@ -99,7 +99,7 @@ export function ContactForm({ defaultName, defaultEmail }: { defaultName?: strin
   const [shownAt] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -108,14 +108,17 @@ export function ContactForm({ defaultName, defaultEmail }: { defaultName?: strin
     const res = await submitContact({ ...Object.fromEntries(new FormData(e.currentTarget)), t: shownAt });
     setBusy(false);
     if (!res.ok) return setError("error" in res ? res.error : "Couldn't send your message. Please email support@keystub.com.");
-    setSent(true);
+    setSent(res.id ? ticketCode(Number(res.id)) : "sent");
   }
 
   if (sent)
     return (
       <div className="mk-contact-card mk-contact-done">
         <h2>Message sent</h2>
-        <p>Thanks for reaching out. We usually reply within one business day, from support@keystub.com.</p>
+        <p>
+          Thanks for reaching out.{sent.startsWith("#") ? <> Your ticket number is <b>{sent}</b>, and we emailed you a copy.</> : null} We usually reply within one
+          business day, from support@keystub.com.
+        </p>
       </div>
     );
 
@@ -158,41 +161,5 @@ export function ContactForm({ defaultName, defaultEmail }: { defaultName?: strin
         Already using KeyStub? Bugs and feature ideas are easiest to send from the app: More → Send feedback.
       </p>
     </form>
-  );
-}
-
-/** KeyStub Admin: one feedback item with status + private note. */
-export function AdminFeedbackControls({ id, status, adminNote }: { id: string; status: string; adminNote: string | null }) {
-  const router = useRouter();
-  const toast = useToast();
-  const [s, setS] = useState(status);
-  const [note, setNote] = useState(adminNote ?? "");
-  const [busy, setBusy] = useState(false);
-  const dirty = s !== status || note !== (adminNote ?? "");
-  return (
-    <div className="fb-admin-controls">
-      <select className="select inline" value={s} onChange={(e) => setS(e.target.value)} aria-label="Status">
-        {FEEDBACK_STATUSES.map((x) => (
-          <option key={x.id} value={x.id}>
-            {x.label}
-          </option>
-        ))}
-      </select>
-      <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Private note (only you see this)" maxLength={2000} />
-      <button
-        className="btn sm"
-        disabled={!dirty || busy}
-        onClick={async () => {
-          setBusy(true);
-          const res = await updateFeedback(id, { status: s, adminNote: note });
-          setBusy(false);
-          if (!res.ok) return toast("error" in res ? res.error : "Couldn't save.", true);
-          toast("Saved.");
-          router.refresh();
-        }}
-      >
-        {busy ? "Saving…" : "Save"}
-      </button>
-    </div>
   );
 }

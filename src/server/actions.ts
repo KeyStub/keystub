@@ -7,9 +7,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { ImportVerificationError, importExport } from "@/db/import-core";
-import { batteryChecks, chargingSessions, costRecords, feedback, fuelEntries, maintenanceRecords, reminders, savedPlaces, user as userTable, vehicles } from "@/db/schema";
-import { isAdminEmail, SUPPORT_EMAIL } from "@/lib/admin";
-import { sendEmail } from "./mailer";
+import { batteryChecks, chargingSessions, costRecords, feedback, fuelEntries, maintenanceRecords, reminders, savedPlaces, user as userTable, userPrefs, vehicles } from "@/db/schema";
+import { normalizeDash, normalizeHistory, normalizeReports } from "@/lib/prefs";
+import { afterTicketCreated } from "./tickets";
 import { laterLowerOdometer, priorOdometer } from "@/lib/calc";
 import { fmtDate } from "@/lib/format";
 import { makeFmt, toMetric, type Fmt, type UnitPrefs } from "@/lib/units";
@@ -883,14 +883,6 @@ export async function deletePlace(id: string): Promise<ActionResult> {
 
 const clip = (s: string | null | undefined, n: number) => (s ? s.slice(0, n) : null);
 
-async function notifySupport(subject: string, lines: (string | null | undefined)[], replyTo: string) {
-  try {
-    await sendEmail({ to: SUPPORT_EMAIL(), subject, text: lines.filter((l) => l != null).join("\n"), replyTo });
-  } catch (e) {
-    console.error("feedback notification failed", e); // the message is saved either way
-  }
-}
-
 const feedbackSchema = z.object({
   kind: z.enum(["bug", "idea", "question", "other"]),
   message: z.string().trim().min(5, "Tell us a little more (at least a few words).").max(5000, "That's a bit long. Please keep it under 5,000 characters."),
@@ -908,18 +900,13 @@ export async function submitFeedback(input: unknown): Promise<ActionResult> {
       .from(feedback)
       .where(and(eq(feedback.userId, user.id), sql`${feedback.createdAt} > now() - interval '1 hour'`));
     if (count >= 10) return { ok: false, error: "You've sent a lot of feedback in the last hour. Thank you! Please try again a bit later." };
-    await db.insert(feedback).values({ userId: user.id, email: user.email, name: user.name, kind: d.kind, message: d.message, page: clip(d.page, 300), userAgent: clip(ua, 300) });
-    await notifySupport(`[KeyStub feedback] ${d.kind}: ${d.message.slice(0, 60).replace(/\s+/g, " ")}`, [
-      `From: ${user.name} <${user.email}> (signed in, ${user.effectivePlan})`,
-      `Type: ${d.kind}`,
-      d.page ? `Page: ${d.page}` : null,
-      "",
-      d.message,
-      "",
-      "Reply to this email to answer them. Manage it at /admin/feedback.",
-    ], user.email);
+    const [t] = await db
+      .insert(feedback)
+      .values({ userId: user.id, email: user.email, name: user.name, kind: d.kind, message: d.message, page: clip(d.page, 300), userAgent: clip(ua, 300) })
+      .returning({ id: feedback.id, number: feedback.number });
+    await afterTicketCreated({ ...t, kind: d.kind, name: user.name, email: user.email, message: d.message, page: d.page, context: `signed in, ${user.effectivePlan} plan` });
     revalidatePath("/app/feedback");
-    return { ok: true };
+    return { ok: true, id: String(t.number) };
   } catch (e) {
     return fail(e);
   }
@@ -954,46 +941,38 @@ export async function submitContact(input: unknown): Promise<ActionResult> {
     if (count >= 3) return { ok: false, error: "We've received a few messages from you already. We'll reply soon, or email support@keystub.com." };
     const { getSession } = await import("./session");
     const s = await getSession();
-    await db.insert(feedback).values({
-      userId: s?.user.id ?? null,
-      email: d.email,
-      name: d.name,
-      kind: "contact",
-      topic: d.topic,
-      message: d.message,
-      userAgent: clip(h.get("user-agent"), 300),
-      ipHash,
-    });
-    await notifySupport(`[KeyStub contact] ${d.topic}: ${d.name}`, [
-      `From: ${d.name} <${d.email}>${s ? " (has an account, signed in)" : ""}`,
-      `Topic: ${d.topic}`,
-      "",
-      d.message,
-      "",
-      "Reply to this email to answer them. Manage it at /admin/feedback.",
-    ], d.email);
-    return { ok: true };
+    const [t] = await db
+      .insert(feedback)
+      .values({
+        userId: s?.user.id ?? null,
+        email: d.email,
+        name: d.name,
+        kind: "contact",
+        topic: d.topic,
+        message: d.message,
+        userAgent: clip(h.get("user-agent"), 300),
+        ipHash,
+      })
+      .returning({ id: feedback.id, number: feedback.number });
+    await afterTicketCreated({ ...t, kind: "contact", name: d.name, email: d.email, message: d.message, topic: d.topic, context: s ? "has an account, signed in" : null });
+    return { ok: true, id: String(t.number) };
   } catch (e) {
     return fail(e);
   }
 }
 
-const statusSchema = z.object({
-  status: z.enum(["new", "planned", "in_progress", "done", "closed"]),
-  adminNote: z.string().max(2000).optional(),
-});
+/* ============================ LAYOUT & REPORT PREFS ============================ */
 
-/** KeyStub Admin: set a feedback item's status / private note. */
-export async function updateFeedback(id: string, input: unknown): Promise<ActionResult> {
+/** Save home-screen layout, report options or maintenance-history columns. null resets to defaults. */
+export async function savePrefs(section: "dashboard" | "reports" | "history", value: unknown): Promise<ActionResult> {
   try {
     const user = await requireUser();
-    if (!isAdminEmail(user.email)) return { ok: false, error: "Not allowed" };
-    const d = statusSchema.parse(input);
+    const clean = value == null ? null : section === "dashboard" ? normalizeDash(value) : section === "reports" ? normalizeReports(value) : normalizeHistory(value);
     await db
-      .update(feedback)
-      .set({ status: d.status, adminNote: d.adminNote ?? null, updatedAt: new Date() })
-      .where(eq(feedback.id, id));
-    revalidatePath("/admin/feedback");
+      .insert(userPrefs)
+      .values({ userId: user.id, [section]: clean, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: userPrefs.userId, set: { [section]: clean, updatedAt: new Date() } });
+    revalidatePath("/app", "layout");
     return { ok: true };
   } catch (e) {
     return fail(e);

@@ -37,7 +37,7 @@ export default async function GaragePage({ searchParams }: PageProps<"/app">) {
               + Add vehicle
             </Link>
           ) : (
-            <Link href="/app/account#plan" className="btn">
+            <Link href="/app/account/plan" className="btn">
               Upgrade to add more
             </Link>
           )}
@@ -50,7 +50,7 @@ export default async function GaragePage({ searchParams }: PageProps<"/app">) {
               <Link href="/app/vehicles/new" className="btn primary">
                 Add a vehicle
               </Link>
-              <Link href="/app/account#import" className="btn">
+              <Link href="/app/account/data#import" className="btn">
                 Import a backup file
               </Link>
             </div>

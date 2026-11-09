@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
   const portal = await stripe().billingPortal.sessions.create({
     customer: await ensureCustomer(s.user),
-    return_url: `${origin}/app/account#plan`,
+    return_url: `${origin}/app/account/plan`,
   });
   return NextResponse.redirect(portal.url, 303);
 }

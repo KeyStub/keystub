@@ -47,6 +47,17 @@ export async function GET(req: Request) {
   const rows: unknown[][] = [
     ["Vehicle", "Category", "Type", "Date", "Description", `Amount (${units.currency})`, `Odometer (${u.distUnit})`, u.volWord, `Price/${u.volUnit}`, "kWh", "Price/kWh", "Notes"],
   ];
+  // Optional filters (Reports / Account → Your data): vehicle, date range, categories.
+  const sp = new URL(req.url).searchParams;
+  const vf = sp.get("vehicle");
+  const from = sp.get("from") || "0000-01-01";
+  const to = sp.get("to") || "9999-12-31";
+  const cats = new Set((sp.get("cats") ?? "Fuel,Charging,Maintenance,Insurance,Other").split(","));
+  const keep = (r: { vehicleId: string; date: string }) => (!vf || r.vehicleId === vf) && r.date >= from && r.date <= to;
+  data.fuel = cats.has("Fuel") ? data.fuel.filter(keep) : [];
+  data.charging = cats.has("Charging") ? data.charging.filter(keep) : [];
+  data.maintenance = cats.has("Maintenance") ? data.maintenance.filter(keep) : [];
+  data.costs = data.costs.filter((r) => keep(r) && cats.has(r.type === "Insurance" ? "Insurance" : "Other"));
   data.fuel.forEach((r) => rows.push([names.get(r.vehicleId), "Fuel", r.fillType, r.date, [r.station, r.grade].filter(Boolean).join(" "), dollars(r.totalPaidCents), odo(r.odometer), vol(r.litres), ppv(r.pricePerLitre), "", "", r.notes]));
   data.maintenance.forEach((r) => rows.push([names.get(r.vehicleId), "Maintenance", r.category, r.date, [r.description, r.shop].filter(Boolean).join(" — "), dollars(r.totalCostCents), odo(r.odometer), "", "", "", "", r.notes]));
   data.costs.forEach((r) => rows.push([names.get(r.vehicleId), "Recurring/Other", r.type, r.date, r.provider, dollars(r.amountCents), "", "", "", "", "", r.notes]));
@@ -57,7 +68,7 @@ export async function GET(req: Request) {
   return new Response(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="keystub-${stamp}.csv"`,
+      "content-disposition": `attachment; filename="keystub-${vf && names.get(vf) ? String(names.get(vf)).replace(/[^A-Za-z0-9]+/g, "-").toLowerCase() + "-" : ""}${cats.size === 1 ? [...cats][0].toLowerCase() + "-" : ""}${stamp}.csv"`,
       "cache-control": "no-store",
     },
   });

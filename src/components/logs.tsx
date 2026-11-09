@@ -731,7 +731,7 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice, places }: { vehicleId
       />
       {rows.some((r) => r.costEstimated) && (
         <p className="muted" style={{ fontSize: 12.5, marginTop: 8 }}>
-          * Estimated from your home electricity rate ({u.price(homeKwhPrice)}/kWh). Change it under Account → Energy.
+          * Estimated from your home electricity rate ({u.price(homeKwhPrice)}/kWh). Change it under Account → Preferences.
         </p>
       )}
       <FormModal

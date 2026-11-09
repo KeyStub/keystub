@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     allow_promotion_codes: true,
     automatic_tax: { enabled: process.env.STRIPE_AUTOMATIC_TAX === "1" },
     success_url: `${origin}/app/account?upgraded=1#plan`,
-    cancel_url: `${origin}/app/account#plan`,
+    cancel_url: `${origin}/app/account/plan`,
     client_reference_id: s.user.id,
   });
   return NextResponse.redirect(session.url!, 303);

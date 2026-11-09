@@ -61,7 +61,7 @@ export default async function ChargingPage({ params }: PageProps<"/app/v/[vid]/c
             </div>
             <p className="muted" style={{ fontSize: 12.5, margin: "10px 0 0" }}>
               “Saved vs gas” compares against a {u.econ(user.compareL100)} car at {u.price(u.perVolToUser(user.compareFuelPrice)!, 2)}/{u.volUnit}.{" "}
-              <Link href="/app/account#energy">Change these</Link>.
+              <Link href="/app/account/preferences#energy">Change these</Link>.
             </p>
           </div>
         </>

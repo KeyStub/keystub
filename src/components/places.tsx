@@ -199,7 +199,7 @@ export function PlaceField({
               </button>
             ))
           )}
-          <Link href="/app/account#stations" className="place-manage">
+          <Link href="/app/account/stations" className="place-manage">
             {w.manage}
           </Link>
         </div>

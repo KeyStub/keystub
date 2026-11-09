@@ -3,7 +3,8 @@ import { and, asc, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
-import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, savedPlaces, vehicles } from "@/db/schema";
+import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, savedPlaces, userPrefs, vehicles } from "@/db/schema";
+import { normalizeDash, normalizeHistory, normalizeReports } from "@/lib/prefs";
 import { placeKey, sortPlaces, type PlaceKind, type PlaceOption, type PlacesData } from "@/lib/places";
 
 /*
@@ -116,4 +117,10 @@ export const getPlaces = cache(async (userId: string, kind: PlaceKind): Promise<
   });
   for (const u of usage.values()) options.push({ id: null, name: u.name, saved: false, uses: u.uses, lastUsed: u.last, lat: null, lng: null });
   return { kind, options: sortPlaces(options) };
+});
+
+/** Layout and report choices, with defaults filled in. */
+export const getPrefs = cache(async (userId: string) => {
+  const [row] = await db.select().from(userPrefs).where(eq(userPrefs.userId, userId));
+  return { dashboard: normalizeDash(row?.dashboard), reports: normalizeReports(row?.reports), history: normalizeHistory(row?.history) };
 });

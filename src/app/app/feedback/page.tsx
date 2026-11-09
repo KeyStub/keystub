@@ -5,7 +5,7 @@ import { FeedbackForm } from "@/components/feedback";
 import { HomeNav } from "@/components/home-nav";
 import { db } from "@/db";
 import { feedback } from "@/db/schema";
-import { FEEDBACK_KINDS, FEEDBACK_STATUSES } from "@/lib/admin";
+import { FEEDBACK_KINDS, FEEDBACK_STATUSES, ticketCode } from "@/lib/admin";
 import { fmtDate } from "@/lib/format";
 import { requireUser } from "@/server/session";
 
@@ -16,7 +16,7 @@ const STATUS_CHIP: Record<string, string> = { new: "neutral", planned: "warning"
 export default async function FeedbackPage() {
   const user = await requireUser();
   const mine = await db
-    .select({ id: feedback.id, kind: feedback.kind, message: feedback.message, status: feedback.status, createdAt: feedback.createdAt })
+    .select({ id: feedback.id, number: feedback.number, kind: feedback.kind, message: feedback.message, status: feedback.status, createdAt: feedback.createdAt })
     .from(feedback)
     .where(eq(feedback.userId, user.id))
     .orderBy(desc(feedback.createdAt))
@@ -49,7 +49,7 @@ export default async function FeedbackPage() {
                           {f.message.length > 140 ? f.message.slice(0, 140) + "…" : f.message}
                         </div>
                         <div className="l-sub">
-                          {k?.label ?? "Message"} · {fmtDate(f.createdAt.toISOString().slice(0, 10))}
+                          {ticketCode(f.number)} · {k?.label ?? "Message"} · {fmtDate(f.createdAt.toISOString().slice(0, 10))}
                         </div>
                       </div>
                       <span className={`chip ${STATUS_CHIP[f.status] ?? "neutral"}`}>

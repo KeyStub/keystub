@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { ImportVerificationError, importExport } from "@/db/import-core";
-import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, user as userTable, vehicles } from "@/db/schema";
+import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, savedPlaces, user as userTable, vehicles } from "@/db/schema";
 import { laterLowerOdometer, priorOdometer } from "@/lib/calc";
 import { fmtDate } from "@/lib/format";
 import { makeFmt, toMetric, type Fmt, type UnitPrefs } from "@/lib/units";
@@ -796,6 +796,79 @@ export async function completeOnboarding(): Promise<ActionResult> {
       .update(userTable)
       .set({ onboardedAt: new Date(), updatedAt: new Date() })
       .where(and(eq(userTable.id, user.id), isNull(userTable.onboardedAt)));
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ============================ SAVED STATIONS ============================ */
+
+const coord = (min: number, max: number) => z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().min(min).max(max).nullable());
+const placeSchema = z.object({
+  kind: z.enum(["fuel", "charging"]),
+  name: z.string().trim().min(1, "Enter a name").max(120),
+  lat: coord(-90, 90).optional(),
+  lng: coord(-180, 180).optional(),
+});
+
+/** Save (or update the location of) a station / charging network. Names are unique per user, ignoring case. */
+export async function savePlace(input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const d = placeSchema.parse(input);
+    const [existing] = await db
+      .select({ id: savedPlaces.id })
+      .from(savedPlaces)
+      .where(and(eq(savedPlaces.userId, user.id), eq(savedPlaces.kind, d.kind), sql`lower(${savedPlaces.name}) = lower(${d.name})`));
+    const loc = d.lat != null && d.lng != null ? { lat: d.lat, lng: d.lng } : {};
+    if (existing) {
+      await db.update(savedPlaces).set({ ...loc, updatedAt: new Date() }).where(eq(savedPlaces.id, existing.id));
+    } else {
+      await db.insert(savedPlaces).values({ userId: user.id, kind: d.kind, name: d.name, ...loc });
+    }
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const placeUpdateSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name").max(120).optional(),
+  lat: coord(-90, 90).optional(),
+  lng: coord(-180, 180).optional(),
+  clearLocation: z.boolean().optional(),
+});
+
+export async function updatePlace(id: string, input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const d = placeUpdateSchema.parse(input);
+    const set: Partial<typeof savedPlaces.$inferInsert> = { updatedAt: new Date() };
+    if (d.name) set.name = d.name;
+    if (d.clearLocation) Object.assign(set, { lat: null, lng: null });
+    else if (d.lat != null && d.lng != null) Object.assign(set, { lat: d.lat, lng: d.lng });
+    const r = await db
+      .update(savedPlaces)
+      .set(set)
+      .where(and(eq(savedPlaces.userId, user.id), eq(savedPlaces.id, id)))
+      .returning({ id: savedPlaces.id });
+    if (!r.length) return { ok: false, error: "Not found" };
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof Error && /saved_places_user_kind_name_idx/.test(e.message)) return { ok: false, error: "You already have a saved place with that name." };
+    return fail(e);
+  }
+}
+
+/** Removes a saved place. Past entries keep their station name. */
+export async function deletePlace(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    await db.delete(savedPlaces).where(and(eq(savedPlaces.userId, user.id), eq(savedPlaces.id, id)));
     revalidatePath("/app", "layout");
     return { ok: true };
   } catch (e) {

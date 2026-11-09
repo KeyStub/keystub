@@ -20,7 +20,7 @@ describe("VIN", () => {
   });
 
   it("decodes Teslas built outside the US (not in NHTSA's database)", () => {
-    expect(decodeVinLocally("LRW3E7FA9MC000000")).toEqual({ year: 2021, make: "Tesla", model: "Model 3", country: "China", powertrain: "ev" });
+    expect(decodeVinLocally("LRW3E7FA9MC000000")).toEqual({ year: 2021, make: "Tesla", model: "Model 3", country: "China", plant: "Shanghai, China", powertrain: "ev" });
     expect(decodeVinLocally("XP7YGCEK0PB000000").make).toBe("Tesla");
     expect(decodeVinLocally("XP7YGCEK0PB000000").model).toBe("Model Y");
   });

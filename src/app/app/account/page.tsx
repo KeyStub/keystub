@@ -10,7 +10,8 @@ import { importLog } from "@/db/schema";
 import { fmtDate, vehicleName } from "@/lib/format";
 import { PLANS } from "@/lib/plans";
 import { billingEnabled } from "@/server/billing";
-import { listVehicles } from "@/server/data";
+import { getPlaces, listVehicles } from "@/server/data";
+import { SavedPlacesSettings } from "@/components/places";
 import { requireUser } from "@/server/session";
 
 export const metadata = { title: "Account" };
@@ -91,6 +92,8 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
           Units &amp; currency
         </h3>
         <UnitSettings prefs={user.units} />
+
+        <SavedPlacesSettings fuel={await getPlaces(user.id, "fuel")} charging={await getPlaces(user.id, "charging")} />
 
         <h3 className="section-title" id="reminders">
           Reminders

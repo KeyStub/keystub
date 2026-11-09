@@ -4,7 +4,7 @@ import { StatTile } from "@/components/ui";
 import { CHARGE_LOCATIONS, chargingStats } from "@/lib/calc";
 import { numFmt } from "@/lib/format";
 import { makeFmt } from "@/lib/units";
-import { getVehicleBundle } from "@/server/data";
+import { getPlaces, getVehicleBundle } from "@/server/data";
 import { requireUser } from "@/server/session";
 
 export const metadata = { title: "Charging" };
@@ -66,7 +66,7 @@ export default async function ChargingPage({ params }: PageProps<"/app/v/[vid]/c
           </div>
         </>
       )}
-      <ChargeLog vehicleId={vid} rows={b.charges} homeKwhPrice={user.homeKwhPrice} />
+      <ChargeLog vehicleId={vid} rows={b.charges} homeKwhPrice={user.homeKwhPrice} places={await getPlaces(user.id, "charging")} />
     </>
   );
 }

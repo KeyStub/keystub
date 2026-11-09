@@ -4,11 +4,15 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { todayISO } from "@/lib/format";
 import { saveFuel } from "@/server/actions";
+import type { PlacesData } from "@/lib/places";
+import { PlaceField, useSavePlacePrompt } from "./places";
 import { useConfirm, useToast } from "./ui";
 import { useFmt } from "./units-provider";
 
 /** The 10-second fill-up: total + odometer at the pump, everything else optional. */
-export function QuickFuel({ vehicleId, lastStation }: { vehicleId: string; lastStation: string | null }) {
+export function QuickFuel({ vehicleId, places }: { vehicleId: string; places: PlacesData }) {
+  const { prompt, maybeOffer } = useSavePlacePrompt(places);
+  const [round, setRound] = useState(0); // remounts the station picker (fresh suggestion) after each save
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const toast = useToast();
@@ -32,10 +36,13 @@ export function QuickFuel({ vehicleId, lastStation }: { vehicleId: string; lastS
     }
     toast("Fill-up logged.");
     formRef.current?.reset();
+    setRound((r) => r + 1);
+    maybeOffer(String((data as Record<string, unknown>).station ?? ""));
     router.refresh();
   }
 
   return (
+    <>
     <form ref={formRef} className="card" onSubmit={onSubmit}>
       <div className="row3">
         <div className="field" style={{ marginBottom: 8 }}>
@@ -51,10 +58,12 @@ export function QuickFuel({ vehicleId, lastStation }: { vehicleId: string; lastS
           <input className="input" id="q-odo" name="odometer" type="number" min={0} inputMode="numeric" />
         </div>
       </div>
-      <input type="hidden" name="station" value={lastStation ?? ""} />
+      <PlaceField key={round} places={places} name="station" id="q-station" label="Station" suggest placeholder="e.g. Shell on Main St" />
       <button className="btn primary block" disabled={busy}>
-        {busy ? "Saving…" : `Log full tank today${lastStation ? ` at ${lastStation}` : ""}`}
+        {busy ? "Saving…" : "Log full tank today"}
       </button>
     </form>
+    {prompt}
+    </>
   );
 }

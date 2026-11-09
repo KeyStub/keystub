@@ -1,9 +1,10 @@
 import "server-only";
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
-import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, vehicles } from "@/db/schema";
+import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, savedPlaces, vehicles } from "@/db/schema";
+import { placeKey, sortPlaces, type PlaceKind, type PlaceOption, type PlacesData } from "@/lib/places";
 
 /*
  * Read side of the data layer. Every function takes the userId and filters on it, so a record
@@ -90,3 +91,29 @@ export async function exportAllForUser(userId: string) {
   ]);
   return { vehicles: vs, fuel, maintenance, costs, reminders: rems, charging: charges, batteryChecks: battery };
 }
+
+/** Saved stations/networks plus names used in the last 12 months (across all vehicles), for the station picker. */
+export const getPlaces = cache(async (userId: string, kind: PlaceKind): Promise<PlacesData> => {
+  const since = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
+  const col = kind === "fuel" ? fuelEntries.station : chargingSessions.network;
+  const table = kind === "fuel" ? fuelEntries : chargingSessions;
+  const [saved, used] = await Promise.all([
+    db
+      .select()
+      .from(savedPlaces)
+      .where(and(eq(savedPlaces.userId, userId), eq(savedPlaces.kind, kind))),
+    db
+      .select({ key: sql<string>`lower(trim(${col}))`, name: sql<string>`max(trim(${col}))`, uses: sql<number>`count(*)::int`, last: sql<string>`max(${table.date})` })
+      .from(table)
+      .where(and(eq(table.userId, userId), gte(table.date, since), sql`coalesce(trim(${col}), '') <> ''`))
+      .groupBy(sql`lower(trim(${col}))`),
+  ]);
+  const usage = new Map(used.map((u) => [u.key, u]));
+  const options: PlaceOption[] = saved.map((p) => {
+    const u = usage.get(placeKey(p.name));
+    usage.delete(placeKey(p.name));
+    return { id: p.id, name: p.name, saved: true, uses: u?.uses ?? 0, lastUsed: u?.last ?? null, lat: p.lat, lng: p.lng };
+  });
+  for (const u of usage.values()) options.push({ id: null, name: u.name, saved: false, uses: u.uses, lastUsed: u.last, lat: null, lng: null });
+  return { kind, options: sortPlaces(options) };
+});

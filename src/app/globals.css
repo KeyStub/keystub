@@ -540,3 +540,24 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
 .tfa-code { font-size: 20px; letter-spacing: 0.18em; text-align: center; }
 .tfa-codes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
 .tfa-codes code { font-size: 14px; text-align: center; padding: 4px 0; }
+
+/* station / network picker */
+.place-field { position: relative; }
+.place-input { display: flex; gap: 6px; }
+.place-input .input { flex: 1; min-width: 0; }
+.place-btn { flex: none; width: 40px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--ink-2); cursor: pointer; font-size: 14px; }
+.place-btn:hover { background: var(--accent-wash); color: var(--ink); }
+.place-list { position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% - 4px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.35); max-height: 260px; overflow-y: auto; padding: 6px; }
+.place-opt { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.place-opt.on, .place-opt:hover { background: var(--accent-wash); }
+.place-star { width: 14px; flex: none; color: var(--warning); }
+.place-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.place-meta { flex: none; color: var(--ink-3); font-size: 12px; }
+.place-empty { padding: 10px; color: var(--ink-3); font-size: 13px; }
+.place-manage { display: block; padding: 8px 10px 4px; margin-top: 4px; border-top: 1px solid var(--border-2); font-size: 12.5px; }
+.place-actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.place-add { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.place-add .input { flex: 1; min-width: 200px; }
+.check-line { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 1.45; margin-top: 10px; cursor: pointer; }
+.check-line input { margin-top: 3px; flex: none; }
+.check-line.compact { margin: 0; align-items: center; white-space: nowrap; font-size: 13px; }

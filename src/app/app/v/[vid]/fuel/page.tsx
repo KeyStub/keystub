@@ -2,7 +2,7 @@ import { FuelLog } from "@/components/logs";
 import { fuelEconomySeries } from "@/lib/calc";
 import { fmtDate } from "@/lib/format";
 import { makeFmt } from "@/lib/units";
-import { getVehicleBundle } from "@/server/data";
+import { getPlaces, getVehicleBundle } from "@/server/data";
 import { requireUser } from "@/server/session";
 
 export const metadata = { title: "Fuel" };
@@ -15,7 +15,7 @@ export default async function FuelPage({ params }: PageProps<"/app/v/[vid]/fuel"
   const eco = fuelEconomySeries(b.fuel).slice(-6).reverse();
   return (
     <>
-      <FuelLog vehicleId={vid} rows={b.fuel} />
+      <FuelLog vehicleId={vid} rows={b.fuel} places={await getPlaces(user.id, "fuel")} />
       {eco.length > 0 && (
         <div className="card" style={{ marginTop: 16 }}>
           <h3>Fuel economy (full tank to full tank)</h3>

@@ -5,6 +5,7 @@ import {
   date,
   doublePrecision,
   index,
+  uniqueIndex,
   integer,
   pgTable,
   text,
@@ -321,3 +322,19 @@ export const importLog = pgTable("import_log", {
   summary: text("summary").notNull(), // JSON: { before, after, expected, matched }
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** A user's saved fill-up stations ("fuel") and charging networks/spots ("charging"). */
+export const savedPlaces = pgTable(
+  "saved_places",
+  {
+    id: id(),
+    userId: owner(),
+    kind: text("kind").notNull(), // "fuel" | "charging"
+    name: text("name").notNull(),
+    /** optional: where the place is, so the app can tell when you're there */
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("saved_places_user_kind_name_idx").on(t.userId, t.kind, sql`lower(${t.name})`)],
+);

@@ -79,6 +79,8 @@ const WMI_MAP = new Map(WMI.flatMap(([codes, make]) => codes.map((c) => [c, make
 export const makeFromWmi = (vin: string) => WMI_MAP.get(vin.slice(0, 3)) ?? null;
 
 const TESLA_MODELS: Record<string, string> = { S: "Model S", "3": "Model 3", X: "Model X", Y: "Model Y", C: "Cybertruck" };
+/** Tesla factory, from position 11. */
+const TESLA_PLANTS: Record<string, string> = { F: "Fremont, USA", A: "Austin, USA", C: "Shanghai, China", B: "Berlin, Germany" };
 
 const COUNTRY: [RegExp, string][] = [
   [/^[145]/, "United States"],
@@ -99,6 +101,8 @@ export type LocalVinDecode = {
   make: string | null;
   model: string | null;
   country: string | null;
+  /** factory, where the VIN reliably says (Teslas) */
+  plant: string | null;
   powertrain: "ev" | null;
 };
 
@@ -110,6 +114,7 @@ export function decodeVinLocally(vin: string): LocalVinDecode {
     make,
     model: tesla ? (TESLA_MODELS[vin[3]] ?? null) : null,
     country: COUNTRY.find(([re]) => re.test(vin))?.[1] ?? null,
+    plant: tesla ? (TESLA_PLANTS[vin[10]] ?? null) : null,
     powertrain: tesla ? "ev" : null,
   };
 }

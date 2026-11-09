@@ -46,6 +46,7 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
     trim?: string;
     powertrain?: string;
     country?: string;
+    plant?: string;
     partial?: boolean;
     checkDigitWarning?: boolean;
   } | null>(null);
@@ -104,12 +105,12 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
           <div className={`note ${decoded.checkDigitWarning ? "" : "info"}`}>
             {[decoded.year, decoded.make, decoded.model, decoded.trim].some(Boolean) ? (
               <>
-                <b>{decoded.partial ? "Partly decoded" : "VIN decoded"}:</b> {[decoded.year, decoded.make, decoded.model, decoded.trim].filter(Boolean).join(" ")}
+                <b>VIN decoded:</b> {[decoded.year, decoded.make, decoded.model, decoded.trim].filter(Boolean).join(" ")}
                 {decoded.powertrain ? ` · ${POWERTRAINS.find((p) => p.id === decoded.powertrain)?.label}` : ""}
                 {decoded.partial && (
                   <div style={{ marginTop: 4, fontSize: 12.5 }}>
-                    {decoded.country ? `Built in ${decoded.country}. ` : ""}This vehicle isn&apos;t in the US government&apos;s VIN database (common for vehicles sold
-                    in Canada or overseas), so we could only read the basics. Fill in anything that&apos;s missing.
+                    {decoded.plant ? `Built in ${decoded.plant}` : decoded.country ? `Built in ${decoded.country}` : "Built"} for markets outside the US, so
+                    trim details aren&apos;t available from VIN records.{decoded.model ? " Add the trim below if you like." : " Fill in the model and trim below."}
                   </div>
                 )}
               </>

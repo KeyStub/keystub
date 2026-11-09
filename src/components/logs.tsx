@@ -14,7 +14,9 @@ import {
   type ActionResult,
   type RecordKind,
 } from "@/server/actions";
+import type { PlacesData } from "@/lib/places";
 import type { ChargingSession, CostRecord, FuelEntry, MaintenanceRecord } from "@/server/data";
+import { PlaceField, useSavePlacePrompt } from "./places";
 import { Field, IconButton, Modal, useConfirm, useOpenOnAdd, useToast } from "./ui";
 import { useFmt } from "./units-provider";
 
@@ -299,7 +301,8 @@ function FormModal({
 
 /* ===================================== FUEL ===================================== */
 
-export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntry[] }) {
+export function FuelLog({ vehicleId, rows, places }: { vehicleId: string; rows: FuelEntry[]; places: PlacesData }) {
+  const { prompt: savePlacePrompt, maybeOffer } = useSavePlacePrompt(places);
   const [editing, setEditing] = useState<FuelEntry | null | undefined>(undefined);
   useOpenOnAdd(() => setEditing(null));
   const [busy, setBusy] = useState(false);
@@ -356,7 +359,10 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
           setBusy(true);
           const ok = await save((ack) => saveFuel(vehicleId, ex?.id ?? null, data, ack), ex ? "Fuel entry updated." : "Fuel entry added.");
           setBusy(false);
-          if (ok) setEditing(undefined);
+          if (ok) {
+            setEditing(undefined);
+            maybeOffer(String(data.station ?? ""));
+          }
         }}
       >
         {ex?.legacy && <div className="note info">Migrated from your old tracker — odometer, litres and grade weren&apos;t recorded there.</div>}
@@ -413,14 +419,16 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
           </Field>
         </div>
         <div className="row2">
-          <Field label="Gas station" htmlFor="f-station">
-            <input className="input" id="f-station" name="station" defaultValue={ex?.station ?? ""} placeholder="e.g. Shell on Main St" list="station-list" />
-            <datalist id="station-list">
-              {[...new Set(rows.map((r) => r.station).filter(Boolean))].map((s) => (
-                <option key={s} value={s!} />
-              ))}
-            </datalist>
-          </Field>
+          <PlaceField
+            key={ex?.id ?? "new"}
+            places={places}
+            name="station"
+            id="f-station"
+            label="Gas station"
+            defaultValue={ex ? (ex.station ?? "") : null}
+            suggest={!ex}
+            placeholder="e.g. Shell on Main St"
+          />
           <Field label="Fuel grade" htmlFor="f-grade">
             <select className="select" id="f-grade" name="grade" defaultValue={ex?.grade ?? ""}>
               <option value="">—</option>
@@ -446,6 +454,7 @@ export function FuelLog({ vehicleId, rows }: { vehicleId: string; rows: FuelEntr
           <textarea className="input" id="f-notes" name="notes" rows={2} defaultValue={ex?.notes ?? ""} />
         </Field>
       </FormModal>
+      {savePlacePrompt}
     </>
   );
 }
@@ -676,7 +685,8 @@ export function CostLog({ vehicleId, rows }: { vehicleId: string; rows: CostReco
 
 
 
-export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string; rows: ChargingSession[]; homeKwhPrice: number }) {
+export function ChargeLog({ vehicleId, rows, homeKwhPrice, places }: { vehicleId: string; rows: ChargingSession[]; homeKwhPrice: number; places: PlacesData }) {
+  const { prompt: savePlacePrompt, maybeOffer } = useSavePlacePrompt(places);
   const [editing, setEditing] = useState<ChargingSession | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [loc, setLoc] = useState("home");
@@ -733,7 +743,10 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
           setBusy(true);
           const ok = await save((ack) => saveCharge(vehicleId, ex?.id ?? null, data, ack), ex ? "Charging session updated." : "Charge logged.");
           setBusy(false);
-          if (ok) setEditing(undefined);
+          if (ok) {
+            setEditing(undefined);
+            if (data.location !== "home") maybeOffer(String(data.network ?? ""));
+          }
         }}
       >
         <div className="row2">
@@ -773,14 +786,16 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
           </Field>
         </div>
         {loc !== "home" && (
-          <Field label="Network or station (optional)" htmlFor="ch-net">
-            <input className="input" id="ch-net" name="network" defaultValue={ex?.network ?? ""} placeholder="e.g. FLO, Electrify Canada, Tesla Supercharger" list="network-list" />
-            <datalist id="network-list">
-              {[...new Set(rows.map((r) => r.network).filter(Boolean))].map((n) => (
-                <option key={n} value={n!} />
-              ))}
-            </datalist>
-          </Field>
+          <PlaceField
+            key={ex?.id ?? "new"}
+            places={places}
+            name="network"
+            id="ch-net"
+            label="Network or station (optional)"
+            defaultValue={ex ? (ex.network ?? "") : null}
+            suggest={!ex}
+            placeholder="e.g. FLO, Electrify Canada, Tesla Supercharger"
+          />
         )}
         <div className="row3">
           <Field label="Battery start %" htmlFor="ch-s">
@@ -800,6 +815,7 @@ export function ChargeLog({ vehicleId, rows, homeKwhPrice }: { vehicleId: string
           <textarea className="input" id="ch-notes" name="notes" rows={2} defaultValue={ex?.notes ?? ""} />
         </Field>
       </FormModal>
+      {savePlacePrompt}
     </>
   );
 }

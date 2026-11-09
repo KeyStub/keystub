@@ -57,7 +57,8 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/vin/[vin]">) {
     trim: n.trim,
     powertrain: n.powertrain ?? local.powertrain ?? undefined,
     country: local.country ?? undefined,
-    /** true when only the basics could be read (vehicle not in NHTSA's US database) */
+    plant: local.plant ?? undefined,
+    /** true when the vehicle isn't in NHTSA's US database (trim/engine details unavailable) */
     partial: !fromNhtsa,
     /** North American VINs have a check digit; a mismatch usually means a typo */
     checkDigitWarning: usesCheckDigit(vin) && !checkDigitOk(vin),

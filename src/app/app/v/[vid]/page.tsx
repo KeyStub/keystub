@@ -16,7 +16,7 @@ import {
 } from "@/lib/calc";
 import { fmtDate, numFmt } from "@/lib/format";
 import { makeFmt } from "@/lib/units";
-import { getVehicleBundle } from "@/server/data";
+import { getPlaces, getVehicleBundle } from "@/server/data";
 import { collectReminders } from "@/server/reminders";
 import { requireUser } from "@/server/session";
 import { serverToday } from "@/server/today";
@@ -164,10 +164,7 @@ export default async function DashboardPage({
           {usesFuel(pt) && (
             <>
               <h3 className="section-title">Quick fill-up</h3>
-              <QuickFuel
-                vehicleId={vid}
-                lastStation={b.fuel.find((f) => f.station)?.station ?? null}
-              />
+              <QuickFuel vehicleId={vid} places={await getPlaces(user.id, "fuel")} />
             </>
           )}
 

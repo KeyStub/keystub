@@ -1,11 +1,27 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { APP_NAME, TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
-const display = Archivo({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-display" });
-const body = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
+// Brand fonts are bundled in src/fonts (SIL Open Font License) so builds never depend on Google Fonts.
+const display = localFont({
+  src: [
+    { path: "../fonts/archivo-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/archivo-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-display",
+  display: "swap",
+});
+const body = localFont({
+  src: [
+    { path: "../fonts/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),

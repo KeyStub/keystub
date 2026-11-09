@@ -39,6 +39,8 @@ export const user = pgTable("user", {
   volumeUnit: text("volume_unit").notNull().default("L"), // "L" | "gal" (US) | "impgal"
   economyUnit: text("economy_unit").notNull().default("l100"), // "l100" | "kml" | "mpg" | "mpgimp"
   currency: text("currency").notNull().default("CAD"), // ISO 4217
+  /** When the user finished or skipped the welcome tour; null = show it on next visit. */
+  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

@@ -12,6 +12,7 @@ export const metadata = { title: "Your garage" };
 
 export default async function GaragePage({ searchParams }: PageProps<"/app">) {
   const user = await requireUser();
+  if (!user.onboardedAt) redirect("/app/welcome");
   const u = makeFmt(user.units);
   const vs = await listVehicles(user.id);
   const sp = await searchParams;

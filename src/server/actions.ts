@@ -776,3 +776,20 @@ export async function saveUnitPrefs(input: unknown): Promise<ActionResult> {
     return fail(e);
   }
 }
+
+/* ============================ ONBOARDING ============================ */
+
+/** Records that the welcome tour was finished or skipped, so it isn't shown automatically again. */
+export async function completeOnboarding(): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    await db
+      .update(userTable)
+      .set({ onboardedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(userTable.id, user.id), isNull(userTable.onboardedAt)));
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}

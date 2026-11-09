@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { AccountForms } from "@/components/account-forms";
 import { AppTopBar } from "@/components/app-top-bar";
@@ -27,6 +28,18 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
       <HomeNav />
       <main className="page" style={{ maxWidth: 760 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>Account</h1>
+
+        <h3 className="section-title" id="getting-started">
+          Getting started
+        </h3>
+        <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+            A one-minute tour of how KeyStub works and what each menu is for.
+          </p>
+          <Link href="/app/welcome?replay=1" className="btn">
+            Replay the welcome tour
+          </Link>
+        </div>
 
         <h3 className="section-title" id="plan">
           Plan

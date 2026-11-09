@@ -37,6 +37,7 @@ export const auth = betterAuth({
       volumeUnit: { type: "string", defaultValue: "L", input: false },
       economyUnit: { type: "string", defaultValue: "l100", input: false },
       currency: { type: "string", defaultValue: "CAD", input: false },
+      onboardedAt: { type: "date", required: false, input: false },
     },
     deleteUser: { enabled: true },
   },

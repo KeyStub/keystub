@@ -36,6 +36,13 @@
       "when": 1791257051468,
       "tag": "0004_units_currency",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794245725543,
+      "tag": "0005_onboarding",
+      "breakpoints": true
     }
   ]
 }

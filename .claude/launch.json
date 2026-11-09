@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "web",
-      "runtimeExecutable": "C:\Program Files\nodejs\npm.cmd",
+      "runtimeExecutable": "C:/Program Files/nodejs/npm.cmd",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
     }

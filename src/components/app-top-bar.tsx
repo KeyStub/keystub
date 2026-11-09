@@ -11,6 +11,9 @@ export function AppTopBar() {
         <Logo size={17} tone="app" />
       </Link>
       <div className="topbar-links" style={{ display: "flex", gap: 4, alignItems: "center" }}>
+        <Link href="/app/welcome?replay=1" className="theme-btn help-btn" aria-label="Getting started guide" title="Getting started guide">
+          ?
+        </Link>
         <ThemeButton />
         <Link href="/app/home" className="btn ghost sm">
           Home

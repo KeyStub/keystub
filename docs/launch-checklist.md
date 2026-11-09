@@ -188,3 +188,16 @@ Shown on the website as "Coming soon" until built.
 ## App navigation (built 2026-10-06)
 - Website header shows "Hi, <name>" + **Open app** when signed in (menu shows who is signed in) instead of Sign in / Start free.
 - **Home** button (top bar + logo) opens the last-viewed vehicle's dashboard (/app/home; remembered in a cookie); the phone tab bar now also appears on Garage, Account and Add vehicle.
+
+## Platform direction (discussed 2026-11-09)
+- Goal from Jarin: as few platforms as possible, managed from one place (like running a Shopify store), built to scale and to hand to a team. Cost is less important than a strong foundation.
+- Recommended: **Vercel as home base** (site, app, logs, deploys, team seats, DNS) with Neon (database) and Resend (email) connected through Vercel's marketplace for one dashboard and one bill; Stripe for money; Google Workspace as the office; GitHub stays in the background. Alternatives considered: Google Firebase/Cloud (closest to one account, but a rebuild and a harder console) and Supabase (doesn't reduce platform count).
+- Plus **KeyStub Admin** (keystub.com/admin, staff only): customers and lookup, plans and trials, email log, announcements (banners/email, later push), dashboard stats, maintenance mode, staff roles, activity log. Privacy: shows account details and counts, not customers' entries, unless the customer grants access.
+- Update workflow: change on a branch → Vercel preview link → Jarin approves → live. Mobile (Capacitor): most updates ship the same way without store review.
+- Next steps when ready: (1) move DNS to Vercel + connect Neon/Resend via Vercel (free); (2) build KeyStub Admin; (3) Vercel Pro + Stripe before charging; (4) mobile app.
+
+## Welcome tour (built 2026-11-09)
+- Every account sees an 8-step tour after confirming their email (and existing accounts once): welcome, garage, logging, dashboard & reports, reminders, what each menu does (phone or computer view), settings, then a quick setup (units preset → add first vehicle / go to dashboard / restore a backup).
+- Wording follows the user's units (per mile vs per km, gallons vs litres). Works in light/dark and on phones.
+- Replay any time: Account → Getting started, the ? in the top bar, or More → Getting started guide on a phone.
+- `user.onboarded_at` (migration 0005) records completion; skipping counts as done.

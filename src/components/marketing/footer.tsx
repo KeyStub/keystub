@@ -25,14 +25,15 @@ export function MarketingFooter() {
           </div>
           <div>
             <h4>Company</h4>
+            <Link href="/contact">Contact</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
-            <span style={{ display: "block", padding: "4px 0" }}>support@keystub.com</span>
+            <a href="mailto:support@keystub.com">support@keystub.com</a>
           </div>
         </div>
         <div className="base">
           <span>© {new Date().getFullYear()} KeyStub · Made in Canada</span>
-          <span>Kilometres, litres and dollars.</span>
+          <span>Kilometres or miles. Litres or gallons. Your currency.</span>
         </div>
       </div>
     </footer>

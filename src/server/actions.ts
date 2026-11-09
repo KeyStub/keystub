@@ -2,11 +2,14 @@
 
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { ImportVerificationError, importExport } from "@/db/import-core";
-import { batteryChecks, chargingSessions, costRecords, fuelEntries, maintenanceRecords, reminders, savedPlaces, user as userTable, vehicles } from "@/db/schema";
+import { batteryChecks, chargingSessions, costRecords, feedback, fuelEntries, maintenanceRecords, reminders, savedPlaces, user as userTable, vehicles } from "@/db/schema";
+import { isAdminEmail, SUPPORT_EMAIL } from "@/lib/admin";
+import { sendEmail } from "./mailer";
 import { laterLowerOdometer, priorOdometer } from "@/lib/calc";
 import { fmtDate } from "@/lib/format";
 import { makeFmt, toMetric, type Fmt, type UnitPrefs } from "@/lib/units";
@@ -870,6 +873,127 @@ export async function deletePlace(id: string): Promise<ActionResult> {
     const user = await requireUser();
     await db.delete(savedPlaces).where(and(eq(savedPlaces.userId, user.id), eq(savedPlaces.id, id)));
     revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ============================ FEEDBACK & CONTACT ============================ */
+
+const clip = (s: string | null | undefined, n: number) => (s ? s.slice(0, n) : null);
+
+async function notifySupport(subject: string, lines: (string | null | undefined)[], replyTo: string) {
+  try {
+    await sendEmail({ to: SUPPORT_EMAIL(), subject, text: lines.filter((l) => l != null).join("\n"), replyTo });
+  } catch (e) {
+    console.error("feedback notification failed", e); // the message is saved either way
+  }
+}
+
+const feedbackSchema = z.object({
+  kind: z.enum(["bug", "idea", "question", "other"]),
+  message: z.string().trim().min(5, "Tell us a little more (at least a few words).").max(5000, "That's a bit long. Please keep it under 5,000 characters."),
+  page: z.string().max(300).optional(),
+});
+
+/** In-app feedback from a signed-in user. */
+export async function submitFeedback(input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const d = feedbackSchema.parse(input);
+    const ua = (await headers()).get("user-agent");
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(feedback)
+      .where(and(eq(feedback.userId, user.id), sql`${feedback.createdAt} > now() - interval '1 hour'`));
+    if (count >= 10) return { ok: false, error: "You've sent a lot of feedback in the last hour. Thank you! Please try again a bit later." };
+    await db.insert(feedback).values({ userId: user.id, email: user.email, name: user.name, kind: d.kind, message: d.message, page: clip(d.page, 300), userAgent: clip(ua, 300) });
+    await notifySupport(`[KeyStub feedback] ${d.kind}: ${d.message.slice(0, 60).replace(/\s+/g, " ")}`, [
+      `From: ${user.name} <${user.email}> (signed in, ${user.effectivePlan})`,
+      `Type: ${d.kind}`,
+      d.page ? `Page: ${d.page}` : null,
+      "",
+      d.message,
+      "",
+      "Reply to this email to answer them. Manage it at /admin/feedback.",
+    ], user.email);
+    revalidatePath("/app/feedback");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Enter your name").max(120),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address").max(254),
+  topic: z.enum(["support", "billing", "partnership", "press", "other"]),
+  message: z.string().trim().min(10, "Tell us a little more (at least a sentence).").max(5000, "Please keep it under 5,000 characters."),
+  /** honeypot: real people never see or fill this */
+  website: z.string().max(0).optional().or(z.literal("")),
+  /** when the form was shown (ms); bots submit instantly */
+  t: z.coerce.number(),
+});
+
+/** Public contact form (website). Spam-protected; no account needed. */
+export async function submitContact(input: unknown): Promise<ActionResult> {
+  try {
+    const raw = (input ?? {}) as Record<string, unknown>;
+    if (raw.website) return { ok: true }; // honeypot filled: pretend it worked, store nothing
+    const d = contactSchema.parse(input);
+    if (Date.now() - d.t < 3000) return { ok: false, error: "That was quick! Please take a moment and try again." };
+    const h = await headers();
+    const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "unknown";
+    const { createHash } = await import("node:crypto");
+    const ipHash = createHash("sha256").update(`${ip}|${process.env.BETTER_AUTH_SECRET ?? ""}`).digest("hex").slice(0, 32);
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(feedback)
+      .where(and(eq(feedback.kind, "contact"), sql`(${feedback.email} = ${d.email} or ${feedback.ipHash} = ${ipHash})`, sql`${feedback.createdAt} > now() - interval '15 minutes'`));
+    if (count >= 3) return { ok: false, error: "We've received a few messages from you already. We'll reply soon, or email support@keystub.com." };
+    const { getSession } = await import("./session");
+    const s = await getSession();
+    await db.insert(feedback).values({
+      userId: s?.user.id ?? null,
+      email: d.email,
+      name: d.name,
+      kind: "contact",
+      topic: d.topic,
+      message: d.message,
+      userAgent: clip(h.get("user-agent"), 300),
+      ipHash,
+    });
+    await notifySupport(`[KeyStub contact] ${d.topic}: ${d.name}`, [
+      `From: ${d.name} <${d.email}>${s ? " (has an account, signed in)" : ""}`,
+      `Topic: ${d.topic}`,
+      "",
+      d.message,
+      "",
+      "Reply to this email to answer them. Manage it at /admin/feedback.",
+    ], d.email);
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const statusSchema = z.object({
+  status: z.enum(["new", "planned", "in_progress", "done", "closed"]),
+  adminNote: z.string().max(2000).optional(),
+});
+
+/** KeyStub Admin: set a feedback item's status / private note. */
+export async function updateFeedback(id: string, input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (!isAdminEmail(user.email)) return { ok: false, error: "Not allowed" };
+    const d = statusSchema.parse(input);
+    await db
+      .update(feedback)
+      .set({ status: d.status, adminNote: d.adminNote ?? null, updatedAt: new Date() })
+      .where(eq(feedback.id, id));
+    revalidatePath("/admin/feedback");
     return { ok: true };
   } catch (e) {
     return fail(e);

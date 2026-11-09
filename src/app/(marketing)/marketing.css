@@ -488,3 +488,21 @@
 .mk .code-input { font-size: 20px; letter-spacing: 0.18em; text-align: center; font-variant-numeric: tabular-nums; }
 .mk .check-row { display: flex; gap: 8px; align-items: center; font-size: 14px; margin: 4px 0 16px; color: var(--mk-ink-2); }
 .mk .link-btn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
+
+/* ---------- contact page ---------- */
+.mk-contact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+@media (max-width: 860px) { .mk-contact { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+.mk-contact-side { display: grid; gap: 16px; margin-top: 28px; }
+.mk-contact-side b { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mk-ink-3); margin-bottom: 4px; }
+.mk-contact-side a, .mk-contact-side span { color: var(--mk-ink); font-size: 16px; }
+.mk-contact-card { background: var(--mk-white); border: 1px solid var(--mk-line); border-radius: var(--mk-radius); box-shadow: var(--mk-shadow); padding: 26px; display: grid; gap: 14px; }
+.mk-contact-card label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; color: var(--mk-ink); }
+.mk-contact-card input, .mk-contact-card select, .mk-contact-card textarea { font: inherit; font-weight: 400; font-size: 15px; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--mk-line); background: var(--mk-bg); color: var(--mk-ink); width: 100%; }
+.mk-contact-card textarea { resize: vertical; }
+.mk-contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .mk-contact-row { grid-template-columns: 1fr; } }
+.mk-contact-card .mk-btn { justify-self: start; }
+.mk-contact-note { font-size: 13px; color: var(--mk-ink-3); margin: 0; }
+.mk-contact-error { background: var(--mk-warn-bg); color: var(--mk-warn-ink); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+.mk-contact-done h2 { margin: 0; }
+.mk-hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }

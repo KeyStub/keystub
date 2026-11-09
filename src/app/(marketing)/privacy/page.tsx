@@ -12,7 +12,13 @@ export default function Privacy() {
         <h2>What we collect</h2>
         <p>
           Your name, email address and a securely hashed password; the vehicle details and expense records you enter (which can include a VIN and licence plate);
-          and basic technical data needed to keep your account secure (IP address and browser type for active sessions).
+          and basic technical data needed to keep your account secure (IP address and browser type for active sessions). If you send feedback or use the
+          contact form, we keep your message, name and email (and, for app feedback, the page you were on) so we can reply and improve {APP_NAME}.
+        </p>
+        <h2>Location</h2>
+        <p>
+          {APP_NAME} only uses your device&apos;s location if you allow it, to recognise when you&apos;re at one of your saved fill-up stations. Your location is
+          checked on your device and is never stored or tracked; the only location we save is a station&apos;s position, when you choose to save it.
         </p>
         <h2>How we use it</h2>
         <p>

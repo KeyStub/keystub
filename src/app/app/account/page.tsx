@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { importLog } from "@/db/schema";
 import { fmtDate, vehicleName } from "@/lib/format";
 import { PLANS } from "@/lib/plans";
+import { isAdminEmail } from "@/lib/admin";
 import { billingEnabled } from "@/server/billing";
 import { getPlaces, listVehicles } from "@/server/data";
 import { SavedPlacesSettings } from "@/components/places";
@@ -31,16 +32,29 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
         <h1 style={{ fontSize: 22, margin: 0 }}>Account</h1>
 
         <h3 className="section-title" id="getting-started">
-          Getting started
+          Help &amp; feedback
         </h3>
         <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            A one-minute tour of how KeyStub works and what each menu is for.
+          <p className="muted" style={{ margin: 0, fontSize: 14, maxWidth: 380 }}>
+            Replay the one-minute tour, report a bug, suggest a feature, or get in touch.
           </p>
-          <Link href="/app/welcome?replay=1" className="btn">
-            Replay the welcome tour
-          </Link>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Link href="/app/welcome?replay=1" className="btn">
+              Replay the welcome tour
+            </Link>
+            <Link href="/app/feedback" className="btn">
+              Send feedback
+            </Link>
+            <Link href="/contact" className="btn ghost">
+              Contact support
+            </Link>
+          </div>
         </div>
+        {isAdminEmail(user.email) && (
+          <div className="note info" style={{ marginTop: 12 }}>
+            <b>KeyStub Admin:</b> <Link href="/admin/feedback">Feedback inbox</Link> (only you can see this).
+          </div>
+        )}
 
         <h3 className="section-title" id="plan">
           Plan

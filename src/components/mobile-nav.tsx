@@ -87,6 +87,7 @@ export function MobileNav({ vid, powertrain }: { vid: string; powertrain: string
           <Link href="/app?garage=1" className="sheet-row">Garage (all vehicles)</Link>
           <Link href="/app/account" className="sheet-row">Account</Link>
           <Link href="/app/welcome?replay=1" className="sheet-row">Getting started guide</Link>
+          <Link href={`/app/feedback?from=${encodeURIComponent(path)}`} className="sheet-row">Send feedback</Link>
           <div className="sheet-row" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
             Theme <ThemeSegmented />
           </div>

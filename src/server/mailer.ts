@@ -9,12 +9,12 @@ import { APP_NAME } from "@/lib/brand";
  * printed to the server log (and, locally, appended to .data/outbox.log) so verification and
  * reset links can still be clicked.
  */
-export async function sendEmail(msg: { to: string; subject: string; text: string; html?: string }) {
+export async function sendEmail(msg: { to: string; subject: string; text: string; html?: string; replyTo?: string }) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM ?? `${APP_NAME} <onboarding@resend.dev>`;
 
   if (!key) {
-    const entry = `\n=== ${new Date().toISOString()} ===\nTo: ${msg.to}\nSubject: ${msg.subject}\n\n${msg.text}\n`;
+    const entry = `\n=== ${new Date().toISOString()} ===\nTo: ${msg.to}${msg.replyTo ? `\nReply-To: ${msg.replyTo}` : ""}\nSubject: ${msg.subject}\n\n${msg.text}\n`;
     console.log(`[dev-mail]${entry}`);
     if (process.env.VERCEL) return; // read-only file system: the console log above is the copy
     try {
@@ -34,6 +34,7 @@ export async function sendEmail(msg: { to: string; subject: string; text: string
     subject: msg.subject,
     text: msg.text,
     html: msg.html,
+    replyTo: msg.replyTo,
   });
   if (error) throw new Error(`Email send failed: ${error.message}`);
 }

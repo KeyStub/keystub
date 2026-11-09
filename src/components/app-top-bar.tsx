@@ -24,6 +24,9 @@ export function AppTopBar() {
         <Link href="/app/account" className="btn ghost sm">
           Account
         </Link>
+        <Link href="/app/feedback" className="btn ghost sm">
+          Feedback
+        </Link>
         <SignOutButton />
       </div>
     </div>

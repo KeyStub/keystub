@@ -212,3 +212,12 @@ Shown on the website as "Coming soon" until built.
 ### Decision pending: "Sign in with Google"
 - Pros: faster sign-up, no password to forget. Cons: needs a Google Cloud OAuth app (Jarin sets up under Google Workspace) and Apple *requires* "Sign in with Apple" in the iOS app if Google sign-in is offered there.
 - Recommendation: add Google + Apple together when the mobile app is built, so web and app match.
+
+## Feedback, contact & saved stations (built 2026-11-09)
+- **Launch markets confirmed: Canada + US first**, expand later with what we learn.
+- **VIN:** free sources (NHTSA + offline decoder) cover Canada/US; vehicles built for other markets (e.g. Shanghai Teslas) decode year/make/model/factory but not trim. A paid worldwide decoder (~5–25¢/lookup) is the upgrade when expanding overseas.
+- **In-app feedback** (top bar "Feedback", More → Send feedback, Account → Help & feedback): Bug / Idea / Question / Other, records the page it came from; users see their past feedback with status (Received / Planned / In progress / Done).
+- **Contact page** keystub.com/contact (footer "Contact"): name, email, topic, message; honeypot + minimum fill time + 3 per 15 min per email/network.
+- **Where it goes:** emailed to support@keystub.com (Reply goes to the sender; change with SUPPORT_EMAIL) and saved to **KeyStub Admin → Feedback inbox** (keystub.com/admin/feedback): filter by status/type, set status, private notes. Admin access = ADMIN_EMAILS, falling back to FOUNDER_EMAILS (Jarin's emails already set on Vercel). Others get a 404.
+- **Saved stations:** see "Saved stations with smart suggestions" in git log; Account → Saved stations. Location used only on the device when allowed; privacy policy updated (feedback/contact data + location).
+- Later: public ideas board with voting (from feedback marked Planned).

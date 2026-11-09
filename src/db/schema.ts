@@ -338,3 +338,30 @@ export const savedPlaces = pgTable(
   },
   (t) => [uniqueIndex("saved_places_user_kind_name_idx").on(t.userId, t.kind, sql`lower(${t.name})`)],
 );
+
+/** Feedback from the app (bugs, ideas, questions) and messages from the website contact form. */
+export const feedback = pgTable(
+  "feedback",
+  {
+    id: id(),
+    /** null for contact-form messages from people who aren't signed in */
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    email: text("email").notNull(),
+    name: text("name"),
+    /** "bug" | "idea" | "question" | "other" (app) · "contact" (website form) */
+    kind: text("kind").notNull(),
+    /** contact form topic, e.g. "support", "billing", "partnership", "press", "other" */
+    topic: text("topic"),
+    message: text("message").notNull(),
+    /** page the person was on when they sent app feedback */
+    page: text("page"),
+    userAgent: text("user_agent"),
+    /** salted hash of the sender's IP, only for rate limiting the public form */
+    ipHash: text("ip_hash"),
+    /** "new" | "planned" | "in_progress" | "done" | "closed" */
+    status: text("status").notNull().default("new"),
+    adminNote: text("admin_note"),
+    ...timestamps,
+  },
+  (t) => [index("feedback_status_idx").on(t.status, t.createdAt), index("feedback_user_idx").on(t.userId)],
+);

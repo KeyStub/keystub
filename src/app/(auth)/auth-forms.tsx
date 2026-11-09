@@ -80,7 +80,7 @@ export function SignInForm() {
     s.setBusy(true);
     s.setError(null);
     setUnverifiedEmail(null);
-    const { error } = await authClient.signIn.email({ email, password: String(f.get("password")), rememberMe: true });
+    const { data, error } = await authClient.signIn.email({ email, password: String(f.get("password")), rememberMe: true });
     s.setBusy(false);
     if (error) {
       if (error.status === 403) {
@@ -90,7 +90,12 @@ export function SignInForm() {
       return s.setError(error.message ?? "Couldn't sign in.");
     }
     const next = params.get("next");
-    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/app");
+    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/app";
+    if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
+      router.push(`/two-factor?next=${encodeURIComponent(safeNext)}`);
+      return;
+    }
+    router.push(safeNext);
     router.refresh();
   }
   return (
@@ -179,6 +184,75 @@ export function ResetForm() {
       <button className="btn primary block" disabled={s.busy}>
         {s.busy ? "Saving…" : "Set new password"}
       </button>
+    </form>
+  );
+}
+
+/** Second sign-in step for accounts with two-factor on: a code from the authenticator app, or a backup code. */
+export function TwoFactorForm() {
+  const s = useSubmit();
+  const router = useRouter();
+  const params = useSearchParams();
+  const [useBackup, setUseBackup] = useState(false);
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const code = String(f.get("code")).replace(/\s/g, "");
+    const trustDevice = f.get("trust") === "on";
+    s.setBusy(true);
+    s.setError(null);
+    const { error } = useBackup
+      ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
+      : await authClient.twoFactor.verifyTotp({ code, trustDevice });
+    s.setBusy(false);
+    if (error) {
+      if (error.status === 401 && /expired|invalid two factor cookie|no two factor/i.test(error.message ?? ""))
+        return s.setError("This sign-in has timed out. Please sign in again.");
+      if (/invalid/i.test(error.message ?? ""))
+        return s.setError(
+          useBackup
+            ? "That backup code didn't work. Each code can only be used once."
+            : "That code didn't work. Codes change every 30 seconds, so use the one showing now.",
+        );
+      return s.setError(error.message ?? "That code didn't work. Try again.");
+    }
+    const next = params.get("next");
+    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/app");
+    router.refresh();
+  }
+  return (
+    <form onSubmit={onSubmit}>
+      {s.error && <div className="note error">{s.error}</div>}
+      <div className="field">
+        <label htmlFor="code">{useBackup ? "Backup code" : "6-digit code from your authenticator app"}</label>
+        <input
+          key={useBackup ? "backup" : "totp"}
+          className="input code-input"
+          id="code"
+          name="code"
+          required
+          autoFocus
+          autoComplete="one-time-code"
+          inputMode={useBackup ? "text" : "numeric"}
+          pattern={useBackup ? undefined : "[0-9 ]{6,7}"}
+          maxLength={useBackup ? 32 : 7}
+          placeholder={useBackup ? "xxxxx-xxxxx" : "123 456"}
+        />
+      </div>
+      <label className="check-row">
+        <input type="checkbox" name="trust" /> Trust this device for 30 days
+      </label>
+      <button className="btn primary block" disabled={s.busy}>
+        {s.busy ? "Checking…" : "Verify and sign in"}
+      </button>
+      <p className="auth-foot">
+        <button type="button" className="link-btn" onClick={() => (setUseBackup((b) => !b), s.setError(null))}>
+          {useBackup ? "Use my authenticator app instead" : "Lost your phone? Use a backup code"}
+        </button>
+      </p>
+      <p className="auth-foot">
+        <Link href="/sign-in">Back to sign in</Link>
+      </p>
     </form>
   );
 }

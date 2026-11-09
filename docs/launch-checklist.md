@@ -201,3 +201,14 @@ Shown on the website as "Coming soon" until built.
 - Wording follows the user's units (per mile vs per km, gallons vs litres). Works in light/dark and on phones.
 - Replay any time: Account → Getting started, the ? in the top bar, or More → Getting started guide on a phone.
 - `user.onboarded_at` (migration 0005) records completion; skipping counts as done.
+
+## Security & safety batch (built 2026-11-09)
+- **Two-step verification (optional):** Account → Two-step verification. Authenticator app (Google/Microsoft Authenticator, 1Password, Authy…) via QR code or setup key; must enter a code to switch it on; 10 one-time backup codes (copy/download, "I've saved these" required); "trust this device for 30 days"; wrong codes rate-limited and the account locks for 15 min after repeated failures. Turning it off needs the password + an "I understand" checkbox. Tables: `two_factor`, `user.two_factor_enabled` (migration 0006).
+- **Confirmations:** archive explains where the vehicle goes; delete vehicle shows exact record counts, offers a backup, needs a checkbox + typing DELETE; delete account adds a checkbox + backup links; entry/reminder deletes say they're permanent.
+- **Archived vehicles:** listed at the bottom of Garage (Open / Restore); banner on archived vehicle pages; restoring respects the plan's vehicle limit.
+- **VIN lookup:** NHTSA first; offline ISO 3779 decoder fills year, maker and Tesla model for vehicles not in the US database (e.g. Shanghai-built Teslas "LRW", Berlin "XP7"); check-digit typo warning.
+- **Build reliability:** brand fonts bundled in src/fonts (no Google Fonts download at build time).
+
+### Decision pending: "Sign in with Google"
+- Pros: faster sign-up, no password to forget. Cons: needs a Google Cloud OAuth app (Jarin sets up under Google Workspace) and Apple *requires* "Sign in with Apple" in the iOS app if Google sign-in is offered there.
+- Recommendation: add Google + Apple together when the mobile app is built, so web and app match.

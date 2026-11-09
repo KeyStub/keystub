@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
+import { twoFactor } from "better-auth/plugins/two-factor";
 import { db } from "@/db";
 import { APP_NAME } from "@/lib/brand";
 import { TRIAL_DAYS } from "@/lib/plans";
@@ -22,6 +23,7 @@ export const auth = betterAuth({
       account: schema.account,
       verification: schema.verification,
       rateLimit: schema.rateLimit,
+      twoFactor: schema.twoFactor,
     },
   }),
   user: {
@@ -106,10 +108,18 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60, max: 3 },
       "/forget-password": { window: 300, max: 3 },
       "/request-password-reset": { window: 300, max: 3 },
+      "/two-factor/verify-totp": { window: 60, max: 5 },
+      "/two-factor/verify-backup-code": { window: 60, max: 5 },
     },
   },
   // Rejects passwords that appear in known breaches (k-anonymity — the password never leaves the server).
-  plugins: [...(process.env.DISABLE_PWNED_CHECK ? [] : [haveIBeenPwned()]), nextCookies()],
+  plugins: [
+    ...(process.env.DISABLE_PWNED_CHECK ? [] : [haveIBeenPwned()]),
+    // Optional two-factor sign-in with an authenticator app, plus one-time backup codes.
+    // Repeated wrong codes lock the account for 15 minutes (plugin default).
+    twoFactor({ issuer: APP_NAME }),
+    nextCookies(), // must stay last
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session;

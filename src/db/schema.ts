@@ -39,6 +39,8 @@ export const user = pgTable("user", {
   volumeUnit: text("volume_unit").notNull().default("L"), // "L" | "gal" (US) | "impgal"
   economyUnit: text("economy_unit").notNull().default("l100"), // "l100" | "kml" | "mpg" | "mpgimp"
   currency: text("currency").notNull().default("CAD"), // ISO 4217
+  /** Two-factor sign-in (authenticator app) is on. Managed by Better Auth's twoFactor plugin. */
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   /** When the user finished or skipped the welcome tour; null = show it on next visit. */
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   stripeCustomerId: text("stripe_customer_id"),
@@ -96,6 +98,23 @@ export const verification = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("verification_identifier_idx").on(t.identifier)],
+);
+
+/** Authenticator-app secret and hashed backup codes (Better Auth twoFactor plugin; secrets are encrypted). */
+export const twoFactor = pgTable(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true),
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  },
+  (t) => [index("two_factor_user_idx").on(t.userId), index("two_factor_secret_idx").on(t.secret)],
 );
 
 export const rateLimit = pgTable("rate_limit", {

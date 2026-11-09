@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Field, Modal, useToast } from "./ui";
+import { TwoFactorSettings } from "./two-factor-settings";
 
-export function AccountForms({ name, email }: { name: string; email: string }) {
+export function AccountForms({ name, email, twoFactorEnabled }: { name: string; email: string; twoFactorEnabled: boolean }) {
   const toast = useToast();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -85,6 +86,8 @@ export function AccountForms({ name, email }: { name: string; email: string }) {
           Change password
         </button>
       </form>
+
+      <TwoFactorSettings enabled={twoFactorEnabled} email={email} />
 
       <h3 className="section-title">Delete account</h3>
       <div className="card" style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>

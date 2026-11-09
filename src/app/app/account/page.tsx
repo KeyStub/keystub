@@ -102,7 +102,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/app/acco
         </h3>
         <EnergySettings homeKwhPrice={user.homeKwhPrice} compareL100={user.compareL100} compareFuelPrice={user.compareFuelPrice} />
 
-        <AccountForms name={user.name} email={user.email} />
+        <AccountForms name={user.name} email={user.email} twoFactorEnabled={!!(user as { twoFactorEnabled?: boolean | null }).twoFactorEnabled} />
 
         <h3 className="section-title" id="data">
           Your data

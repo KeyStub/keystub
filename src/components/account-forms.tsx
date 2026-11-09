@@ -11,6 +11,7 @@ export function AccountForms({ name, email }: { name: string; email: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [typed, setTyped] = useState("");
+  const [understood, setUnderstood] = useState(false);
 
   async function saveName(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -96,10 +97,20 @@ export function AccountForms({ name, email }: { name: string; email: string }) {
       </div>
       <Modal open={deleteOpen} title="Delete your account?" onClose={() => setDeleteOpen(false)}>
         <form onSubmit={deleteAccount}>
-          <p style={{ marginTop: 0 }}>Everything will be permanently deleted. If you have a paid plan, cancel it under Manage billing first.</p>
+          <p style={{ marginTop: 0 }}>
+            Everything will be permanently deleted: your vehicles, fuel, charging, maintenance and cost records, reminders and settings. If you have a paid
+            plan, cancel it under Manage billing first.
+          </p>
+          <p>
+            Want a copy first? <a href="/api/export?format=json">Download a full backup</a> or <a href="/api/export?format=csv">a spreadsheet</a>.
+          </p>
           <Field label='Type "delete my account"' htmlFor="del-typed">
             <input className="input" id="del-typed" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
           </Field>
+          <label className="confirm-check" style={{ marginBottom: 12 }}>
+            <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
+            <span>I understand this permanently deletes my account, every vehicle and every record, and that it can&apos;t be recovered.</span>
+          </label>
           <Field label="Your password" htmlFor="del-pw">
             <input className="input" id="del-pw" name="password" type="password" required autoComplete="current-password" />
           </Field>
@@ -107,7 +118,7 @@ export function AccountForms({ name, email }: { name: string; email: string }) {
             <button type="button" className="btn" onClick={() => setDeleteOpen(false)}>
               Cancel
             </button>
-            <button className="btn danger" disabled={typed.trim().toLowerCase() !== "delete my account" || busy === "del"}>
+            <button className="btn danger" disabled={typed.trim().toLowerCase() !== "delete my account" || !understood || busy === "del"}>
               Delete everything
             </button>
           </div>

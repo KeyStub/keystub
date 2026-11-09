@@ -102,7 +102,7 @@ export function RemindersView({
                           <IconButton
                             kind="trash"
                             onClick={async () => {
-                              if (!(await confirm({ title: "Delete reminder?", message: `This removes “${r.title}”.`, confirmLabel: "Delete", danger: true }))) return;
+                              if (!(await confirm({ title: "Delete reminder?", message: `This permanently removes “${r.title}”. It can't be undone.`, confirmLabel: "Delete", danger: true }))) return;
                               await deleteReminder(r.id);
                               toast("Reminder deleted.");
                               router.refresh();

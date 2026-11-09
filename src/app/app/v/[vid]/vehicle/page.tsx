@@ -37,7 +37,19 @@ export default async function VehiclePage({ params }: PageProps<"/app/v/[vid]/ve
           ))
         )}
       </div>
-      <VehicleDangerZone id={vid} name={vehicleName(b.vehicle)} archived={!!b.vehicle.archivedAt} />
+      <VehicleDangerZone
+        id={vid}
+        name={vehicleName(b.vehicle)}
+        archived={!!b.vehicle.archivedAt}
+        counts={{
+          fuel: b.fuel.length,
+          charging: b.charges.length,
+          maintenance: b.maintenance.length,
+          costs: b.costs.length,
+          reminders: b.reminders.length,
+          battery: b.battery.length,
+        }}
+      />
     </div>
   );
 }

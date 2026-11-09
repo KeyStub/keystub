@@ -39,13 +39,27 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
   const [error, setError] = useState<string | null>(null);
   const [vin, setVin] = useState(v.vin ?? "");
   const [powertrain, setPowertrain] = useState(v.powertrain ?? "gas");
-  const [decoded, setDecoded] = useState<{ year?: string; make?: string; model?: string; trim?: string; powertrain?: string } | null>(null);
+  const [decoded, setDecoded] = useState<{
+    year?: string;
+    make?: string;
+    model?: string;
+    trim?: string;
+    powertrain?: string;
+    country?: string;
+    partial?: boolean;
+    checkDigitWarning?: boolean;
+  } | null>(null);
+  const [decoding, setDecoding] = useState(false);
 
   async function decodeVin() {
-    if (vin.trim().length !== 17) return toast("A VIN is 17 characters.", true);
-    const r = await fetch(`/api/vin/${encodeURIComponent(vin.trim())}`);
-    if (!r.ok) return toast("Couldn't decode that VIN.", true);
-    const d = await r.json();
+    const clean = vin.replace(/[\s-]/g, "").toUpperCase();
+    if (clean.length !== 17) return toast(`A VIN is 17 characters; this one has ${clean.length}.`, true);
+    setDecoding(true);
+    const r = await fetch(`/api/vin/${encodeURIComponent(clean)}`).catch(() => null);
+    setDecoding(false);
+    if (!r) return toast("Couldn't reach the VIN lookup. Check your connection, or type the details in.", true);
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) return toast(d.error ?? "Couldn't decode that VIN.", true);
     setDecoded(d);
     if (d.powertrain && !v.id) setPowertrain(d.powertrain);
     const form = document.getElementById("vehicle-form") as HTMLFormElement;
@@ -77,8 +91,8 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
           <Field label="VIN (optional)" hint="Private. Use “Look up” to fill in year, make and model." htmlFor="vin">
             <div style={{ display: "flex", gap: 6 }}>
               <input className="input" id="vin" name="vin" value={vin} onChange={(e) => setVin(e.target.value.toUpperCase())} maxLength={17} />
-              <button type="button" className="btn sm" onClick={decodeVin}>
-                Look up
+              <button type="button" className="btn sm" onClick={decodeVin} disabled={decoding}>
+                {decoding ? "Looking…" : "Look up"}
               </button>
             </div>
           </Field>
@@ -87,9 +101,29 @@ export function VehicleForm({ vehicle }: { vehicle?: V }) {
           </Field>
         </div>
         {decoded && (
-          <div className="note info">
-            VIN decoded: {[decoded.year, decoded.make, decoded.model, decoded.trim].filter(Boolean).join(" ") || "no details found"}
-            {decoded.powertrain ? ` · ${POWERTRAINS.find((p) => p.id === decoded.powertrain)?.label}` : ""}
+          <div className={`note ${decoded.checkDigitWarning ? "" : "info"}`}>
+            {[decoded.year, decoded.make, decoded.model, decoded.trim].some(Boolean) ? (
+              <>
+                <b>{decoded.partial ? "Partly decoded" : "VIN decoded"}:</b> {[decoded.year, decoded.make, decoded.model, decoded.trim].filter(Boolean).join(" ")}
+                {decoded.powertrain ? ` · ${POWERTRAINS.find((p) => p.id === decoded.powertrain)?.label}` : ""}
+                {decoded.partial && (
+                  <div style={{ marginTop: 4, fontSize: 12.5 }}>
+                    {decoded.country ? `Built in ${decoded.country}. ` : ""}This vehicle isn&apos;t in the US government&apos;s VIN database (common for vehicles sold
+                    in Canada or overseas), so we could only read the basics. Fill in anything that&apos;s missing.
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <b>We couldn&apos;t read the details from this VIN.</b> That&apos;s fine: type the year, make and model below. The VIN is still saved on the
+                vehicle.
+              </>
+            )}
+            {decoded.checkDigitWarning && (
+              <div style={{ marginTop: 4, fontSize: 12.5 }}>
+                ⚠ This VIN&apos;s check digit doesn&apos;t match, which usually means a typo. Double-check it against your registration or the windshield.
+              </div>
+            )}
           </div>
         )}
         <Field label="Powertrain" htmlFor="powertrain" hint="Sets which logs you see: fill-ups, charging, or both.">

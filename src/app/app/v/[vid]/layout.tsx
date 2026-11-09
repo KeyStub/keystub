@@ -1,6 +1,7 @@
 import { AppTopBar } from "@/components/app-top-bar";
 import { MobileNav } from "@/components/mobile-nav";
 import { RememberVehicle } from "@/components/remember-vehicle";
+import { RestoreVehicleButton } from "@/components/vehicle-danger-zone";
 import { VehicleTabs } from "@/components/vehicle-tabs";
 import { fmtDate, numFmt, vehicleName } from "@/lib/format";
 import { makeFmt } from "@/lib/units";
@@ -39,7 +40,17 @@ export default async function VehicleLayout({ children, params }: LayoutProps<"/
         </div>
         <VehicleTabs vid={vid} powertrain={v.powertrain} />
       </header>
-      <main className="page">{children}</main>
+      <main className="page">
+        {v.archivedAt && (
+          <div className="note archived-banner" role="status">
+            <span>
+              <b>This vehicle is archived.</b> It&apos;s hidden from your garage and every record is kept. Restore it to start tracking again.
+            </span>
+            <RestoreVehicleButton id={vid} />
+          </div>
+        )}
+        {children}
+      </main>
       <MobileNav vid={vid} powertrain={v.powertrain} />
       <RememberVehicle vid={vid} />
     </div>

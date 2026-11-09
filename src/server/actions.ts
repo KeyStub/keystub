@@ -514,6 +514,15 @@ export async function saveVehicle(id: string | null, input: unknown): Promise<Ac
 export async function setVehicleArchived(id: string, archived: boolean): Promise<ActionResult> {
   try {
     const user = await requireUser();
+    if (!archived) {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(vehicles)
+        .where(and(eq(vehicles.userId, user.id), isNull(vehicles.archivedAt)));
+      const limit = PLANS[user.effectivePlan].maxVehicles;
+      if (Number(count) >= limit)
+        return { ok: false, error: `Your ${PLANS[user.effectivePlan].name} plan includes ${limit} active vehicles. Archive another one or upgrade to Pro to restore this one.` };
+    }
     await db
       .update(vehicles)
       .set({ archivedAt: archived ? new Date() : null, updatedAt: new Date() })

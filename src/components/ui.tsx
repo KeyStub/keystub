@@ -11,7 +11,14 @@ export const useToast = () => useContext(ToastCtx);
 
 /* ------------------------------- Confirm dialog ------------------------------- */
 
-type ConfirmOpts = { title: string; message: ReactNode; confirmLabel?: string; danger?: boolean };
+type ConfirmOpts = {
+  title: string;
+  message: ReactNode;
+  confirmLabel?: string;
+  danger?: boolean;
+  /** For high-risk actions: the confirm button stays disabled until this box is ticked. */
+  checkbox?: string;
+};
 const ConfirmCtx = createContext<(o: ConfirmOpts) => Promise<boolean>>(async () => false);
 export const useConfirm = () => useContext(ConfirmCtx);
 
@@ -31,8 +38,13 @@ export function UIProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const [pending, setPending] = useState<(ConfirmOpts & { resolve: (v: boolean) => void }) | null>(null);
+  const [ticked, setTicked] = useState(false);
   const confirm = useCallback(
-    (o: ConfirmOpts) => new Promise<boolean>((resolve) => setPending({ ...o, resolve })),
+    (o: ConfirmOpts) =>
+      new Promise<boolean>((resolve) => {
+        setTicked(false);
+        setPending({ ...o, resolve });
+      }),
     [],
   );
   const decide = (v: boolean) => {
@@ -53,13 +65,24 @@ export function UIProvider({ children }: { children: ReactNode }) {
               <button className="btn" onClick={() => decide(false)}>
                 Cancel
               </button>
-              <button className={`btn ${pending?.danger ? "danger" : "primary"}`} onClick={() => decide(true)} autoFocus>
+              <button
+                className={`btn ${pending?.danger ? "danger" : "primary"}`}
+                onClick={() => decide(true)}
+                disabled={!!pending?.checkbox && !ticked}
+                autoFocus={!pending?.checkbox}
+              >
                 {pending?.confirmLabel ?? "Confirm"}
               </button>
             </>
           }
         >
           <div style={{ fontSize: 14, lineHeight: 1.5 }}>{pending?.message}</div>
+          {pending?.checkbox && (
+            <label className="confirm-check">
+              <input type="checkbox" checked={ticked} onChange={(e) => setTicked(e.target.checked)} autoFocus />
+              <span>{pending.checkbox}</span>
+            </label>
+          )}
         </Modal>
         <div className="toast-host" role="status" aria-live="polite">
           {toasts.map((t) => (

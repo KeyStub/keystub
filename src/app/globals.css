@@ -526,3 +526,8 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
   .ob-nav .btn { flex: 1; justify-content: center; }
 }
 .help-btn { text-decoration: none; font: 700 15px/1 var(--font-body-stack); }
+
+/* "I understand" checkbox on high-risk confirmations */
+.confirm-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--critical-bg); color: var(--ink); font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+.confirm-check input { margin-top: 2px; width: 16px; height: 16px; flex: none; accent-color: var(--critical); }
+.archived-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; }

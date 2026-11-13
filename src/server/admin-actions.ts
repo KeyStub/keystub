@@ -4,7 +4,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { emailTemplates, feedback, staff, supportCategories, ticketMessages } from "@/db/schema";
+import { emailTemplates, feedback, siteSettings, staff, supportCategories, ticketMessages } from "@/db/schema";
 import { adminUrl, TEMPLATE_KEYS, ticketCode, ticketReplyTo } from "@/lib/admin";
 import { APP_NAME } from "@/lib/brand";
 import type { ActionResult } from "./actions";
@@ -273,6 +273,24 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     const me = await staffForAction("templates");
     if (!me) return DENIED;
     await db.delete(supportCategories).where(eq(supportCategories.id, id));
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ---------------- notifications ---------------- */
+
+export async function saveNotifySettings(input: unknown): Promise<ActionResult> {
+  try {
+    const me = await staffForAction("templates");
+    if (!me) return DENIED;
+    const d = z.object({ newTicket: z.boolean(), customerReply: z.boolean() }).parse(input);
+    await db
+      .insert(siteSettings)
+      .values({ key: "notify", value: d, updatedBy: staffName(me.user), updatedAt: new Date() })
+      .onConflictDoUpdate({ target: siteSettings.key, set: { value: d, updatedBy: staffName(me.user), updatedAt: new Date() } });
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (e) {

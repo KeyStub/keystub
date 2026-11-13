@@ -18,6 +18,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     ...(can(me.role, "customers") ? [{ href: "/admin/customers", label: "Customers" }] : []),
     ...(can(me.role, "templates") ? [{ href: "/admin/settings/auto-replies", label: "Auto-reply emails" }] : []),
     ...(can(me.role, "templates") ? [{ href: "/admin/settings/categories", label: "Ticket categories" }] : []),
+    ...(can(me.role, "templates") ? [{ href: "/admin/settings/notifications", label: "Notifications" }] : []),
     ...(can(me.role, "staff") ? [{ href: "/admin/staff", label: "Staff" }] : []),
     { href: "/admin/security", label: "My security" },
     { href: "/admin/pricing", label: "Plans & pricing", soon: true },

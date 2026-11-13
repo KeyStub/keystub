@@ -255,3 +255,5 @@ Shown on the website as "Coming soon" until built.
 - **Categories:** Admin → Ticket categories (10 starter categories, rename/remove/add); set per ticket; filter the ticket list by category; Overview shows tickets by category and by type for the last 30 days.
 - Later ideas for scale: priority, assigning tickets to a person, saved replies (macros), response-time targets, public ideas board with votes.
 - Migration 0012 (feedback.category, follow_up_of, customer_seen_at; support_categories).
+- **Notifications (2026-11-13):** Admin → Notifications turns the heads-up emails to support@ on/off separately for "new ticket" and "customer replied" (site_settings table, migration 0013). Customers' auto-replies are unaffected.
+- **Recommended:** forward support@keystub.com → support@inbox.keystub.com (Gmail filter or forwarding, archive Gmail's copy) so every support email becomes a ticket; notification emails come from @keystub.com and are ignored by the inbox, so there's no loop.

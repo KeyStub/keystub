@@ -444,3 +444,11 @@ export const supportCategories = pgTable(
   },
   (t) => [uniqueIndex("support_categories_name_idx").on(sql`lower(${t.name})`)],
 );
+
+/** Business-wide settings changed in Admin (e.g. support notification emails). */
+export const siteSettings = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedBy: text("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

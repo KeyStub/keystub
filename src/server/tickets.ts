@@ -1,9 +1,15 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { emailTemplates, ticketMessages } from "@/db/schema";
-import { adminUrl, DEFAULT_TEMPLATES, fillTemplate, stripQuotedReply, SUPPORT_EMAIL, TEMPLATE_KEYS, TICKET_KIND_LABEL, ticketCode, ticketNumberFrom, ticketReplyTo, type TemplateKey } from "@/lib/admin";
+import { emailTemplates, siteSettings, ticketMessages } from "@/db/schema";
+import { adminUrl, DEFAULT_NOTIFY, type NotifySettings, DEFAULT_TEMPLATES, fillTemplate, stripQuotedReply, SUPPORT_EMAIL, TEMPLATE_KEYS, TICKET_KIND_LABEL, ticketCode, ticketNumberFrom, ticketReplyTo, type TemplateKey } from "@/lib/admin";
 import { sendEmail, supportFrom } from "./mailer";
+
+/** Which heads-up emails go to the support inbox (Admin → Notifications). */
+export async function getNotifySettings(): Promise<NotifySettings> {
+  const [row] = await db.select().from(siteSettings).where(eq(siteSettings.key, "notify"));
+  return { ...DEFAULT_NOTIFY, ...((row?.value as Partial<NotifySettings>) ?? {}) };
+}
 
 /** A template from the database, or the built-in default if it was never edited. */
 export async function getTemplate(key: TemplateKey) {
@@ -46,6 +52,7 @@ export async function afterTicketCreated(t: NewTicket) {
       await db.insert(ticketMessages).values({ ticketId: t.id, kind: "auto_reply", body: `Subject: ${subject}\n\n${body}`, authorName: "Auto-reply", emailStatus: status });
     }
   }
+  if (!(await getNotifySettings()).newTicket) return;
   try {
     await sendEmail({
       to: SUPPORT_EMAIL(),
@@ -179,6 +186,7 @@ export async function addCustomerReply(
   }
   await db.insert(ticketMessages).values({ ticketId: t.id, kind: "customer", body: m.body, authorId: m.authorId ?? null, authorName: m.name, emailStatus: m.attachNote ?? null });
   await db.update(feedback).set({ status: "new", updatedAt: new Date() }).where(eq(feedback.id, t.id));
+  if (!(await getNotifySettings()).customerReply) return { number: t.number, followUp: false };
   try {
     await sendEmail({
       to: SUPPORT_EMAIL(),

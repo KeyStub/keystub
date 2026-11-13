@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
 import { adminPath, FEEDBACK_STATUSES, ROLES, TEMPLATE_PLACEHOLDERS, type StaffRole } from "@/lib/admin";
+import { saveNotifySettings } from "@/server/admin-actions";
 import { addCategory, addStaff, addTicketNote, deleteCategory, removeStaff, renameCategory, replyToTicket, resetTemplate, saveTemplate, setStaffPerk, setStaffRole, setTicketCategory, setTicketStatus } from "@/server/admin-actions";
 import type { ActionResult } from "@/server/actions";
 import { Logo } from "./logo";
@@ -527,5 +528,49 @@ export function CategoryManager({ rows }: { rows: { id: string; name: string; ti
         </button>
       </form>
     </>
+  );
+}
+
+/* ---------------- notifications ---------------- */
+
+export function NotifySettingsForm({ value, inbox }: { value: { newTicket: boolean; customerReply: boolean }; inbox: string }) {
+  const run = useRun();
+  const [v, setV] = useState(value);
+  const [busy, setBusy] = useState(false);
+  const dirty = v.newTicket !== value.newTicket || v.customerReply !== value.customerReply;
+  const row = (key: "newTicket" | "customerReply", title: string, hint: string) => (
+    <label className="order-row" style={{ cursor: "pointer" }}>
+      <span className="order-check">
+        <input type="checkbox" checked={v[key]} onChange={(e) => setV({ ...v, [key]: e.target.checked })} />
+        <span>
+          <b>{title}</b>
+          <span className="muted" style={{ display: "block", fontSize: 13 }}>
+            {hint}
+          </span>
+        </span>
+      </span>
+    </label>
+  );
+  return (
+    <div className="card">
+      {row("newTicket", "A new ticket arrives", "From the app, the contact form, or an email to support.")}
+      {row("customerReply", "A customer replies to a ticket", "By email or in the app.")}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+        <span className="muted" style={{ fontSize: 12.5 }}>
+          Sent to {inbox}. Tickets always appear in Admin either way.
+        </span>
+        <button
+          className="btn primary"
+          disabled={!dirty || busy}
+          onClick={async () => {
+            setBusy(true);
+            await run(() => saveNotifySettings(v), "Notification settings saved.");
+            setBusy(false);
+          }}
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </div>
   );
 }

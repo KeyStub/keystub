@@ -153,3 +153,8 @@ export function fillTemplate(text: string, v: { name?: string | null; ticket: st
   const t = v.link ? text : text.split("\n").filter((l) => !l.includes("{link}")).join("\n");
   return t.replaceAll("{name}", first).replaceAll("{ticket}", v.ticket).replaceAll("{message}", v.message).replaceAll("{link}", v.link ?? "");
 }
+
+/* ---------- notification emails to the support inbox ---------- */
+
+export type NotifySettings = { newTicket: boolean; customerReply: boolean };
+export const DEFAULT_NOTIFY: NotifySettings = { newTicket: true, customerReply: true };

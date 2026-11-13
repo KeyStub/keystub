@@ -1,7 +1,7 @@
-import { and, count, desc, eq, ilike, inArray, isNull, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
-import { feedback, supportCategories } from "@/db/schema";
+import { feedback, supportCategories, ticketMessages } from "@/db/schema";
 import { adminPath, FEEDBACK_STATUSES, OPEN_STATUSES, parseTicketCode, TICKET_KIND_LABEL, ticketCode } from "@/lib/admin";
 import { requireStaff } from "@/server/staff";
 
@@ -24,7 +24,19 @@ export default async function Tickets({ searchParams }: PageProps<"/admin/ticket
   else if (cat !== "all") where.push(eq(feedback.category, cat));
   if (q) {
     const n = parseTicketCode(q);
-    where.push(n ? eq(feedback.number, n) : or(ilike(feedback.email, `%${q}%`), ilike(feedback.name, `%${q}%`), ilike(feedback.message, `%${q}%`))!);
+    const like = `%${q.replace(/[\\%_]/g, (c) => "\\" + c)}%`;
+    // Matches the first message, the sender, the category, and anything in the conversation (replies and notes).
+    where.push(
+      n
+        ? eq(feedback.number, n)
+        : or(
+            ilike(feedback.email, like),
+            ilike(feedback.name, like),
+            ilike(feedback.message, like),
+            ilike(feedback.category, like),
+            sql`exists (select 1 from ${ticketMessages} m where m.ticket_id = "feedback"."id" and m.body ilike ${like})`,
+          )!,
+    );
   }
   const [items, counts] = await Promise.all([
     db
@@ -43,11 +55,11 @@ export default async function Tickets({ searchParams }: PageProps<"/admin/ticket
       <h1 className="adm-h1">Support tickets</h1>
       <form className="adm-search" action={adminPath("/admin/tickets")}>
         <input type="hidden" name="status" value="all" />
-        <input className="input" name="q" defaultValue={q} placeholder="Search by #KS number, email, name or words…" />
+        <input className="input" name="q" defaultValue={q} placeholder="Search by #KS number, email, name, or any word in the conversation…" />
         <button className="btn">Search</button>
       </form>
       <div className="fb-filters">
-        {[["all", `All (${counts.reduce((t, c) => t + c.n, 0)})`], ["open", `Open (${OPEN_STATUSES.reduce((t, s) => t + n(s), 0)})`], ...FEEDBACK_STATUSES.map((s) => [s.id, `${s.label} (${n(s.id)})`])].map(([id, label]) => (
+        {[["all", `All (${counts.reduce((t, c) => t + c.n, 0)})`], ["open", `All open (${OPEN_STATUSES.reduce((t, s) => t + n(s), 0)})`], ...FEEDBACK_STATUSES.map((s) => [s.id, `${s.label} (${n(s.id)})`])].map(([id, label]) => (
           <Link key={id} href={link({ status: id })} className={`btn sm ${status === id ? "primary" : "ghost"}`}>
             {label}
           </Link>

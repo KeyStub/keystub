@@ -90,7 +90,7 @@ export const CONTACT_TOPICS = [
 
 export const FEEDBACK_STATUSES = [
   { id: "new", label: "Needs reply" },
-  { id: "in_progress", label: "Open" },
+  { id: "in_progress", label: "In progress" },
   { id: "planned", label: "Planned" },
   { id: "done", label: "Done" },
   { id: "closed", label: "Closed" },

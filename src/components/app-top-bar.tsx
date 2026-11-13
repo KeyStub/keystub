@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { APP_NAME } from "@/lib/brand";
+import { unreadSupportCount } from "@/server/data";
+import { getSession } from "@/server/session";
 import { Logo } from "./logo";
 import { SignOutButton } from "./sign-out-button";
 import { ThemeButton } from "./theme-toggle";
 
-export function AppTopBar() {
+export async function AppTopBar() {
+  const s = await getSession();
+  const unread = s ? await unreadSupportCount(s.user.id, s.user.email) : 0;
   return (
     <div className="header-row" style={{ paddingTop: 12 }}>
       <Link href="/app/home" className="logo-link" aria-label={`${APP_NAME} home`}>
@@ -24,8 +28,9 @@ export function AppTopBar() {
         <Link href="/app/account" className="btn ghost sm">
           Account
         </Link>
-        <Link href="/app/feedback" className="btn ghost sm">
-          Feedback
+        <Link href="/app/feedback" className="btn ghost sm" aria-label={unread ? `Support, ${unread} new repl${unread === 1 ? "y" : "ies"}` : "Support"}>
+          Support
+          {unread > 0 && <span className="nav-badge">{unread}</span>}
         </Link>
         <SignOutButton />
       </div>

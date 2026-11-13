@@ -2,7 +2,7 @@ import { and, count, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { feedback, user } from "@/db/schema";
-import { adminPath, OPEN_STATUSES } from "@/lib/admin";
+import { adminPath, OPEN_STATUSES, TICKET_KIND_LABEL } from "@/lib/admin";
 import { requireStaff } from "@/server/staff";
 
 export const metadata = { title: "Overview" };
@@ -26,6 +26,21 @@ export default async function AdminOverview() {
     ["Paying Pro", pro.n, "billing not live yet", adminPath("/admin/customers")],
     ["Open tickets", openTickets.n, `${newTickets.n} not answered yet`, adminPath("/admin/tickets")],
   ] as const;
+  const [byCat, byKind] = await Promise.all([
+    db
+      .select({ name: feedback.category, n: count() })
+      .from(feedback)
+      .where(sql`${feedback.createdAt} > now() - interval '30 days'`)
+      .groupBy(feedback.category)
+      .orderBy(sql`count(*) desc`),
+    db
+      .select({ name: feedback.kind, n: count() })
+      .from(feedback)
+      .where(sql`${feedback.createdAt} > now() - interval '30 days'`)
+      .groupBy(feedback.kind)
+      .orderBy(sql`count(*) desc`),
+  ]);
+  const total30 = byKind.reduce((t, r) => t + r.n, 0);
   return (
     <>
       <h1 className="adm-h1">Overview</h1>
@@ -37,6 +52,36 @@ export default async function AdminOverview() {
             <div className="sub">{sub}</div>
           </Link>
         ))}
+      </div>
+      <div className="adm-patterns">
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Tickets by category · last 30 days</h3>
+          {total30 === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>No tickets yet.</p>
+          ) : (
+            byCat.map((r) => (
+              <div key={r.name ?? "none"} className="adm-bar">
+                <span>{r.name ?? <i className="muted">No category yet</i>}</span>
+                <span className="adm-bar-track">
+                  <span style={{ width: `${Math.round((r.n / total30) * 100)}%` }} />
+                </span>
+                <b className="tabular">{r.n}</b>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>By type · last 30 days</h3>
+          {byKind.map((r) => (
+            <div key={r.name} className="adm-bar">
+              <span>{TICKET_KIND_LABEL[r.name] ?? r.name}</span>
+              <span className="adm-bar-track">
+                <span style={{ width: `${Math.round((r.n / Math.max(total30, 1)) * 100)}%` }} />
+              </span>
+              <b className="tabular">{r.n}</b>
+            </div>
+          ))}
+        </div>
       </div>
       <p className="muted" style={{ fontSize: 13, marginTop: 16 }}>
         Revenue, sign-up charts and failed emails will appear here once billing and analytics are switched on.

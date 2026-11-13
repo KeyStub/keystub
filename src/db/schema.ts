@@ -363,6 +363,12 @@ export const feedback = pgTable(
     ipHash: text("ip_hash"),
     /** "new" | "planned" | "in_progress" | "done" | "closed" */
     status: text("status").notNull().default("new"),
+    /** staff-chosen category (support_categories.name), for spotting patterns */
+    category: text("category"),
+    /** ticket number this one follows up on (replies to old, closed tickets start a new one) */
+    followUpOf: integer("follow_up_of"),
+    /** when the customer last opened this ticket in the app (for "new reply" badges) */
+    customerSeenAt: timestamp("customer_seen_at", { withTimezone: true }),
     adminNote: text("admin_note"),
     ...timestamps,
   },
@@ -426,3 +432,15 @@ export const userPrefs = pgTable("user_prefs", {
   history: jsonb("history"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Support ticket categories, managed in Admin (e.g. "Billing", "Import & data"). */
+export const supportCategories = pgTable(
+  "support_categories",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    sort: integer("sort").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("support_categories_name_idx").on(sql`lower(${t.name})`)],
+);

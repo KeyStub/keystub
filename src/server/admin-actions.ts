@@ -4,11 +4,12 @@ import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { emailTemplates, feedback, staff, ticketMessages } from "@/db/schema";
+import { emailTemplates, feedback, staff, supportCategories, ticketMessages } from "@/db/schema";
 import { adminUrl, TEMPLATE_KEYS, ticketCode, ticketReplyTo } from "@/lib/admin";
 import { APP_NAME } from "@/lib/brand";
 import type { ActionResult } from "./actions";
 import { sendEmail, supportFrom } from "./mailer";
+import { ticketLink } from "./tickets";
 import { staffForAction } from "./staff";
 
 const DENIED: ActionResult = { ok: false, error: "You don't have access to do that." };
@@ -75,7 +76,7 @@ export async function replyToTicket(ticketId: string, input: unknown): Promise<A
         from: supportFrom(),
         replyTo: ticketReplyTo(t.number),
         subject: `Re: [${code}] ${firstLine}`,
-        text: `${d.body}\n\n—\n${staffName(me.user)}, ${APP_NAME} support\nTicket ${code}. Just reply to this email to continue the conversation.\n\nYou wrote:\n${quoted}`,
+        text: `${d.body}\n\n—\n${staffName(me.user)}, ${APP_NAME} support\nTicket ${code}. Reply to this email${t.userId ? ` or continue in KeyStub: ${ticketLink(t.number)}` : " to continue the conversation."}\n\nYou wrote:\n${quoted}`,
       });
     } catch (e) {
       emailStatus = "failed";
@@ -211,6 +212,68 @@ export async function setStaffPerk(id: string, perkEmail: unknown): Promise<Acti
     if (e && e === row.email.toLowerCase()) return { ok: false, error: "Use their personal email, not the work one." };
     await db.update(staff).set({ perkEmail: e || null }).where(eq(staff.id, id));
     revalidatePath("/admin/staff");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ---------------- ticket categories ---------------- */
+
+export async function setTicketCategory(ticketId: string, category: unknown): Promise<ActionResult> {
+  try {
+    const me = await staffForAction("tickets");
+    if (!me) return DENIED;
+    const c = z.string().trim().max(80).parse(category ?? "");
+    await db.update(feedback).set({ category: c || null }).where(eq(feedback.id, ticketId));
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const catName = z.string().trim().min(1, "Enter a name").max(80, "Keep it under 80 characters");
+
+export async function addCategory(name: unknown): Promise<ActionResult> {
+  try {
+    const me = await staffForAction("templates");
+    if (!me) return DENIED;
+    const n = catName.parse(name);
+    const [{ max }] = await db.select({ max: sql<number>`coalesce(max(${supportCategories.sort}), 0)::int` }).from(supportCategories);
+    await db.insert(supportCategories).values({ name: n, sort: max + 1 });
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof Error && /support_categories_name_idx/.test(e.message + String((e as { cause?: unknown }).cause))) return { ok: false, error: "That category already exists." };
+    return fail(e);
+  }
+}
+
+/** Rename a category; tickets already filed under the old name move with it. */
+export async function renameCategory(id: string, name: unknown): Promise<ActionResult> {
+  try {
+    const me = await staffForAction("templates");
+    if (!me) return DENIED;
+    const n = catName.parse(name);
+    const [row] = await db.select().from(supportCategories).where(eq(supportCategories.id, id));
+    if (!row) return { ok: false, error: "Not found" };
+    await db.update(supportCategories).set({ name: n }).where(eq(supportCategories.id, id));
+    await db.update(feedback).set({ category: n }).where(eq(feedback.category, row.name));
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Remove a category from the list. Tickets keep the label so old reports still make sense. */
+export async function deleteCategory(id: string): Promise<ActionResult> {
+  try {
+    const me = await staffForAction("templates");
+    if (!me) return DENIED;
+    await db.delete(supportCategories).where(eq(supportCategories.id, id));
+    revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (e) {
     return fail(e);

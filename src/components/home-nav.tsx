@@ -1,3 +1,4 @@
+import { unreadSupportCount } from "@/server/data";
 import { homeVehicle } from "@/server/home";
 import { requireUser } from "@/server/session";
 import { MobileNav } from "./mobile-nav";
@@ -6,5 +7,5 @@ import { MobileNav } from "./mobile-nav";
 export async function HomeNav() {
   const user = await requireUser();
   const v = await homeVehicle(user.id);
-  return v ? <MobileNav vid={v.id} powertrain={v.powertrain} /> : null;
+  return v ? <MobileNav vid={v.id} powertrain={v.powertrain} supportUnread={await unreadSupportCount(user.id, user.email)} /> : null;
 }

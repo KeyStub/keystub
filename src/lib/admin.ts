@@ -113,6 +113,7 @@ export const TEMPLATE_PLACEHOLDERS = [
   ["{name}", "the person's first name (or “there”)"],
   ["{ticket}", "the ticket number, e.g. #KS1001"],
   ["{message}", "a copy of what they wrote"],
+  ["{link}", "a link to view and reply to the ticket in KeyStub (the line is left out if they have no account)"],
 ] as const;
 
 const SIGN_OFF = "\n\nThanks,\nThe KeyStub team\nsupport@keystub.com";
@@ -120,19 +121,19 @@ const SIGN_OFF = "\n\nThanks,\nThe KeyStub team\nsupport@keystub.com";
 export const DEFAULT_TEMPLATES: Record<TemplateKey, { subject: string; body: string }> = {
   auto_bug: {
     subject: "We got your bug report ({ticket})",
-    body: `Hi {name},\n\nThanks for reporting this. Your ticket number is {ticket}. We'll look into it and email you if we need more details or once it's fixed.\n\nWhat you sent:\n{message}${SIGN_OFF}`,
+    body: `Hi {name},\n\nThanks for reporting this. Your ticket number is {ticket}. We'll look into it and email you if we need more details or once it's fixed.\n\nFollow it or add details here: {link}\n\nWhat you sent:\n{message}${SIGN_OFF}`,
   },
   auto_idea: {
     subject: "Thanks for your idea ({ticket})",
-    body: `Hi {name},\n\nThanks for the suggestion! Every idea is read and helps decide what we build next. You can follow its status in the app under Send feedback.\n\nYour idea ({ticket}):\n{message}${SIGN_OFF}`,
+    body: `Hi {name},\n\nThanks for the suggestion! Every idea is read and helps decide what we build next. You can follow its status here: {link}\n\nYour idea ({ticket}):\n{message}${SIGN_OFF}`,
   },
   auto_question: {
     subject: "We got your question ({ticket})",
-    body: `Hi {name},\n\nThanks for reaching out. Your ticket number is {ticket}, and a real person will reply, usually within one business day.\n\nYour question:\n{message}${SIGN_OFF}`,
+    body: `Hi {name},\n\nThanks for reaching out. Your ticket number is {ticket}, and a real person will reply, usually within one business day.\n\nView or add to it here: {link}\n\nYour question:\n{message}${SIGN_OFF}`,
   },
   auto_other: {
     subject: "Thanks for your feedback ({ticket})",
-    body: `Hi {name},\n\nThanks for taking the time to write to us. Your message is ticket {ticket}, and we'll reply if there's anything to follow up on.\n\nWhat you sent:\n{message}${SIGN_OFF}`,
+    body: `Hi {name},\n\nThanks for taking the time to write to us. Your message is ticket {ticket}, and we'll reply if there's anything to follow up on.\n\nView it here: {link}\n\nWhat you sent:\n{message}${SIGN_OFF}`,
   },
   auto_email: {
     subject: "We got your email ({ticket})",
@@ -146,7 +147,9 @@ Thanks for emailing KeyStub. Your message is ticket {ticket}, and a real person 
   },
 };
 
-export function fillTemplate(text: string, v: { name?: string | null; ticket: string; message: string }) {
+export function fillTemplate(text: string, v: { name?: string | null; ticket: string; message: string; link?: string }) {
   const first = v.name?.trim().split(/\s+/)[0] || "there";
-  return text.replaceAll("{name}", first).replaceAll("{ticket}", v.ticket).replaceAll("{message}", v.message);
+  // Lines with {link} are dropped when there's no link (e.g. the person has no KeyStub account).
+  const t = v.link ? text : text.split("\n").filter((l) => !l.includes("{link}")).join("\n");
+  return t.replaceAll("{name}", first).replaceAll("{ticket}", v.ticket).replaceAll("{message}", v.message).replaceAll("{link}", v.link ?? "");
 }

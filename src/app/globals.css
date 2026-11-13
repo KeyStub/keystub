@@ -683,3 +683,21 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
 }
 .perk-cell { display: flex; gap: 6px; align-items: center; min-width: 210px; }
 .perk-cell .input { padding: 6px 8px; font-size: 13px; }
+.nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 999px; background: var(--critical); color: #fff; font-size: 11px; font-weight: 700; }
+.mnav-item { position: relative; }
+.mnav-item .nav-badge { position: absolute; top: 0; right: 18%; margin: 0; }
+.my-ticket { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border-2); color: var(--ink); text-decoration: none; }
+.my-ticket:last-child { border-bottom: 0; }
+.my-ticket:hover { background: var(--accent-wash); }
+.my-ticket-main { display: grid; gap: 2px; min-width: 0; }
+.my-ticket-main b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.my-ticket-main .muted { font-size: 12.5px; }
+.my-ticket.unread b::before { content: "● "; color: var(--critical); font-size: 10px; vertical-align: 2px; }
+.adm-cat { display: inline-block; margin-left: 6px; font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--accent-wash); color: var(--ink-2); border: 1px solid var(--border-2); }
+.adm-patterns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+@media screen and (max-width: 900px) { .adm-patterns { grid-template-columns: minmax(0, 1fr); } }
+.adm-bar { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 32px; gap: 10px; align-items: center; padding: 5px 0; font-size: 13.5px; }
+.adm-bar > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-bar-track { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.adm-bar-track > span { display: block; height: 100%; border-radius: 999px; background: var(--s1); }
+.adm-bar b { text-align: right; }

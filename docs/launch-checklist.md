@@ -246,3 +246,12 @@ Shown on the website as "Coming soon" until built.
 - **Tickets list** now opens on All (with counts), sorted by latest activity; statuses: Needs reply · Open · Planned · Done · Closed. Staff of any role see every ticket.
 - Local dev DB note: the old local database uses WIN1252 encoding; new local DBs are created UTF-8 (production Neon is UTF-8).
 - Migration 0011 (staff.perk_email).
+
+## Customer-side tickets, follow-ups, categories (built 2026-11-13)
+- Customers manage their own tickets at **Support** (top bar; More on phones): every ticket they sent (app, contact form or email from the same address), each with its own page to read replies, add messages, **Mark as resolved** or **Reopen**. Staff notes and auto-receipts stay hidden.
+- **Unread badge** on Support / More when staff replied and the customer hasn't opened it; "New reply" in the list. (Phone push notifications come with the mobile app.)
+- Auto-replies and staff replies include a link to the ticket in KeyStub (new `{link}` placeholder; left out when the person has no account). Customers can reply by email or in the app; both land on the same ticket.
+- **Closed-ticket rule (industry standard):** Done = resolved, and a reply within 14 days reopens it. Closed, or Done for more than 14 days → a reply starts a new follow-up ticket linked to the old one ("Follow-up to #KS…"), both in the app and by email.
+- **Categories:** Admin → Ticket categories (10 starter categories, rename/remove/add); set per ticket; filter the ticket list by category; Overview shows tickets by category and by type for the last 30 days.
+- Later ideas for scale: priority, assigning tickets to a person, saved replies (macros), response-time targets, public ideas board with votes.
+- Migration 0012 (feedback.category, follow_up_of, customer_seen_at; support_categories).

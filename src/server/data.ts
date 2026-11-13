@@ -124,3 +124,15 @@ export const getPrefs = cache(async (userId: string) => {
   const [row] = await db.select().from(userPrefs).where(eq(userPrefs.userId, userId));
   return { dashboard: normalizeDash(row?.dashboard), reports: normalizeReports(row?.reports), history: normalizeHistory(row?.history) };
 });
+
+/** Support tickets with a staff reply the customer hasn't opened yet (for the "Support" badge). */
+export const unreadSupportCount = cache(async (userId: string, email: string) => {
+  const { feedback, ticketMessages } = await import("@/db/schema");
+  const [r] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(feedback)
+    .where(
+      sql`(${feedback.userId} = ${userId} or lower(${feedback.email}) = ${email.toLowerCase()}) and exists (select 1 from ${ticketMessages} m where m.ticket_id = ${feedback.id} and m.kind = 'reply' and m.created_at > coalesce(${feedback.customerSeenAt}, 'epoch'::timestamptz))`,
+    );
+  return r?.n ?? 0;
+});

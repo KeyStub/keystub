@@ -12,7 +12,7 @@ import { ThemeSegmented } from "./theme-toggle";
  * Phone layout: a bottom tab bar with a yellow "+" in the middle for quick logging, like a native
  * app. Hidden on wider screens, where the top tabs are used instead.
  */
-export function MobileNav({ vid, powertrain }: { vid: string; powertrain: string }) {
+export function MobileNav({ vid, powertrain, supportUnread = 0 }: { vid: string; powertrain: string; supportUnread?: number }) {
   const path = usePathname();
   const base = `/app/v/${vid}`;
   // The sheet remembers which page it was opened on, so navigating away closes it.
@@ -87,7 +87,7 @@ export function MobileNav({ vid, powertrain }: { vid: string; powertrain: string
           <Link href="/app?garage=1" className="sheet-row">Garage (all vehicles)</Link>
           <Link href="/app/account" className="sheet-row">Account</Link>
           <Link href="/app/welcome?replay=1" className="sheet-row">Getting started guide</Link>
-          <Link href={`/app/feedback?from=${encodeURIComponent(path)}`} className="sheet-row">Send feedback</Link>
+          <Link href={`/app/feedback?from=${encodeURIComponent(path)}`} className="sheet-row">Support &amp; feedback{supportUnread > 0 && <span className="nav-badge">{supportUnread}</span>}</Link>
           <div className="sheet-row" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
             Theme <ThemeSegmented />
           </div>
@@ -106,6 +106,7 @@ export function MobileNav({ vid, powertrain }: { vid: string; powertrain: string
         <button type="button" className={`mnav-item${sheet === "more" ? " on" : ""}`} onClick={() => setSheet(sheet === "more" ? null : "more")}>
           <IconMore size={22} />
           <span>More</span>
+          {supportUnread > 0 && <span className="nav-badge">{supportUnread}</span>}
         </button>
       </nav>
     </>

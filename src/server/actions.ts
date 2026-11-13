@@ -904,7 +904,7 @@ export async function submitFeedback(input: unknown): Promise<ActionResult> {
       .insert(feedback)
       .values({ userId: user.id, email: user.email, name: user.name, kind: d.kind, message: d.message, page: clip(d.page, 300), userAgent: clip(ua, 300) })
       .returning({ id: feedback.id, number: feedback.number });
-    await afterTicketCreated({ ...t, kind: d.kind, name: user.name, email: user.email, message: d.message, page: d.page, context: `signed in, ${user.effectivePlan} plan` });
+    await afterTicketCreated({ ...t, kind: d.kind, name: user.name, email: user.email, message: d.message, page: d.page, context: `signed in, ${user.effectivePlan} plan`, hasAccount: true });
     revalidatePath("/app/feedback");
     return { ok: true, id: String(t.number) };
   } catch (e) {
@@ -954,7 +954,7 @@ export async function submitContact(input: unknown): Promise<ActionResult> {
         ipHash,
       })
       .returning({ id: feedback.id, number: feedback.number });
-    await afterTicketCreated({ ...t, kind: "contact", name: d.name, email: d.email, message: d.message, topic: d.topic, context: s ? "has an account, signed in" : null });
+    await afterTicketCreated({ ...t, kind: "contact", name: d.name, email: d.email, message: d.message, topic: d.topic, context: s ? "has an account, signed in" : null, hasAccount: !!s });
     return { ok: true, id: String(t.number) };
   } catch (e) {
     return fail(e);
@@ -985,4 +985,49 @@ export async function isInvitedStaff(email: unknown): Promise<boolean> {
   if (!e.includes("@")) return false;
   const { staffInfoFor } = await import("./staff");
   return !!(await staffInfoFor(e))?.dedicated;
+}
+
+/* ============================ MY SUPPORT TICKETS (customer side) ============================ */
+
+/** A ticket the signed-in person owns (made while signed in, or sent from their account's email). */
+async function myTicket(userId: string, email: string, number: number) {
+  const [t] = await db
+    .select()
+    .from(feedback)
+    .where(and(eq(feedback.number, number), sql`(${feedback.userId} = ${userId} or lower(${feedback.email}) = ${email.toLowerCase()})`));
+  return t ?? null;
+}
+
+/** Customer adds a message from the app. Closed/long-resolved tickets start a linked follow-up instead. */
+export async function replyToMyTicket(number: number, body: unknown): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const text = z.string().trim().min(1, "Write a message first.").max(5000, "Please keep it under 5,000 characters.").parse(body);
+    const t = await myTicket(user.id, user.email, number);
+    if (!t) return { ok: false, error: "Ticket not found" };
+    const { addCustomerReply } = await import("./tickets");
+    const r = await addCustomerReply(t, { body: text, name: user.name || user.email, authorId: user.id });
+    revalidatePath("/app/feedback", "layout");
+    return { ok: true, id: String(r.number) };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Customer marks their ticket resolved (done) or reopens it (within the reopen window). */
+export async function setMyTicketResolved(number: number, resolved: boolean): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const t = await myTicket(user.id, user.email, number);
+    if (!t) return { ok: false, error: "Ticket not found" };
+    const { isPastReopenWindow } = await import("./tickets");
+    if (!resolved && isPastReopenWindow(t)) return { ok: false, error: "This ticket is closed. Send a message and we'll open a follow-up." };
+    await db.update(feedback).set({ status: resolved ? "done" : "new", updatedAt: new Date() }).where(eq(feedback.id, t.id));
+    const { ticketMessages } = await import("@/db/schema");
+    await db.insert(ticketMessages).values({ ticketId: t.id, kind: "note", body: resolved ? "Customer marked this ticket as resolved." : "Customer reopened this ticket.", authorName: "System" });
+    revalidatePath("/app/feedback", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
 }

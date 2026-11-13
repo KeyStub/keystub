@@ -1,7 +1,7 @@
-import { and, count, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, or, type SQL } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
-import { feedback } from "@/db/schema";
+import { feedback, supportCategories } from "@/db/schema";
 import { adminPath, FEEDBACK_STATUSES, OPEN_STATUSES, parseTicketCode, TICKET_KIND_LABEL, ticketCode } from "@/lib/admin";
 import { requireStaff } from "@/server/staff";
 
@@ -15,25 +15,29 @@ export default async function Tickets({ searchParams }: PageProps<"/admin/ticket
   const status = typeof sp.status === "string" ? sp.status : "all";
   const kind = typeof sp.kind === "string" ? sp.kind : "all";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const cat = typeof sp.cat === "string" ? sp.cat : "all";
   const where: SQL[] = [];
   if (status === "open") where.push(inArray(feedback.status, OPEN_STATUSES));
   else if (status !== "all") where.push(eq(feedback.status, status));
   if (kind !== "all") where.push(eq(feedback.kind, kind));
+  if (cat === "none") where.push(isNull(feedback.category));
+  else if (cat !== "all") where.push(eq(feedback.category, cat));
   if (q) {
     const n = parseTicketCode(q);
     where.push(n ? eq(feedback.number, n) : or(ilike(feedback.email, `%${q}%`), ilike(feedback.name, `%${q}%`), ilike(feedback.message, `%${q}%`))!);
   }
   const [items, counts] = await Promise.all([
     db
-      .select({ id: feedback.id, number: feedback.number, kind: feedback.kind, name: feedback.name, email: feedback.email, message: feedback.message, status: feedback.status, createdAt: feedback.createdAt, updatedAt: feedback.updatedAt })
+      .select({ id: feedback.id, number: feedback.number, kind: feedback.kind, name: feedback.name, email: feedback.email, message: feedback.message, status: feedback.status, category: feedback.category, createdAt: feedback.createdAt, updatedAt: feedback.updatedAt })
       .from(feedback)
       .where(where.length ? and(...where) : undefined)
       .orderBy(desc(feedback.updatedAt))
       .limit(300),
     db.select({ status: feedback.status, n: count() }).from(feedback).groupBy(feedback.status),
   ]);
+  const categories = (await db.select({ name: supportCategories.name }).from(supportCategories).orderBy(supportCategories.sort)).map((c) => c.name);
   const n = (s: string) => counts.find((c) => c.status === s)?.n ?? 0;
-  const link = (patch: Record<string, string>) => `${adminPath("/admin/tickets")}?${new URLSearchParams({ status, kind, ...(q ? { q } : {}), ...patch })}`;
+  const link = (patch: Record<string, string>) => `${adminPath("/admin/tickets")}?${new URLSearchParams({ status, kind, cat, ...(q ? { q } : {}), ...patch })}`;
   return (
     <>
       <h1 className="adm-h1">Support tickets</h1>
@@ -56,6 +60,30 @@ export default async function Tickets({ searchParams }: PageProps<"/admin/ticket
           </Link>
         ))}
       </div>
+      <div className="fb-filters">
+        <select
+          className="select inline"
+          aria-label="Category"
+          defaultValue={cat}
+          // a plain GET form keeps this a server page
+          form="cat-filter"
+          name="cat"
+        >
+          <option value="all">All categories</option>
+          <option value="none">No category yet</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <form id="cat-filter" action={adminPath("/admin/tickets")} style={{ display: "contents" }}>
+          <input type="hidden" name="status" value={status} />
+          <input type="hidden" name="kind" value={kind} />
+          {q && <input type="hidden" name="q" value={q} />}
+          <button className="btn sm">Filter</button>
+        </form>
+      </div>
       {items.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: 32 }}>
           <p className="muted" style={{ margin: 0 }}>{q ? "No tickets match that search." : "Nothing here. 🎉"}</p>
@@ -68,6 +96,7 @@ export default async function Tickets({ searchParams }: PageProps<"/admin/ticket
               <span className="adm-kind">{TICKET_KIND_LABEL[t.kind] ?? t.kind}</span>
               <span className="adm-subj">
                 <b>{t.name || t.email}</b>
+                {t.category && <span className="adm-cat">{t.category}</span>}
                 <span className="muted"> · {t.message.replace(/\s+/g, " ").slice(0, 110)}</span>
               </span>
               <span className={`chip ${CHIP[t.status] ?? "neutral"}`}>

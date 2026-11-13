@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CONTACT_TOPICS, FEEDBACK_KINDS, ticketCode } from "@/lib/admin";
-import { submitContact, submitFeedback } from "@/server/actions";
+import { replyToMyTicket, setMyTicketResolved, submitContact, submitFeedback } from "@/server/actions";
 
 /** In-app: report a bug, suggest an idea, ask a question. */
 export function FeedbackForm() {
@@ -160,6 +160,66 @@ export function ContactForm({ defaultName, defaultEmail }: { defaultName?: strin
       <p className="mk-contact-note">
         Already using KeyStub? Bugs and feature ideas are easiest to send from the app: More → Send feedback.
       </p>
+    </form>
+  );
+}
+
+/** Customer side of a ticket: reply, mark resolved, reopen. */
+export function MyTicketActions({ number, status, closed, reopenDays }: { number: number; status: string; closed: boolean; reopenDays: number }) {
+  const router = useRouter();
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const resolved = status === "done" && !closed;
+
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const res = await replyToMyTicket(number, body);
+    setBusy(false);
+    if (!res.ok) return setError("error" in res ? res.error : "Couldn't send it.");
+    setBody("");
+    if (res.id && Number(res.id) !== number) router.push(`/app/feedback/${res.id}`);
+    else router.refresh();
+  }
+  async function toggle(r: boolean) {
+    setBusy(true);
+    const res = await setMyTicketResolved(number, r);
+    setBusy(false);
+    if (!res.ok) return setError("error" in res ? res.error : "Couldn't update it.");
+    router.refresh();
+  }
+
+  return (
+    <form className="card" onSubmit={send}>
+      {error && <div className="note error">{error}</div>}
+      <label htmlFor="my-reply" style={{ fontWeight: 600, fontSize: 14 }}>
+        {closed ? "Need more help with this?" : "Add a message"}
+      </label>
+      <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 8px" }}>
+        {closed
+          ? "This ticket is closed. Sending a message starts a new follow-up ticket that links back to this one."
+          : resolved
+            ? `Marked as resolved. Replying within ${reopenDays} days reopens it.`
+            : "We'll see it right away. You can also just reply to our email."}
+      </p>
+      <textarea className="input" id="my-reply" rows={4} value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} required />
+      <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap", marginTop: 10 }}>
+        {!closed &&
+          (resolved ? (
+            <button type="button" className="btn ghost" disabled={busy} onClick={() => toggle(false)}>
+              Reopen ticket
+            </button>
+          ) : (
+            <button type="button" className="btn ghost" disabled={busy} onClick={() => toggle(true)}>
+              Mark as resolved
+            </button>
+          ))}
+        <button className="btn primary" disabled={busy || !body.trim()} style={{ marginLeft: "auto" }}>
+          {busy ? "Sending…" : closed ? "Start follow-up" : "Send"}
+        </button>
+      </div>
     </form>
   );
 }

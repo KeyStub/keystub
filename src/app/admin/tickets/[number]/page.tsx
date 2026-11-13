@@ -1,9 +1,9 @@
 import { and, asc, count, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TicketComposer, TicketStatusSelect } from "@/components/admin";
+import { TicketCategorySelect, TicketComposer, TicketStatusSelect } from "@/components/admin";
 import { db } from "@/db";
-import { feedback, ticketMessages, user, vehicles } from "@/db/schema";
+import { feedback, supportCategories, ticketMessages, user, vehicles } from "@/db/schema";
 import { adminPath, CONTACT_TOPICS, TICKET_KIND_LABEL, ticketCode } from "@/lib/admin";
 import { effectivePlan, PLANS } from "@/lib/plans";
 import { requireStaff } from "@/server/staff";
@@ -30,6 +30,7 @@ export default async function TicketPage({ params }: PageProps<"/admin/tickets/[
           .then((r) => r[0])
       : Promise.resolve(undefined),
   ]);
+  const categories = (await db.select({ name: supportCategories.name }).from(supportCategories).orderBy(supportCategories.sort)).map((c) => c.name);
   const vehicleCount = customer ? (await db.select({ n: count() }).from(vehicles).where(and(eq(vehicles.userId, customer.id))))[0].n : 0;
   const code = ticketCode(t.number);
 
@@ -48,8 +49,16 @@ export default async function TicketPage({ params }: PageProps<"/admin/tickets/[
             {code}
           </h1>
         </div>
-        <TicketStatusSelect id={t.id} status={t.status} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <TicketCategorySelect id={t.id} category={t.category} options={categories} />
+          <TicketStatusSelect id={t.id} status={t.status} />
+        </div>
       </div>
+      {t.followUpOf && (
+        <p className="muted" style={{ fontSize: 13, marginTop: -8 }}>
+          Follow-up to <Link href={adminPath(`/admin/tickets/${t.followUpOf}`)}>{ticketCode(t.followUpOf)}</Link>
+        </p>
+      )}
 
       <div className="adm-ticket">
         <div className="adm-thread">

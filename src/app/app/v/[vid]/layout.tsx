@@ -5,7 +5,7 @@ import { RestoreVehicleButton } from "@/components/vehicle-danger-zone";
 import { VehicleTabs } from "@/components/vehicle-tabs";
 import { fmtDate, numFmt, vehicleName } from "@/lib/format";
 import { makeFmt } from "@/lib/units";
-import { getVehicleBundle } from "@/server/data";
+import { getVehicleBundle, unreadSupportCount } from "@/server/data";
 import { requireUser } from "@/server/session";
 
 export default async function VehicleLayout({ children, params }: LayoutProps<"/app/v/[vid]">) {
@@ -51,7 +51,7 @@ export default async function VehicleLayout({ children, params }: LayoutProps<"/
         )}
         {children}
       </main>
-      <MobileNav vid={vid} powertrain={v.powertrain} />
+      <MobileNav vid={vid} powertrain={v.powertrain} supportUnread={await unreadSupportCount(user.id, user.email)} />
       <RememberVehicle vid={vid} />
     </div>
   );

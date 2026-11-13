@@ -22,6 +22,8 @@ export type NewTicket = {
   page?: string | null;
   /** e.g. "signed in, free plan" */
   context?: string | null;
+  /** the ticket belongs to a KeyStub account, so it can be viewed in the app */
+  hasAccount?: boolean;
 };
 
 /** After a ticket is saved: auto-reply to the customer and notify the support inbox. Never throws. */
@@ -31,7 +33,7 @@ export async function afterTicketCreated(t: NewTicket) {
   if (key) {
     const tpl = await getTemplate(key);
     if (tpl.enabled) {
-      const vars = { name: t.name, ticket: code, message: t.message };
+      const vars = { name: t.name, ticket: code, message: t.message, link: t.hasAccount ? ticketLink(t.number) : "" };
       const subject = fillTemplate(tpl.subject, vars);
       const body = fillTemplate(tpl.body, vars);
       let status = "sent";
@@ -119,19 +121,8 @@ export async function processInboundEmail(e: InboundEmail): Promise<{ result: "r
   const [existing] = n ? await db.select().from(feedback).where(eq(feedback.number, n)) : [];
 
   if (existing) {
-    await db.insert(ticketMessages).values({ ticketId: existing.id, kind: "customer", body, authorName: from.name || from.email, emailStatus: attachNote });
-    await db.update(feedback).set({ status: "new", updatedAt: new Date() }).where(eq(feedback.id, existing.id));
-    try {
-      await sendEmail({
-        to: SUPPORT_EMAIL(),
-        replyTo: from.email,
-        subject: `[${ticketCode(existing.number)}] New reply from ${from.name || from.email}`,
-        text: `${from.name || from.email} replied to ${ticketCode(existing.number)}:\n\n${body}\n\nAnswer it in KeyStub Admin: ${adminUrl(`/admin/tickets/${existing.number}`)}`,
-      });
-    } catch (err) {
-      console.error("reply notification failed", err);
-    }
-    return { result: "reply", number: existing.number };
+    const r = await addCustomerReply(existing, { body, name: from.name || from.email, attachNote });
+    return { result: r.followUp ? "ticket" : "reply", number: r.number };
   }
 
   const [account] = await db.select({ id: user.id, name: user.name }).from(user).where(eq(user.email, from.email));
@@ -141,6 +132,65 @@ export async function processInboundEmail(e: InboundEmail): Promise<{ result: "r
     .values({ userId: account?.id ?? null, email: from.email, name: from.name || account?.name || null, kind: "email", message, userAgent: null })
     .returning({ id: feedback.id, number: feedback.number });
   if (attachNote) await db.insert(ticketMessages).values({ ticketId: t.id, kind: "note", body: `Customer's email had ${attachNote}.`, authorName: "System" });
-  await afterTicketCreated({ ...t, kind: "email", name: from.name || account?.name || null, email: from.email, message, context: account ? "has an account" : "emailed support" });
+  await afterTicketCreated({ ...t, kind: "email", name: from.name || account?.name || null, email: from.email, message, context: account ? "has an account" : "emailed support", hasAccount: !!account });
   return { result: "ticket", number: t.number };
 }
+
+/* ---------------- customer replies (email or app) ---------------- */
+
+/** Days a resolved ticket can still be reopened by a reply. After that (or once Closed), a reply starts a follow-up ticket. */
+export const REOPEN_DAYS = 14;
+
+type TicketRow = {
+  id: string;
+  number: number;
+  kind: string;
+  status: string;
+  updatedAt: Date;
+  userId: string | null;
+  email: string;
+  name: string | null;
+  topic: string | null;
+  category: string | null;
+};
+
+export function isPastReopenWindow(t: { status: string; updatedAt: Date }, now = Date.now()) {
+  return t.status === "closed" || (t.status === "done" && now - t.updatedAt.getTime() > REOPEN_DAYS * 86_400_000);
+}
+
+/**
+ * The customer wrote back. Open or recently resolved tickets get the message and go back to
+ * "Needs reply"; closed (or long-resolved) ones get a new follow-up ticket that links to the old one.
+ */
+export async function addCustomerReply(
+  t: TicketRow,
+  m: { body: string; name: string; authorId?: string | null; attachNote?: string | null },
+): Promise<{ number: number; followUp: boolean }> {
+  const { feedback } = await import("@/db/schema");
+  if (isPastReopenWindow(t)) {
+    const message = `Follow-up to ${ticketCode(t.number)}:\n\n${m.body}`.slice(0, 10000);
+    const [n] = await db
+      .insert(feedback)
+      .values({ userId: t.userId, email: t.email, name: t.name, kind: t.kind, topic: t.topic, category: t.category, message, followUpOf: t.number })
+      .returning({ id: feedback.id, number: feedback.number });
+    if (m.attachNote) await db.insert(ticketMessages).values({ ticketId: n.id, kind: "note", body: `Customer's email had ${m.attachNote}.`, authorName: "System" });
+    await afterTicketCreated({ ...n, kind: t.kind, name: t.name, email: t.email, message, topic: t.topic, context: `follow-up to ${ticketCode(t.number)}`, hasAccount: !!t.userId });
+    return { number: n.number, followUp: true };
+  }
+  await db.insert(ticketMessages).values({ ticketId: t.id, kind: "customer", body: m.body, authorId: m.authorId ?? null, authorName: m.name, emailStatus: m.attachNote ?? null });
+  await db.update(feedback).set({ status: "new", updatedAt: new Date() }).where(eq(feedback.id, t.id));
+  try {
+    await sendEmail({
+      to: SUPPORT_EMAIL(),
+      replyTo: t.email,
+      subject: `[${ticketCode(t.number)}] New reply from ${m.name}`,
+      text: `${m.name} replied to ${ticketCode(t.number)}:\n\n${m.body}\n\nAnswer it in KeyStub Admin: ${adminUrl(`/admin/tickets/${t.number}`)}`,
+    });
+  } catch (err) {
+    console.error("reply notification failed", err);
+  }
+  return { number: t.number, followUp: false };
+}
+
+/** Customer-facing link to a ticket (only useful when the ticket belongs to an account). */
+export const ticketLink = (n: number) => `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/app/feedback/${n}`;

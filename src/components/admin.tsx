@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
 import { adminPath, FEEDBACK_STATUSES, ROLES, TEMPLATE_PLACEHOLDERS, type StaffRole } from "@/lib/admin";
-import { addStaff, addTicketNote, removeStaff, replyToTicket, resetTemplate, saveTemplate, setStaffPerk, setStaffRole, setTicketStatus } from "@/server/admin-actions";
+import { addCategory, addStaff, addTicketNote, deleteCategory, removeStaff, renameCategory, replyToTicket, resetTemplate, saveTemplate, setStaffPerk, setStaffRole, setTicketCategory, setTicketStatus } from "@/server/admin-actions";
 import type { ActionResult } from "@/server/actions";
 import { Logo } from "./logo";
 import { ThemeButton } from "./theme-toggle";
@@ -414,3 +414,118 @@ export function StaffManager({ rows, myEmail, envOwners }: { rows: StaffRow[]; m
 }
 
 export type { StaffRole };
+
+/* ---------------- categories ---------------- */
+
+export function TicketCategorySelect({ id, category, options }: { id: string; category: string | null; options: string[] }) {
+  const run = useRun();
+  const [busy, setBusy] = useState(false);
+  const all = category && !options.includes(category) ? [category, ...options] : options;
+  return (
+    <select
+      className="select inline"
+      value={category ?? ""}
+      disabled={busy}
+      aria-label="Ticket category"
+      onChange={async (e) => {
+        setBusy(true);
+        await run(() => setTicketCategory(id, e.target.value), e.target.value ? "Category set." : "Category cleared.");
+        setBusy(false);
+      }}
+    >
+      <option value="">No category</option>
+      {all.map((c) => (
+        <option key={c} value={c}>
+          {c}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+export function CategoryManager({ rows }: { rows: { id: string; name: string; tickets: number }[] }) {
+  const run = useRun();
+  const confirm = useConfirm();
+  const [editing, setEditing] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <>
+      <div className="card" style={{ padding: 0 }}>
+        <div className="list">
+          {rows.map((r) => (
+            <div className="list-item" key={r.id} style={{ padding: "10px 16px" }}>
+              {editing === r.id ? (
+                <form
+                  style={{ display: "flex", gap: 8, flex: 1 }}
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (await run(() => renameCategory(r.id, name), "Renamed. Tickets moved with it.")) setEditing(null);
+                  }}
+                >
+                  <input className="input" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus required />
+                  <button className="btn sm primary">Save</button>
+                  <button type="button" className="btn sm ghost" onClick={() => setEditing(null)}>
+                    Cancel
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <div className="l-main">
+                    <div className="l-title">{r.name}</div>
+                    <div className="l-sub">
+                      {r.tickets} ticket{r.tickets === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      className="btn sm ghost"
+                      onClick={() => {
+                        setName(r.name);
+                        setEditing(r.id);
+                      }}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      className="btn sm ghost"
+                      onClick={async () => {
+                        if (
+                          await confirm({
+                            title: `Remove “${r.name}”?`,
+                            message: "It disappears from the picker. Tickets already in it keep the label, so past reports still add up.",
+                            confirmLabel: "Remove",
+                            danger: true,
+                          })
+                        )
+                          await run(() => deleteCategory(r.id), "Category removed.");
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      <form
+        className="place-add"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const form = e.currentTarget;
+          setBusy(true);
+          const ok = await run(() => addCategory(new FormData(form).get("name")), "Category added.");
+          setBusy(false);
+          if (ok) form.reset();
+        }}
+      >
+        <input className="input" name="name" placeholder="New category, e.g. EV charging" maxLength={80} required />
+        <button className="btn" disabled={busy}>
+          Add
+        </button>
+      </form>
+    </>
+  );
+}

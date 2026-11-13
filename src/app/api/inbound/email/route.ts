@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY || "re_dev_placeholder");
-  let event: { type: string; data: { email_id: string; from: string; to: string[]; subject: string; text?: string; html?: string; attachments?: unknown[] } };
+  let event: { type: string; data: { email_id: string; from: string; to: string[]; subject: string; text?: string; html?: string; attachments?: unknown[]; cc?: string[]; headers?: Record<string, string> } };
   try {
     const h = (name: string) => req.headers.get(`svix-${name}`) ?? req.headers.get(`webhook-${name}`) ?? "";
     event = secret
@@ -31,14 +31,14 @@ export async function POST(req: Request) {
   if (devUnsigned) {
     // Local testing only: the test payload carries the message itself.
     const d = event.data;
-    email = { from: d.from, to: d.to, subject: d.subject, text: d.text ?? null, html: d.html ?? null, attachments: d.attachments?.length ?? 0 };
+    email = { from: d.from, to: d.to, subject: d.subject, text: d.text ?? null, html: d.html ?? null, attachments: d.attachments?.length ?? 0, addressedTo: [...d.to, ...(d.cc ?? [])], headers: d.headers ?? null };
   } else {
     const { data, error } = await resend.emails.receiving.get(event.data.email_id);
     if (error || !data) {
       console.error("couldn't fetch inbound email", error);
       return NextResponse.json({ error: "Couldn't fetch the email" }, { status: 502 }); // Resend retries
     }
-    email = { from: data.from, to: [...data.to, ...(data.received_for ?? [])], subject: data.subject ?? "", text: data.text, html: data.html, attachments: data.attachments?.length ?? 0, headers: data.headers };
+    email = { from: data.from, to: [...data.to, ...(data.received_for ?? [])], subject: data.subject ?? "", text: data.text, html: data.html, attachments: data.attachments?.length ?? 0, headers: data.headers, addressedTo: [...data.to, ...(data.cc ?? [])] };
   }
   const result = await processInboundEmail(email);
   return NextResponse.json({ ok: true, ...result });

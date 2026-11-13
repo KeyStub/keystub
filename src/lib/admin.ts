@@ -19,6 +19,18 @@ export const adminUrl = (p: string) =>
 export const INBOUND_DOMAIN = () => process.env.INBOUND_DOMAIN || "";
 /** Reply-To for a ticket: support+ks1001@inbox.keystub.com (falls back to the support address). */
 export const ticketReplyTo = (n: number) => (INBOUND_DOMAIN() ? `support+ks${n}@${INBOUND_DOMAIN()}` : SUPPORT_EMAIL());
+/**
+ * True when an address is one of our support inboxes: support@ or support+anything@ at our own
+ * domains or the inbound domain. Mail forwarded from a shared Gmail inbox keeps its original To/Cc,
+ * so this tells real support mail apart from other mail (e.g. to accounts@) that got forwarded too.
+ */
+export function isSupportAddress(raw: string, domains: string[]) {
+  const email = (raw.match(/<([^>]+)>/)?.[1] ?? raw).trim().toLowerCase();
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return false;
+  const support = SUPPORT_EMAIL().toLowerCase();
+  return email === support || ((local === "support" || local.startsWith("support+")) && domains.includes(domain));
+}
 /** Ticket number from a reply address (support+ks1001@…) or subject ("Re: [#KS1001] …"). */
 export function ticketNumberFrom(to: string[], subject: string) {
   for (const t of to) {

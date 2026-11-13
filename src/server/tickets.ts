@@ -2,7 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { emailTemplates, siteSettings, ticketMessages } from "@/db/schema";
-import { adminUrl, DEFAULT_NOTIFY, type NotifySettings, DEFAULT_TEMPLATES, fillTemplate, stripQuotedReply, SUPPORT_EMAIL, TEMPLATE_KEYS, TICKET_KIND_LABEL, ticketCode, ticketNumberFrom, ticketReplyTo, type TemplateKey } from "@/lib/admin";
+import { adminUrl, DEFAULT_NOTIFY, type NotifySettings, DEFAULT_TEMPLATES, fillTemplate, INBOUND_DOMAIN, isSupportAddress, stripQuotedReply, SUPPORT_EMAIL, TEMPLATE_KEYS, TICKET_KIND_LABEL, ticketCode, ticketNumberFrom, ticketReplyTo, type TemplateKey } from "@/lib/admin";
 import { sendEmail, supportFrom } from "./mailer";
 
 /** Which heads-up emails go to the support inbox (Admin → Notifications). */
@@ -85,6 +85,8 @@ export type InboundEmail = {
   html: string | null;
   attachments: number;
   headers?: Record<string, string> | null;
+  /** The To and Cc headers as written by the sender (not the forwarding address). */
+  addressedTo?: string[];
 };
 
 const htmlToText = (html: string) =>
@@ -121,6 +123,13 @@ export async function processInboundEmail(e: InboundEmail): Promise<{ result: "r
   const domain = from.email.split("@")[1] ?? "";
   const auto = e.headers && Object.entries(e.headers).find(([k]) => k.toLowerCase() === "auto-submitted")?.[1];
   if (!from.email.includes("@") || OWN_DOMAINS().includes(domain) || (auto && auto.toLowerCase() !== "no")) return { result: "ignored" };
+  // Newsletters and mailing lists (they carry these headers; people writing to support don't).
+  const header = (k: string) => e.headers && Object.entries(e.headers).find(([h]) => h.toLowerCase() === k)?.[1];
+  if (header("list-unsubscribe") || header("list-id") || /^(bulk|list|junk)$/i.test(header("precedence") ?? "")) return { result: "ignored" };
+  // Only mail written to a support address. Forwarding a whole Gmail inbox also forwards mail sent
+  // to its other aliases (accounts@, billing@…); those keep their own To and are skipped here.
+  const supportDomains = [...OWN_DOMAINS(), INBOUND_DOMAIN().toLowerCase()].filter(Boolean);
+  if (e.addressedTo && !e.addressedTo.some((a) => isSupportAddress(a, supportDomains))) return { result: "ignored" };
 
   const body = stripQuotedReply(e.text ?? (e.html ? htmlToText(e.html) : "")) || "(no message text)";
   const attachNote = e.attachments ? `${e.attachments} attachment${e.attachments === 1 ? "" : "s"} (open them in Resend, under Emails, Receiving)` : null;

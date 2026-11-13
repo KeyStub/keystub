@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseTicketCode, stripQuotedReply, ticketNumberFrom } from "./admin";
+import { isSupportAddress, parseTicketCode, stripQuotedReply, ticketNumberFrom } from "./admin";
 
 describe("ticket emails", () => {
   it("finds the ticket from the reply address or the subject", () => {
@@ -23,5 +23,20 @@ describe("ticket emails", () => {
     expect(parseTicketCode("ks-1002")).toBe(1002);
     expect(parseTicketCode("1003")).toBe(1003);
     expect(parseTicketCode("brakes")).toBeNull();
+  });
+});
+
+describe("isSupportAddress", () => {
+  const d = ["keystub.com", "keystub.ca", "inbox.keystub.com"];
+  it("accepts support inboxes", () => {
+    expect(isSupportAddress("support@keystub.com", d)).toBe(true);
+    expect(isSupportAddress("KeyStub Support <Support@KeyStub.com>", d)).toBe(true);
+    expect(isSupportAddress("support+ks1001@inbox.keystub.com", d)).toBe(true);
+    expect(isSupportAddress("support@inbox.keystub.com", d)).toBe(true);
+  });
+  it("rejects other aliases and other domains", () => {
+    expect(isSupportAddress("accounts@keystub.com", d)).toBe(false);
+    expect(isSupportAddress("billing@keystub.com", d)).toBe(false);
+    expect(isSupportAddress("support@neon.tech", d)).toBe(false);
   });
 });
